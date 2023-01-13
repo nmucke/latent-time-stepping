@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "latent-time-stepping"
+version = "0.1.0"
+license = {file = "LICENSE.txt"}
+description = "A simple package template"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy ~= 1.23.5"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/nmucke/latent-time-stepping"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+
+[tool.coverage.run]
+source = ["src/latent_time_stepping"]
+omit = ["*/__init__.py"]
