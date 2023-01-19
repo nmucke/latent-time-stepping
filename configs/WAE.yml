@@ -1,0 +1,30 @@
+dataloader_args:
+  batch_size: 256
+  shuffle: True
+  num_workers: 4
+  
+model_args:
+  encoder:
+    num_channels: [2, 4, 8, 16, 32, 64]
+    kernel_size: [5, 5, 5, 5, 5]
+    latent_dim: 16
+    stride: [2, 2, 2, 2, 2]
+    padding: [0, 0, 0, 0, 0]
+  decoder:
+    num_channels: [64, 32, 16, 8, 4, 2]
+    kernel_size: [5, 5, 5, 5, 5]
+    latent_dim: 16
+    stride: [2, 2, 2, 2, 2]
+    padding: [0, 0, 0, 0, 0]
+    output_padding: [0, 0, 0, 1, 1]
+
+optimizer_args:
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-8
+
+train_stepper_args:
+  latent_loss_regu: 1.0e-3
+
+train_args:
+  num_epochs: 30
+

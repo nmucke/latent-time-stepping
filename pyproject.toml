@@ -22,5 +22,5 @@ addopts = [
 ]
 
 [tool.coverage.run]
-source = ["src/latent_time_stepping"]
+source = ["latent_time_stepping"]
 omit = ["*/__init__.py"]

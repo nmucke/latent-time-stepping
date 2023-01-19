@@ -7,6 +7,8 @@ from discontinuous_galerkin.base.base_model import BaseModel
 from discontinuous_galerkin.start_up_routines.start_up_1D import StartUp1D
 import matplotlib.pyplot as plt
 import pdb
+import scipy.stats
+
 
 from matplotlib.animation import FuncAnimation
 import ray
@@ -28,9 +30,14 @@ class PipeflowEquations(BaseModel):
         self.rho_ref = 52.67
         self.e = 1e-8
         self.mu = 1.2e-5
-        self.Cd = 5e-4
 
-        self.leak_location = 500
+        self.D_orifice = 0.03
+        self.A_orifice = np.pi*(self.D_orifice/2)**2
+
+    def update_leak(self, Cd, leak_location):
+
+        self.Cv = self.A/np.sqrt(self.rho_ref/2 * ((self.A/(self.A_orifice*Cd))**2-1))
+        self.leak_location = leak_location
 
     def density_to_pressure(self, rho):
         """Compute the pressure from the density."""
@@ -135,20 +142,59 @@ class PipeflowEquations(BaseModel):
         rho = q[0]/self.A
         p = self.density_to_pressure(rho)
 
-        s[0] = - self.Cd * np.sqrt(rho * (p - self.p_amb)) * point_source
+        s[0] = - self.Cv * np.sqrt(rho * (p - self.p_amb)) * point_source
 
         s[1] = -self.friction_factor(q)
 
         return s
 
+@ray.remote(num_returns=1)
 def simulate_pipeflow(
     leak_location=100,
     leak_size=1e-4,
+    pipe_DG=None,
     idx=0
     ):
 
+    pipe_DG.update_leak(leak_size, leak_location)
+    
+    init = pipe_DG.initial_condition(pipe_DG.DG_vars.x.flatten('F'))
+
+    t_final = 100.
+    sol, t_vec = pipe_DG.solve(t=0, q_init=init, t_final=t_final, print_progress=False)
+
+    x = np.linspace(pipe_DG.DG_vars.x[0, 0], pipe_DG.DG_vars.x[-1, -1], 256)
+
+    u = np.zeros((len(x), len(t_vec)))
+    rho = np.zeros((len(x), len(t_vec)))
+    for t in range(sol.shape[-1]):
+        rho[:, t] = pipe_DG.evaluate_solution(x, sol_nodal=sol[0, :, t])
+        u[:, t] = pipe_DG.evaluate_solution(x, sol_nodal=sol[1, :, t])
+    rho = rho / pipe_DG.A
+    u = u / rho / pipe_DG.A
+
+    rho = rho[:, 1:]
+    u = u[:, 1:]
+
+    rho = np.expand_dims(rho, axis=0)
+    u = np.expand_dims(u, axis=0)
+    state = np.concatenate((rho, u), axis=0)
+
+    pars = np.array([leak_location, leak_size])
+
+
+    np.save(f'data/raw_data/test_data/pars/sample_{idx}.npy', pars)
+    np.save(f'data/raw_data/test_data/state/sample_{idx}.npy', state)
+
+    print('Saved data for sample {}'.format(idx))
+
+    return None
+
+
+
+def main():
     xmin = 0.
-    xmax = 1000
+    xmax = 1000.
 
     BC_params = {
         'type':'dirichlet',
@@ -166,7 +212,7 @@ def simulate_pipeflow(
 
     numerical_flux_type = 'lax_friedrichs'
     numerical_flux_params = {
-        'alpha': 0.0,
+        'alpha': 0.5,
     }
     stabilizer_type = 'filter'
     stabilizer_params = {
@@ -215,91 +261,33 @@ def simulate_pipeflow(
         )
 
 
-    init = pipe_DG.initial_condition(pipe_DG.DG_vars.x.flatten('F'))
-
-    t_final = 1.0
-    sol, t_vec = pipe_DG.solve(t=0, q_init=init, t_final=t_final, print_progress=False)
-
-    x = np.linspace(xmin, xmax, 256)
-
-    u = np.zeros((len(x), len(t_vec)))
-    rho = np.zeros((len(x), len(t_vec)))
-    for t in range(sol.shape[-1]):
-        rho[:, t] = pipe_DG.evaluate_solution(x, sol_nodal=sol[0, :, t])
-        u[:, t] = pipe_DG.evaluate_solution(x, sol_nodal=sol[1, :, t])
-    rho = rho / pipe_DG.A
-    u = u / rho / pipe_DG.A
-
-    rho = rho[:, 1:]
-    u = u[:, 1:]
-
-    rho = np.expand_dims(rho, axis=0)
-    u = np.expand_dims(u, axis=0)
-    state = np.concatenate((rho, u), axis=0)
-
-    pars = np.array([leak_location, leak_size])
-
-    np.save(f'data/training_data/pars/sample_{idx}.npy', pars)
-    np.save(f'data/training_data/state/sample_{idx}.npy', state)
-
-    '''
-    plt.figure()
-    plt.subplot(1, 2, 1)
-    plt.imshow(u, extent=[0, t_final, xmin, xmax], aspect='auto')
-    
-    plt.subplot(1, 2, 2)
-    plt.plot(x, u[:, 0])
-    plt.plot(x, u[:, 1])
-    plt.plot(x, u[:, 10])
-    plt.plot(x, u[:, -1])
-    #plt.plot(x, u[:, -1])
-    plt.grid()
-    plt.show()
-
-
-    fig, ax = plt.subplots()
-    xdata, ydata = [], []
-    ln, = ax.plot([], [], lw=3, animated=True)
-
-    def init():
-        ax.set_xlim(0, xmax)
-        ax.set_ylim(2, 6)
-        return ln,
-
-    def update(frame):
-        xdata.append(x)
-        ydata.append(u[:, frame])
-        ln.set_data(x, u[:, frame])
-        return ln,
-
-    ani = FuncAnimation(
-        fig,
-        update,
-        frames=range(len(t_vec)),
-        init_func=init, 
-        blit=True,
-        interval=10,
-        )
-    ani.save('pipeflow.gif', fps=30)
-    plt.show()
-    '''
-
-def main():
-
-    num_samples = 10
+    num_samples = 100
     leak_location_vec  = np.random.uniform(10, 990, num_samples)
-    leak_size_vec = np.random.uniform(1e-4, 9e-4, num_samples)
-
-    ray.init(num_cpus=10)
+    leak_size_vec = np.random.uniform(1., 2., num_samples)
+    #leak_size_vec = scipy.stats.loguniform.rvs(1., 2., size=num_samples)
+    
+    ray.shutdown()
+    ray.init(num_cpus=25)
+    ray.get([
+        simulate_pipeflow.remote(
+            leak_location=leak_location,
+            leak_size=leak_size,
+            pipe_DG=pipe_DG,
+            idx=idx
+        ) for (leak_location, leak_size, idx) in 
+        zip(leak_location_vec, leak_size_vec, range(num_samples))])
+    '''
     for i in range(num_samples):
-        simulate_pipeflow(
+        state, pars = simulate_pipeflow.remote(
             leak_location=leak_location_vec[i], 
             leak_size=leak_size_vec[i], 
+            pipe_DG=pipe_DG,
             idx=i
             )
-    ray.shutdown()
 
-
+        np.save(f'data/raw_data/training_data/pars/sample_{i}.npy', ray.get(pars))
+        np.save(f'data/raw_data/training_data/state/sample_{i}.npy', ray.get(state))
+    '''
 if __name__ == "__main__":
     
     main()

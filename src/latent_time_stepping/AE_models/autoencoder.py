@@ -3,10 +3,9 @@ import torch
 from torch import nn
 import pdb
 
-
 class UnsupervisedWassersteinAE(nn.Module):
     """
-    Wasserstein Autoencoder
+    Unsupervised Wasserstein Autoencoder
     """
 
     def __init__(

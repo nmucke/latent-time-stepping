@@ -3,12 +3,72 @@ import torch
 from tqdm import tqdm
 import pdb
 
-from DT_for_WDN_leak_localization.early_stopping import EarlyStopper
-from DT_for_WDN_leak_localization.factories import create_train_stepper
-from DT_for_WDN_leak_localization.optimizers import Optimizers
+from latent_time_stepping.AE_training.optimizers import Optimizer
+from latent_time_stepping.AE_training.train_steppers import BaseTrainStepper
 
+def train(
+    train_dataloader: torch.utils.data.DataLoader,
+    val_dataloader: torch.utils.data.DataLoader,
+    num_epochs: int,
+    model_save_path: str,
+    train_stepper: BaseTrainStepper,
+    print_progress: bool = True,
+) -> None:
 
+    device = train_stepper.device
 
+    for epoch in range(num_epochs):
+
+        if print_progress:
+            pbar = tqdm(
+                    enumerate(train_dataloader),
+                    total=int(len(train_dataloader.dataset)/train_dataloader.batch_size),
+                    bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'
+                )
+        else:
+            pbar = enumerate(train_dataloader)
+
+        train_stepper.reset_loss()
+        for i, (input_state, output_state, pars) in pbar:
+
+            input_state = input_state.to(device)
+            output_state = output_state.to(device)
+            pars = pars.to(device)
+
+            loss = train_stepper.train_step(
+                input_state=input_state,
+                output_state=output_state,
+                pars=pars,
+                )
+
+            if i % 100 == 0:
+                pbar.set_postfix(loss)
+        
+        train_stepper.optimizer.step_scheduler(loss.get('reconstruction_loss', 0))
+        train_stepper.update_teacher_forcing()
+
+        train_stepper.reset_loss()
+        for i, (input_state, output_state, pars) in enumerate(val_dataloader):
+
+            input_state = input_state.to(device)
+            output_state = output_state.to(device)
+            pars = pars.to(device)
+
+            train_stepper.val_step(
+                input_state=input_state,
+                output_state=output_state,
+                pars=pars,
+            )
+
+        if print_progress:
+            for keys, values in train_stepper.val_loss.items():
+                print(f'{keys}: {values:.6f}')
+            print(f'Epoch: {epoch+1}/{num_epochs}')
+    
+    train_stepper.save_model(model_save_path)
+    
+
+'''
 class AETrainer():
 
     def __init__(
@@ -17,6 +77,7 @@ class AETrainer():
         optimizer: Optimizers,
         params: dict,
         model_save_path: str,
+        train_stepper: ,
     ) -> None:
 
         self.model = model
@@ -110,5 +171,5 @@ class AETrainer():
 
             self.train_stepper.scheduler_step()
             
-
+'''
 
