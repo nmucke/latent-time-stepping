@@ -14,7 +14,7 @@ DATA_PATH = 'data/raw_data/training_data'
 state_path = f'{DATA_PATH}/state/sample_'
 pars_path = f'{DATA_PATH}/pars/sample_'
 
-TRAINED_PREPROCESSOR_SAVE_PATH = 'data/processed_data/trained_preprocessor.pkl'
+TRAINED_PREPROCESSOR_SAVE_PATH = 'data/processed_data/trained_preprocessor.pt'
 
 def main():
 
@@ -36,10 +36,9 @@ def main():
 
         preprocessor.partial_fit_state(state)
         preprocessor.partial_fit_pars(pars)
-        
-    # Save the preprocessor    
-    with open(TRAINED_PREPROCESSOR_SAVE_PATH, "wb") as f:
-        pickle.dump(preprocessor, f)
+    
+    # Save the preprocessor   
+    torch.save(preprocessor, TRAINED_PREPROCESSOR_SAVE_PATH) 
 
     # Transform the data
     processed_states = []

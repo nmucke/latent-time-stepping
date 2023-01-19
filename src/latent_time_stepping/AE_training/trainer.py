@@ -2,9 +2,20 @@ from torch import nn
 import torch
 from tqdm import tqdm
 import pdb
+from dataclasses import dataclass
+
 
 from latent_time_stepping.AE_training.optimizers import Optimizer
 from latent_time_stepping.AE_training.train_steppers import BaseTrainStepper
+
+
+@dataclass
+class EarlyStopping:
+    num_non_improving_epochs: int = 0
+    best_loss: float = float('inf')
+    patience: int = 10
+
+
 
 def train(
     train_dataloader: torch.utils.data.DataLoader,
@@ -13,7 +24,11 @@ def train(
     model_save_path: str,
     train_stepper: BaseTrainStepper,
     print_progress: bool = True,
+    patience: int = None
 ) -> None:
+
+    if patience is not None:
+        early_stopper = EarlyStopping(patience=patience)
 
     device = train_stepper.device
 
@@ -52,7 +67,22 @@ def train(
         if print_progress:
             for keys, values in train_stepper.val_loss.items():
                 print(f'{keys}: {values:.6f}')
+                
             print(f'Epoch: {epoch+1}/{num_epochs}')
+        
+        if patience is not None:
+            if train_stepper.val_loss['recon'] < early_stopper.best_loss:
+                early_stopper.best_loss = train_stepper.val_loss['recon']
+                early_stopper.num_non_improving_epochs = 0
+                train_stepper.save_model(model_save_path)
+            else:
+                early_stopper.num_non_improving_epochs += 1
+                if early_stopper.num_non_improving_epochs >= early_stopper.patience:
+                    print('Early stopping')
+                    break
+                
+    if patience is None:
+        train_stepper.save_model(model_save_path)
     
     train_stepper.save_model(model_save_path)
     

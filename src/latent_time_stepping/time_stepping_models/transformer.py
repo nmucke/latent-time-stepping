@@ -168,10 +168,10 @@ class DecoderLayer(nn.Module):
         self.layernorm2 = nn.LayerNorm(normalized_shape=embed_dim, eps=1e-6)
         self.layernorm3 = nn.LayerNorm(normalized_shape=embed_dim, eps=1e-6)
 
-    def forward(self, x, encoder_output):
+    def forward(self, x, encoder_output, mask=None):
 
         # Multi-head self attention
-        attn_output, _ = self.mha(X_q=x, X_k=x, X_v=x)  # (batch_size, input_seq_len, input_embed_dim)
+        attn_output, _ = self.mha(X_q=x, X_k=x, X_v=x, mask=mask)  # (batch_size, input_seq_len, input_embed_dim)
 
         # Layer norm after adding the residual connection
         x = self.layernorm1(x + attn_output)  # (batch_size, input_seq_len, input_embed_dim)
