@@ -159,6 +159,7 @@ class TimeSteppingModel(nn.Module):
             output_seq_len=output_seq_len-1,
             device=self.device
         )
+        pdb.set_trace()
 
         pars = self.encode_pars(pars)
         
