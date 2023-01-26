@@ -5,7 +5,7 @@ import torch
 import matplotlib.pyplot as plt
 torch.set_default_dtype(torch.float32)
 
-MODEL_TYPE = "WAE"
+MODEL_TYPE = "VAE"
 model = torch.load(f"trained_models/autoencoders/{MODEL_TYPE}.pt")
 model = model.to('cpu')
 model.eval()
@@ -46,7 +46,10 @@ def main():
         pars = preprocessor.transform_pars(pars)
         pars = pars.repeat(num_time_steps, 1)
         
-        latent_state[i] = model.encoder(hf_trajectory)
+        if MODEL_TYPE == "WAE":
+            latent_state[i] = model.encode(hf_trajectory).transpose(0, 1)
+        elif MODEL_TYPE == "VAE":
+            latent_state[i], _, _ = model.encoder(hf_trajectory)
 
         recon_state = model.decoder(latent_state[i], pars)
         

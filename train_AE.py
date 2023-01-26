@@ -4,7 +4,9 @@ import yaml
 from yaml.loader import SafeLoader
 import torch
 
-from latent_time_stepping.AE_models.autoencoder import UnsupervisedWassersteinAE
+from latent_time_stepping.AE_models.VAE_encoder import VAEEncoder
+
+from latent_time_stepping.AE_models.autoencoder import Autoencoder
 
 from latent_time_stepping.AE_models.encoder_decoder import (
     Decoder, 
@@ -12,12 +14,12 @@ from latent_time_stepping.AE_models.encoder_decoder import (
 )
 from latent_time_stepping.datasets.AE_dataset import get_AE_dataloader
 from latent_time_stepping.AE_training.optimizers import Optimizer
-from latent_time_stepping.AE_training.train_steppers import WAETrainStepper
+from latent_time_stepping.AE_training.train_steppers import VAETrainStepper, WAETrainStepper
 from latent_time_stepping.AE_training.trainer import train
 
 torch.set_default_dtype(torch.float32)
 
-MODEL_TYPE = "WAE"
+MODEL_TYPE = "VAE"
 
 config_path = f"configs/{MODEL_TYPE}.yml"
 with open(config_path) as f:
@@ -38,7 +40,6 @@ train_pars = pars[TRAIN_SAMPLE_IDS]
 val_state = state[VAL_SAMPLE_IDS]
 val_pars = pars[VAL_SAMPLE_IDS]
 
-
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}.pt"
 
 CUDA = True
@@ -46,10 +47,13 @@ DEVICE = torch.device('cuda' if CUDA else 'cpu')
 
 def main():
 
-    encoder = Encoder(**config['model_args']['encoder'])
+    if MODEL_TYPE == "VAE":
+        encoder = VAEEncoder(**config['model_args']['encoder'])
+    elif MODEL_TYPE == "WAE":
+        encoder = Encoder(**config['model_args']['encoder'])
     decoder = Decoder(**config['model_args']['decoder'])
 
-    model = UnsupervisedWassersteinAE(
+    model = Autoencoder(
         encoder=encoder,
         decoder=decoder,
     )
@@ -60,11 +64,18 @@ def main():
         args=config['optimizer_args'],
     )
 
-    train_stepper = WAETrainStepper(
-        model=model,
-        optimizer=optimizer,
-        **config['train_stepper_args'],
-    )
+    if MODEL_TYPE == "VAE":
+        train_stepper = VAETrainStepper(
+            model=model,
+            optimizer=optimizer,
+            **config['train_stepper_args'],
+        )
+    elif MODEL_TYPE == "WAE":
+        train_stepper = WAETrainStepper(
+            model=model,
+            optimizer=optimizer,
+            **config['train_stepper_args'],
+        )
 
     train_dataloader = get_AE_dataloader(
         state=train_state,
