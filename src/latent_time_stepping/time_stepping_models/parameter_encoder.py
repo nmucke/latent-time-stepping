@@ -15,7 +15,6 @@ class ParameterEncoder(nn.Module):
         embed_hidden_dim: int,
         num_layers: int,
         pars_dim: int,
-        input_seq_len: int,
         p=0.1
     ):
         super().__init__()
@@ -27,7 +26,6 @@ class ParameterEncoder(nn.Module):
         self.num_layers = num_layers
 
         self.pars_dim = pars_dim
-        self.input_seq_len = input_seq_len
 
         self.activation = nn.LeakyReLU()
 
@@ -39,6 +37,13 @@ class ParameterEncoder(nn.Module):
             dim=1, 
             unflattened_size=(1, embed_dim)
             )
+
+        self.out_dense_layer = nn.Linear(
+            in_features=embed_dim,
+            out_features=embed_dim
+        )
+        
+        '''
         self.initial_conv_layer = nn.Conv1d(
             in_channels=1,
             out_channels=input_seq_len,
@@ -62,19 +67,14 @@ class ParameterEncoder(nn.Module):
                 for _ in range(num_layers)
             ]
         )
+        '''
 
     def forward(self, x):
         # x: (batch_size, pars_dim)
         x = self.initial_dense_layer(x)
         x = self.activation(x)
-        x = self.unflatten(x)
-        x = self.initial_conv_layer(x)
-        x = self.activation(x)
-
-        x = self.positional_embedding(x)
-
-        for encoder_layer in self.encoder_layers:
-            x = encoder_layer(x)
+        x = self.out_dense_layer(x)
+        x = self.unflatten(x) # (batch_size, 1, embed_dim)
         return x
 
 

@@ -88,7 +88,7 @@ class WAETrainStepper():
 
         latent_state = self.model.encoder(state)
 
-        state_pred = self.model.decoder(latent_state)
+        state_pred = self.model.decoder(latent_state, pars)
 
         reconstruction_loss = \
             self._reconstruction_loss_function(state, state_pred)
@@ -122,7 +122,7 @@ class WAETrainStepper():
 
         latent_state = self.model.encoder(state)
 
-        state_pred = self.model.decoder(latent_state)
+        state_pred = self.model.decoder(latent_state, pars)
 
         reconstruction_loss = \
             self._reconstruction_loss_function(state, state_pred)

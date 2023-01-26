@@ -1,4 +1,5 @@
 import pdb
+from matplotlib import pyplot as plt
 import yaml
 from yaml.loader import SafeLoader
 import torch
@@ -25,8 +26,8 @@ with open(config_path) as f:
 STATE_PATH = 'data/processed_data/training_data/states.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
-TRAIN_SAMPLE_IDS = range(850)
-VAL_SAMPLE_IDS = range(850, 1000)
+TRAIN_SAMPLE_IDS = range(2500)
+VAL_SAMPLE_IDS = range(2500, 3000)
 
 state = torch.load(STATE_PATH)
 pars = torch.load(PARS_PATH)
@@ -75,7 +76,7 @@ def main():
         pars=val_pars,
         **config['dataloader_args']
     )
-
+    
     train(
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,

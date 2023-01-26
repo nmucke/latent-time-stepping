@@ -165,26 +165,24 @@ class DecoderLayer(nn.Module):
 
 
         self.layernorm1 = nn.LayerNorm(normalized_shape=embed_dim, eps=1e-6)
-        self.layernorm2 = nn.LayerNorm(normalized_shape=embed_dim, eps=1e-6)
+        #self.layernorm2 = nn.LayerNorm(normalized_shape=embed_dim, eps=1e-6)
         self.layernorm3 = nn.LayerNorm(normalized_shape=embed_dim, eps=1e-6)
 
-    def forward(self, x, encoder_output, mask=None):
+    def forward(self, x, mask=None):
+
+        x = self.layernorm1(x)  # (batch_size, input_seq_len, input_embed_dim)
 
         # Multi-head self attention
         attn_output, _ = self.mha(X_q=x, X_k=x, X_v=x, mask=mask)  # (batch_size, input_seq_len, input_embed_dim)
 
-        # Layer norm after adding the residual connection
-        x = self.layernorm1(x + attn_output)  # (batch_size, input_seq_len, input_embed_dim)
-
-        # Multi-head cross attention
-        attn_output, _ = self.mha(X_q=x, X_k=encoder_output, X_v=encoder_output)  # (batch_size, input_seq_len, input_embed_dim)
-
-        # Layer norm after adding the residual connection
-        x = self.layernorm2(x + attn_output)  # (batch_size, input_seq_len, input_embed_dim)
+        x = x + attn_output
+        
+        x = self.layernorm3(x)
 
         # Compute accross embedding dimension
         x_ff = self.feedforward(x)  # (batch_size, input_seq_len, output_embed_dim)
-        x = self.layernorm3(x + x_ff)
+
+        x = x_ff + x
 
         return x
 

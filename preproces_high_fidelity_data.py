@@ -20,7 +20,7 @@ def main():
 
     preprocessor = Preprocessor(num_states=2, num_pars=2)
 
-    sample_ids = range(1000)
+    sample_ids = range(3000)
 
     # Fit the preprocessor
     pbar = tqdm(sample_ids, total=len(sample_ids))
@@ -48,11 +48,8 @@ def main():
         state = np.load(f'{state_path}{sample_id}.npy')
         pars = np.load(f'{pars_path}{sample_id}.npy')
 
-        state = torch.from_numpy(state)
-        pars = torch.from_numpy(pars)
-
-        state = state.type(torch.get_default_dtype())
-        pars = pars.type(torch.get_default_dtype())
+        state = torch.from_numpy(state).type(torch.get_default_dtype())
+        pars = torch.from_numpy(pars).type(torch.get_default_dtype())
 
         preprocessor.transform_state(state)
         preprocessor.transform_pars(pars)

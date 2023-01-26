@@ -21,6 +21,8 @@ class AEDataset(torch.utils.data.Dataset):
         self._prepare_state_and_pars()
 
     def _prepare_state_and_pars(self,):
+        self.state = self.state[:, : , :, 0::4]
+
         self.state = self.state.transpose(2, 3)
         self.state = self.state.transpose(1, 2)
 

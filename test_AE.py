@@ -10,12 +10,13 @@ model = torch.load(f"trained_models/autoencoders/{MODEL_TYPE}.pt")
 model = model.to('cpu')
 model.eval()
 
-STATE_PATH = 'data/raw_data/test_data/state/sample_'
+STATE_PATH = 'data/raw_data/training_data/state/sample_'
+PARS_PATH = 'data/raw_data/training_data/pars/sample_'
 
 PREPROCESSOR_PATH = 'data/processed_data/trained_preprocessor.pt'
 
 def main():
-    num_samples = 100
+    num_samples = 10
     num_time_steps = 2001
 
     preprocessor = torch.load(PREPROCESSOR_PATH)
@@ -39,10 +40,15 @@ def main():
         hf_trajectory = preprocessor.transform_state(hf_trajectory)
         hf_trajectory = hf_trajectory.transpose(1, 2)
         hf_trajectory = hf_trajectory.transpose(0, 1)
-        
-        latent_state[i] = model.encode(hf_trajectory)
 
-        recon_state = model.decode(latent_state[i])
+        pars = np.load(f'{PARS_PATH}{i}.npy')
+        pars = torch.tensor(pars, dtype=torch.get_default_dtype())
+        pars = preprocessor.transform_pars(pars)
+        pars = pars.repeat(num_time_steps, 1)
+        
+        latent_state[i] = model.encoder(hf_trajectory)
+
+        recon_state = model.decoder(latent_state[i], pars)
         
         L2_error.append(torch.norm(hf_trajectory - recon_state)/torch.norm(hf_trajectory))
 
@@ -68,17 +74,27 @@ def main():
     plt.plot(hf_trajectory[1000, 1, :], label="High Fidelity", color='tab:blue')
     plt.legend()
     plt.subplot(2, 4, 3)
-    plt.hist(latent_state[:, :, 0].flatten(), bins=50, density=True)
-    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
-    plt.subplot(2, 4, 4)
-    plt.hist(latent_state[:, :, 1].flatten(), bins=50, density=True)
-    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
-    plt.subplot(2, 4, 5)
-    plt.plot(latent_state[0, 0::4, 0], latent_state[0, 0::4, 1])
-    plt.grid()
-    plt.subplot(2, 4, 6)
     plt.plot(latent_state[0, 0::4, 0])
     plt.plot(latent_state[0, 0::4, 1])
+    plt.plot(latent_state[0, 0::4, 2])
+    plt.grid()
+    plt.subplot(2, 4, 4)
+    plt.plot(latent_state[0, 0::4, 3])
+    plt.plot(latent_state[0, 0::4, 4])
+    plt.plot(latent_state[0, 0::4, 5])
+    plt.grid()
+    plt.subplot(2, 4, 5)
+    plt.hist(latent_state[:, :, 0].flatten(), bins=50, density=True)
+    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+    plt.subplot(2, 4, 6)
+    plt.hist(latent_state[:, :, 1].flatten(), bins=50, density=True)
+    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+    plt.subplot(2, 4, 7)
+    plt.hist(latent_state[:, :, 2].flatten(), bins=50, density=True)
+    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+    plt.subplot(2, 4, 8)
+    plt.hist(latent_state[:, :, 3].flatten(), bins=50, density=True)
+    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
 
     plt.show()
 
