@@ -16,7 +16,7 @@ class TimeSteppingDataset(torch.utils.data.Dataset):
         state = state.to(torch.get_default_dtype())
         pars = pars.to(torch.get_default_dtype())
 
-        state = state[:, :, 0::4]
+        state = state[:, :, 0::2]
 
         self.input_state, self.output_state = self._prepare_multistep_state(
             state=state,

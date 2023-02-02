@@ -19,7 +19,7 @@ class VAEEncoder(nn.Module):
         self.kernel_size = kernel_size
         self.latent_dim = latent_dim
 
-        self.encoder_out_shape = latent_dim*4
+        self.encoder_out_shape = latent_dim*2
 
         self.encoder = Encoder(
             num_channels=num_channels,
@@ -27,8 +27,16 @@ class VAEEncoder(nn.Module):
             latent_dim=self.encoder_out_shape
         )
 
-        self.mu = nn.Linear(self.encoder_out_shape, latent_dim)
-        self.logvar = nn.Linear(self.encoder_out_shape, latent_dim)
+        self.mu = nn.Sequential(
+            nn.Linear(self.encoder_out_shape, latent_dim),
+            nn.LeakyReLU(),
+            nn.Linear(latent_dim, latent_dim)
+        )
+        self.logvar = nn.Sequential(
+            nn.Linear(self.encoder_out_shape, latent_dim),
+            nn.LeakyReLU(),
+            nn.Linear(latent_dim, latent_dim)
+        )
     
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar)

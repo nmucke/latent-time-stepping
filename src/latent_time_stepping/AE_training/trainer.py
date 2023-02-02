@@ -44,20 +44,21 @@ def train(
             pbar = enumerate(train_dataloader)
 
         train_stepper.reset_loss()
-        for i, (state, pars) in pbar:
+        for i, (state, pars, t) in pbar:
 
             state = state.to(device)
             pars = pars.to(device)
 
-            loss = train_stepper.train_step(state, pars)
+            loss = train_stepper.train_step(state, pars, t)
 
             if i % 100 == 0:
                 pbar.set_postfix(loss)
         
         train_stepper.optimizer.step_scheduler(loss.get('reconstruction_loss', 0))
+        #train_stepper.optimizer.step_scheduler()
 
         train_stepper.reset_loss()
-        for i, (state, pars) in enumerate(val_dataloader):
+        for i, (state, pars, t) in enumerate(val_dataloader):
 
             state = state.to(device)
             pars = pars.to(device)

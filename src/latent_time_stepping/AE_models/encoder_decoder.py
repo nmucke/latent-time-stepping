@@ -1,8 +1,61 @@
+import math
 import numpy as np
 import torch
 from torch import nn
 import pdb
 import torch.nn.functional as F
+
+class ConvResNetBlock(nn.Module):
+    def __init__(
+        self, 
+        in_channels: int, 
+        out_channels: int, 
+        kernel_size: int, 
+        ) -> None:
+        super().__init__()
+
+        self.skip_conv = nn.Conv1d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=1,
+            bias=False
+        )
+
+        self.conv1 = nn.Conv1d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            padding=kernel_size//2,
+            bias=False
+        )
+        self.conv2 = nn.Conv1d(
+            in_channels=out_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            padding=kernel_size//2,
+            bias=False
+        )
+
+        self.bn1 = nn.BatchNorm1d(out_channels)
+        self.bn2 = nn.BatchNorm1d(out_channels)
+
+        self.activation = nn.LeakyReLU()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.activation(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        x = self.skip_conv(x)
+
+        return out + x
+
+
+
 
 class PositionalEmbedding(nn.Module):
     def __init__(self, embed_dim, seq_len=1000):
@@ -16,7 +69,8 @@ class PositionalEmbedding(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        return x + self.pe[:, :x.size(1)]
+        x = x.transpose(1,2) + self.pe[:, :x.size(2)]
+        return x.transpose(1,2)
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads, p, d_input=None):
@@ -82,7 +136,6 @@ class MultiHeadAttention(nn.Module):
         H = self.W_h(H_cat)  # (bs, q_length, dim)
         return H, A
 
-
 class FeedForward(nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim):
         super().__init__()
@@ -95,7 +148,6 @@ class FeedForward(nn.Module):
         x = self.activation(x)
         x = self.k1convL2(x)
         return x
-
 
 class EncoderLayer(nn.Module):
     def __init__(
@@ -135,7 +187,6 @@ class EncoderLayer(nn.Module):
         x = self.layernorm2(x + x_ff)
 
         return x
-
 
 class DecoderLayer(nn.Module):
     def __init__(
@@ -214,8 +265,7 @@ class AttnBlock(nn.Module):
         out = self.proj_out(out)
 
         return x + out
-
-        
+  
 class UpSample(nn.Module):
 
     def __init__(
@@ -273,11 +323,47 @@ class Encoder(nn.Module):
         elif self.kernel_size == 3:
             self.padding = 1
 
+        final_dim = 256//2**(len(self.num_channels)-1)
+
         self.latent_dim = latent_dim
 
         self.activation = nn.LeakyReLU()
 
+        self.resnet_blocks = nn.ModuleList()
+        for i in range(len(self.num_channels)-1):
+            self.resnet_blocks.append(
+                ConvResNetBlock(
+                    in_channels=self.num_channels[i],
+                    out_channels=self.num_channels[i+1],
+                    kernel_size=self.kernel_size,
+                )
+            )
+        
+        self.down_sample = nn.ModuleList()
+        for i in range(len(self.num_channels)-1):
+            self.down_sample.append(
+                DownSample(
+                    channels=self.num_channels[i+1],
+                )
+            )
+        
+        self.flatten = nn.Flatten()
 
+        self.dense_layers = nn.ModuleList()
+        self.dense_layers.append(
+            nn.Linear(
+                in_features=self.num_channels[-1]*final_dim,
+                out_features=self.num_channels[-1],
+                bias=True,
+            )
+        )
+        self.final_dense_layers = nn.Linear(
+                in_features=self.num_channels[-1],
+                out_features=self.latent_dim,
+                bias=False,
+            )
+
+        '''
         self.conv_list = nn.ModuleList()
         for i in range(len(self.num_channels)-1):
             self.conv_list.append(
@@ -316,34 +402,59 @@ class Encoder(nn.Module):
             out_features=self.latent_dim,
             bias=False
         )
-        '''
         self.attention = EncoderLayer(
             embed_dim=self.num_channels[-1],
             num_heads=8,
             embed_hidden_dim=self.num_channels[-1],
             p=0.1
             )
-        '''
-
-        
-        self.attn = AttnBlock(
-            channels=self.num_channels[-1]
+            
+        self.positional_encoding = PositionalEmbedding(
+            embed_dim=self.num_channels[-1]
         )
 
+        self.attn1 = AttnBlock(
+            channels=self.num_channels[-1]
+        )
+        
+        self.attn2 = AttnBlock(
+            channels=self.num_channels[-1]
+        )
+        '''
 
     def forward(self, x):
+        '''
         for (conv, down, batch_norm) in zip(self.conv_list, self.down, self.batchnorm_list):
             x = conv(x)
             x = self.activation(x)
             x = batch_norm(x)
             x = down(x)
-        x = self.activation(x)
-        x = self.attn(x)
+        #x = self.activation(x)
+        #x = self.positional_encoding(x)
+        #x = self.attn1(x)
+        #x = self.activation(x)
+        #x = self.attn2(x)
+        
         #x = self.attention(x.transpose(1, 2)).transpose(1, 2)
-        x = self.activation(x)
+        #x = self.activation(x)
         x = self.flatten(x)
         x = self.activation(x)
         x = self.fc1(x)
+        '''
+        
+        for (resnet_block, down_sample) in zip(self.resnet_blocks, self.down_sample):
+            x = resnet_block(x)
+            x = self.activation(x)
+            x = down_sample(x)
+            x = self.activation(x)
+        
+        x = self.flatten(x)
+        for dense_layer in self.dense_layers:
+            x = dense_layer(x)
+            x = self.activation(x)
+        
+        x = self.final_dense_layers(x)
+
         return x
 
 class Decoder(nn.Module):
@@ -357,7 +468,8 @@ class Decoder(nn.Module):
         ):
         super().__init__()
 
-        init_dim = 8
+        pars_embed_channels = 8
+        init_dim = 4
         
         if num_channels is None:
             num_channels = [128, 64, 32, 2]
@@ -376,6 +488,71 @@ class Decoder(nn.Module):
         self.latent_dim = latent_dim
         self.activation = nn.LeakyReLU()
 
+        init_dim = 256//2**(len(self.num_channels)-1)
+
+        self.latent_dim = latent_dim
+
+        self.activation = nn.LeakyReLU()
+
+        self.init_dense_layer = nn.Linear(
+                in_features=self.latent_dim,
+                out_features=self.num_channels[0],
+                bias=False,
+            )
+
+        self.dense_layers = nn.ModuleList()
+        self.dense_layers.append(
+            nn.Linear(
+                in_features=self.num_channels[0],
+                out_features=self.num_channels[0]*init_dim,
+                bias=True,
+            )
+        )
+
+        self.pars_embed_1 = nn.Linear(
+            in_features=pars_dim,
+            out_features=pars_embed_channels,
+            bias=True,
+        )
+        self.pars_embed_2 = nn.Linear(
+            in_features=pars_embed_channels,
+            out_features=pars_embed_channels * init_dim,
+            bias=True,
+        )
+
+        self.state_unflatten = nn.Unflatten(1, (self.num_channels[0], init_dim))
+        self.pars_unflatten = nn.Unflatten(1, (pars_embed_channels, init_dim))
+
+        self.num_channels[0] += pars_embed_channels
+        self.resnet_blocks = nn.ModuleList()
+        for i in range(len(self.num_channels)-1):
+            self.resnet_blocks.append(
+                ConvResNetBlock(
+                    in_channels=self.num_channels[i],
+                    out_channels=self.num_channels[i+1],
+                    kernel_size=self.kernel_size,
+                )
+            )
+        
+        self.up_sample = nn.ModuleList()
+        for i in range(len(self.num_channels)-1):
+            self.up_sample.append(
+                UpSample(
+                    channels=self.num_channels[i+1],
+                )
+            )
+        
+        self.final_conv = nn.Conv1d(
+            in_channels=self.num_channels[-1],
+            out_channels=self.num_channels[-1],
+            kernel_size=self.kernel_size,
+            padding=self.padding,
+            bias=False,
+        )
+
+
+        '''
+
         self.fc1 = nn.Linear(
             in_features=self.latent_dim,
             out_features=self.num_channels[0]*init_dim,
@@ -385,17 +562,31 @@ class Decoder(nn.Module):
             dim=1,
             unflattened_size=(self.num_channels[0], init_dim),
         )
-
-        pars_channels = 16
         self.pars_encoder = nn.Linear(
             in_features=pars_dim,
-            out_features=pars_channels*init_dim,
+            out_features=pars_embed_dim*init_dim,
             bias=True
         )
         self.pars_unflatten = nn.Unflatten(
             dim=1,
-            unflattened_size=(pars_channels, init_dim),
+            unflattened_size=(pars_embed_dim, init_dim),
         )
+
+        self.num_channels[0] += pars_embed_dim
+        '''
+
+        '''
+
+        self.pars_encoder = nn.Linear(
+            in_features=pars_dim,
+            out_features=self.num_channels[0]*pars_embed_dim,
+            bias=True
+        )
+        self.pars_unflatten = nn.Unflatten(
+            dim=1,
+            unflattened_size=(self.num_channels[0], pars_embed_dim),
+        )
+        '''
         
         '''
         self.self_attention_1 = EncoderLayer(
@@ -416,12 +607,31 @@ class Decoder(nn.Module):
             channels=init_dim,
         )
         '''
-        self.attn2 = AttnBlock(
-            channels=self.num_channels[0] + pars_channels,
+
+        '''
+        self.positional_encoding = PositionalEmbedding(
+            embed_dim=self.num_channels[0],
         )
 
-        self.num_channels[0] = self.num_channels[0] + pars_channels
+        self.attn1 = AttnBlock(
+            channels=self.num_channels[0],
+        )
+        self.attn2 = AttnBlock(
+            channels=self.num_channels[0],
+        )
+        '''
 
+        '''
+        self.initial_projection = nn.Linear(
+            in_features=init_dim,
+            out_features=init_dim,
+            bias=True
+        )
+
+        self.num_channels[0] = self.num_channels[0]
+        '''
+
+        '''
         self.conv_list = nn.ModuleList()
         for i in range(len(self.num_channels) - 1):
             self.conv_list.append(
@@ -460,9 +670,10 @@ class Decoder(nn.Module):
             stride=1,
             padding=self.padding,
         )
+        '''
 
     def forward(self, x, pars):
-
+        '''
         pars = self.pars_encoder(pars)
         pars = self.activation(pars)
         pars = self.pars_unflatten(pars)
@@ -475,7 +686,14 @@ class Decoder(nn.Module):
 
         #x = self.attn1(x.transpose(1, 2)).transpose(1, 2)
 
-        x = self.attn2(x)
+        #x = self.positional_encoding(x)
+
+        #x = self.attn1(x)
+        #x = self.activation(x)
+        #x = self.attn2(x)
+        #x = self.activation(x)
+
+        #x = self.initial_projection(x)
 
         #x = self.self_attention_1(x)
         #x = self.self_attention_2(x.transpose(1, 2)).transpose(1, 2)
@@ -486,4 +704,28 @@ class Decoder(nn.Module):
             x = up(x)
         x = self.activation(x)
         x = self.output_conv(x)
+        '''
+
+        pars = self.pars_embed_1(pars)
+        pars = self.activation(pars)
+        pars = self.pars_embed_2(pars)
+        pars = self.activation(pars)
+        pars = self.pars_unflatten(pars)
+
+        x = self.init_dense_layer(x)
+        x = self.activation(x)
+        for dense in self.dense_layers:
+            x = dense(x)
+            x = self.activation(x)
+        x = self.state_unflatten(x)
+
+        x = torch.cat([x, pars], dim=1)
+
+        for (resnet_block, up) in zip(self.resnet_blocks, self.up_sample):
+            x = resnet_block(x)
+            x = self.activation(x)
+            x = up(x)
+            x = self.activation(x)
+
+        x = self.final_conv(x)
         return x

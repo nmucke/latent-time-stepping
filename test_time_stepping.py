@@ -25,14 +25,14 @@ def main():
     num_time_steps = 2001
 
     time = np.linspace(0, 100, num_time_steps)
-    time = time[0::4]
+    time = time[0::2]
 
     x_vec = np.linspace(0, 1000, 256)
 
     preprocessor = torch.load(PREPROCESSOR_PATH)
 
     state = np.load(f'{STATE_PATH}{case}.npy')
-    state = state[:, :, 0::4]
+    state = state[:, :, 0::2]
     pars = np.load(f'{PARS_PATH}{case}.npy')
     pars = preprocessor.transform_pars(pars)
     pars = torch.tensor(pars, dtype=torch.get_default_dtype())

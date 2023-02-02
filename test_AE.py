@@ -5,7 +5,7 @@ import torch
 import matplotlib.pyplot as plt
 torch.set_default_dtype(torch.float32)
 
-MODEL_TYPE = "VAE"
+MODEL_TYPE = "WAE"
 model = torch.load(f"trained_models/autoencoders/{MODEL_TYPE}.pt")
 model = model.to('cpu')
 model.eval()
@@ -17,7 +17,7 @@ PREPROCESSOR_PATH = 'data/processed_data/trained_preprocessor.pt'
 
 def main():
     num_samples = 10
-    num_time_steps = 2001
+    num_time_steps = 501#2001
 
     preprocessor = torch.load(PREPROCESSOR_PATH)
 
@@ -37,6 +37,7 @@ def main():
     for i in pbar:
         state = np.load(f'{STATE_PATH}{i}.npy')
         hf_trajectory = torch.tensor(state, dtype=torch.get_default_dtype())
+        hf_trajectory = hf_trajectory[:, :, 0::4]
         hf_trajectory = preprocessor.transform_state(hf_trajectory)
         hf_trajectory = hf_trajectory.transpose(1, 2)
         hf_trajectory = hf_trajectory.transpose(0, 1)
@@ -47,7 +48,7 @@ def main():
         pars = pars.repeat(num_time_steps, 1)
         
         if MODEL_TYPE == "WAE":
-            latent_state[i] = model.encode(hf_trajectory).transpose(0, 1)
+            latent_state[i] = model.encode(hf_trajectory)
         elif MODEL_TYPE == "VAE":
             latent_state[i], _, _ = model.encoder(hf_trajectory)
 
@@ -67,24 +68,24 @@ def main():
     plt.subplot(2, 4, 1)
     plt.plot(recon_state[100, 0, :], label="Reconstructed", color='tab:orange')
     plt.plot(hf_trajectory[100, 0, :], label="High Fidelity", color='tab:blue')
-    plt.plot(recon_state[1000, 0, :], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[1000, 0, :], label="High Fidelity", color='tab:blue')
+    plt.plot(recon_state[-1, 0, :], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[-1, 0, :], label="High Fidelity", color='tab:blue')
     plt.legend()
     plt.subplot(2, 4, 2)
     plt.plot(recon_state[100, 1, :], label="Reconstructed", color='tab:orange')
     plt.plot(hf_trajectory[100, 1, :], label="High Fidelity", color='tab:blue')
-    plt.plot(recon_state[1000, 1, :], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[1000, 1, :], label="High Fidelity", color='tab:blue')
+    plt.plot(recon_state[-1, 1, :], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[-1, 1, :], label="High Fidelity", color='tab:blue')
     plt.legend()
     plt.subplot(2, 4, 3)
-    plt.plot(latent_state[0, 0::4, 0])
-    plt.plot(latent_state[0, 0::4, 1])
-    plt.plot(latent_state[0, 0::4, 2])
+    plt.plot(latent_state[0, :, 0])
+    plt.plot(latent_state[0, :, 1])
+    plt.plot(latent_state[0, :, 2])
     plt.grid()
     plt.subplot(2, 4, 4)
-    plt.plot(latent_state[0, 0::4, 3])
-    plt.plot(latent_state[0, 0::4, 4])
-    plt.plot(latent_state[0, 0::4, 5])
+    plt.plot(latent_state[0, :, 3])
+    plt.plot(latent_state[0, :, 4])
+    plt.plot(latent_state[0, :, 5])
     plt.grid()
     plt.subplot(2, 4, 5)
     plt.hist(latent_state[:, :, 0].flatten(), bins=50, density=True)

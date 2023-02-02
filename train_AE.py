@@ -19,7 +19,7 @@ from latent_time_stepping.AE_training.trainer import train
 
 torch.set_default_dtype(torch.float32)
 
-MODEL_TYPE = "VAE"
+MODEL_TYPE = "WAE"
 
 config_path = f"configs/{MODEL_TYPE}.yml"
 with open(config_path) as f:
@@ -28,8 +28,8 @@ with open(config_path) as f:
 STATE_PATH = 'data/processed_data/training_data/states.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
-TRAIN_SAMPLE_IDS = range(2500)
-VAL_SAMPLE_IDS = range(2500, 3000)
+TRAIN_SAMPLE_IDS = range(1000)
+VAL_SAMPLE_IDS = range(1000, 1200)
 
 state = torch.load(STATE_PATH)
 pars = torch.load(PARS_PATH)
@@ -43,7 +43,10 @@ val_pars = pars[VAL_SAMPLE_IDS]
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}.pt"
 
 CUDA = True
-DEVICE = torch.device('cuda' if CUDA else 'cpu')
+if CUDA:
+    DEVICE = torch.device('cuda' if CUDA else 'cpu')
+else:
+    DEVICE = torch.device('cpu')
 
 def main():
 
@@ -51,6 +54,7 @@ def main():
         encoder = VAEEncoder(**config['model_args']['encoder'])
     elif MODEL_TYPE == "WAE":
         encoder = Encoder(**config['model_args']['encoder'])
+
     decoder = Decoder(**config['model_args']['decoder'])
 
     model = Autoencoder(
