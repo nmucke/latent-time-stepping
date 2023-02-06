@@ -79,21 +79,10 @@ class TimeSteppingTrainStepper():
 
         self.optimizer.zero_grad()
 
-        output_seq_len = output_state.shape[1]
-
-        # Teacher forcing
-        if torch.rand(1) < self.teacher_forcing_ratio:
-            state_pred = self.model.multistep_prediction_with_teacher_forcing(
-                x=input_state,
-                pars=pars,
-                output_states=output_state,
-            )
-        else:
-            state_pred = self.model.multistep_prediction(
-                x=input_state,
-                pars=pars,
-                output_seq_len=output_seq_len,
-            )
+        state_pred = self.model.masked_prediction(
+            x=input_state,
+            pars=pars,
+        )
 
         loss = self._loss_function(output_state, state_pred)
 
@@ -115,22 +104,20 @@ class TimeSteppingTrainStepper():
         pars: torch.Tensor,  
         ) -> None:
 
-        self.model.train()
-
-        self.optimizer.zero_grad()
-
+        self.model.eval()
         output_seq_len = output_state.shape[1]
 
-        state_pred = self.model.multistep_prediction(
-            x=input_state,
-            pars=pars,
-            output_seq_len=output_seq_len,
-        )
-        loss = self._loss_function(output_state, state_pred)
-
-        loss.backward()
-
-        self.optimizer.step()
+        #state_pred = self.model.multistep_prediction(
+        #    x=input_state,
+        #    pars=pars,
+        #    output_seq_len=output_seq_len,
+        #)
+        with torch.no_grad():
+            state_pred = self.model.masked_prediction(
+                    x=input_state,
+                    pars=pars,
+                )
+            loss = self._loss_function(output_state, state_pred)
 
         self.loss += loss.item()
         self.counter += 1

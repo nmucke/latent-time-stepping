@@ -10,19 +10,18 @@ from latent_time_stepping.time_stepping_models.transformer import (
 )
 
 def create_look_ahead_mask(
-    input_seq_len, 
-    output_seq_len, 
+    input_seq_len,  
     device='cpu'
     ):
-    look_ahead_mask = torch.ones((output_seq_len, output_seq_len), device=device)
-    look_ahead_mask = torch.triu(look_ahead_mask, diagonal=1)
-    past_mask = torch.zeros((output_seq_len, input_seq_len), device=device)
+    total_seq_len = input_seq_len
+    mask = torch.ones((total_seq_len, total_seq_len), device=device)
+    #future_mask = torch.triu(mask, diagonal=1)
+    mask = torch.triu(mask, diagonal=1)
+    #mask = future_mask + past_mask
+    #mask[0:input_seq_len, 0:input_seq_len] = 0
+    mask *= -1e9
 
-    look_ahead_mask = torch.cat((past_mask, look_ahead_mask), dim=1)
-
-    look_ahead_mask *= -1e9
-
-    return look_ahead_mask  # (size, size)
+    return mask  # (size, size)
 
 class TimeSteppingModel(nn.Module):
 
@@ -33,8 +32,7 @@ class TimeSteppingModel(nn.Module):
         num_heads: int,
         embed_hidden_dim: int,
         num_layers: int,
-        input_seq_len: int,
-        output_seq_len: int,
+        max_seq_len: int,
         pars_encoder: ParameterEncoder,
     ):
         super().__init__()
@@ -44,8 +42,7 @@ class TimeSteppingModel(nn.Module):
         self.num_heads = num_heads
         self.embed_hidden_dim = embed_hidden_dim
         self.num_layers = num_layers
-        self.input_seq_len = input_seq_len
-        self.output_seq_len = output_seq_len
+        self.max_seq_len = max_seq_len
         self.pars_encoder = pars_encoder
 
         self.initial_conv_layer = nn.Linear(
@@ -56,7 +53,7 @@ class TimeSteppingModel(nn.Module):
 
         self.positional_embedding = PositionalEmbedding(
             embed_dim=embed_dim,
-            max_len=input_seq_len + output_seq_len
+            max_len=max_seq_len + 1
         )
         
         self.decoder_layers = nn.ModuleList(
@@ -70,6 +67,7 @@ class TimeSteppingModel(nn.Module):
             ]
         )
 
+
         self.final_conv_layer = nn.Linear(
             in_features=embed_dim,
             out_features=latent_dim,
@@ -78,23 +76,32 @@ class TimeSteppingModel(nn.Module):
     
     def encode_pars(self, pars: torch.Tensor) -> torch.Tensor:
         return self.pars_encoder(pars)
-
-    def decode_next_step(
+        
+    def decode_multiple_masked_steps(
         self,
         x: torch.Tensor,
-        encoded_pars: torch.Tensor,
+        mask: torch.Tensor = None,
+        ) -> torch.Tensor:
+        
+        out = x
+        for decoder_layer in self.decoder_layers:
+            out = decoder_layer(out, mask)
+        out = self.final_conv_layer(out)
+
+        return out[:, -self.max_seq_len:]
+    
+    def decode_one_step(
+        self,
+        x: torch.Tensor,
         ) -> torch.Tensor:
 
-        x = self.initial_conv_layer(x)
-        x = self.positional_embedding(x)
-
+        out = x
         for decoder_layer in self.decoder_layers:
-            x = decoder_layer(x, encoded_pars)
+            out = decoder_layer(out)
+        out = self.final_conv_layer(out)
+        
+        return out[:, -1:]
 
-        x = self.final_conv_layer(x)
-        x = x[:, -1:, :]
-
-        return x
 
     def forward(
         self, 
@@ -103,7 +110,7 @@ class TimeSteppingModel(nn.Module):
         ) -> torch.Tensor:
         pars = self.encode_pars(pars)
 
-        x = self.decode_next_step(x, pars)
+        x = self.decode(x, pars)
         
         return x
 
@@ -114,44 +121,46 @@ class TimeSteppingModel(nn.Module):
         output_seq_len: int,
         ) -> torch.Tensor:
 
-        input_seq_len = x.shape[1]
-
         pars = self.encode_pars(pars)
 
         out = x
         for _ in range(output_seq_len):
-            x = self.decode_next_step(out[:, -input_seq_len:], pars)
-            out = torch.cat([out, x], dim=1)
-        
-        return out[:, -output_seq_len:]
+            inp = self.initial_conv_layer(out[:, -self.max_seq_len:])
+            inp = torch.cat([pars, inp], dim=1)
+            inp = self.positional_embedding(inp)
 
-    def multistep_prediction_with_teacher_forcing(
+            x = self.decode_one_step(inp)
+
+            x = out[:, -1:] + x
+
+            out = torch.cat([out, x], dim=1)
+
+        return out
+
+    def masked_prediction(
         self,
         x: torch.Tensor,
         pars: torch.Tensor,
-        output_states: torch.Tensor,
         ) -> torch.Tensor:
 
 
         input_seq_len = x.shape[1]
-        output_seq_len = output_states.shape[1]
 
         mask = create_look_ahead_mask(
-            input_seq_len=input_seq_len,
-            output_seq_len=output_seq_len,
+            input_seq_len=input_seq_len+1,
             device=self.device
         )
 
         pars = self.encode_pars(pars)
+        inp = self.initial_conv_layer(x)
 
-        out = torch.zeros(
-            (x.shape[0], output_seq_len, x.shape[2]),
-            device=self.device
-        )
-        in_out_state = torch.cat([x, output_states], dim=1)
-        for i in range(output_seq_len):
-            x = self.decode_next_step(in_out_state[:, i:(i+input_seq_len)], pars)
-            out[:, i] = x[:, 0]
+        inp = torch.cat([pars, inp], dim=1)
+
+        inp = self.positional_embedding(inp)
+        
+        out = self.decode_multiple_masked_steps(inp, mask)
+
+        out = x[:, -input_seq_len:] + out[:, -input_seq_len:]
 
         return out
 

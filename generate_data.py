@@ -183,8 +183,8 @@ def simulate_pipeflow(
     pars = np.array([leak_location, leak_size])
 
 
-    np.save(f'data/raw_data/test_data/pars/sample_{idx}.npy', pars)
-    np.save(f'data/raw_data/test_data/state/sample_{idx}.npy', state)
+    np.save(f'data/raw_data/training_data/pars/sample_{idx}.npy', pars)
+    np.save(f'data/raw_data/training_data/state/sample_{idx}.npy', state)
 
     print('Saved data for sample {}'.format(idx))
 
@@ -214,6 +214,7 @@ def main():
     numerical_flux_params = {
         'alpha': 0.5,
     }
+    '''
     stabilizer_type = 'filter'
     stabilizer_params = {
         'num_modes_to_filter': 10,
@@ -222,9 +223,8 @@ def main():
     '''
     stabilizer_type = 'slope_limiter'
     stabilizer_params = {
-        'second_derivative_upper_bound': 1e-8,
+        'second_derivative_upper_bound': 1e-4,
     }
-    '''
 
     time_integrator_type = 'implicit_euler'
     time_integrator_params = {
@@ -239,7 +239,7 @@ def main():
     polynomial_type='legendre'
     num_states=2
 
-    polynomial_order = 2
+    polynomial_order = 3
     num_elements = 125
 
 
@@ -261,7 +261,7 @@ def main():
         )
 
 
-    num_samples = 100
+    num_samples = 3000
     leak_location_vec  = np.random.uniform(10, 990, num_samples)
     leak_size_vec = np.random.uniform(1., 2., num_samples)
     #leak_size_vec = scipy.stats.loguniform.rvs(1., 2., size=num_samples)
@@ -276,18 +276,7 @@ def main():
             idx=idx
         ) for (leak_location, leak_size, idx) in 
         zip(leak_location_vec, leak_size_vec, range(num_samples))])
-    '''
-    for i in range(num_samples):
-        state, pars = simulate_pipeflow.remote(
-            leak_location=leak_location_vec[i], 
-            leak_size=leak_size_vec[i], 
-            pipe_DG=pipe_DG,
-            idx=i
-            )
 
-        np.save(f'data/raw_data/training_data/pars/sample_{i}.npy', ray.get(pars))
-        np.save(f'data/raw_data/training_data/state/sample_{i}.npy', ray.get(state))
-    '''
 if __name__ == "__main__":
     
     main()

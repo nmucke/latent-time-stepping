@@ -1,6 +1,7 @@
 import torch
+import torch.nn as nn
 
-class Preprocessor():
+class Preprocessor(nn.Module):
     def __init__(self, num_states, num_pars):
 
         self.state_min = [1e12 for _ in range(num_states)]

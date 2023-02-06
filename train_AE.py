@@ -1,9 +1,12 @@
 import pdb
+from matplotlib import pyplot as plt
 import yaml
 from yaml.loader import SafeLoader
 import torch
 
-from latent_time_stepping.AE_models.autoencoder import UnsupervisedWassersteinAE
+from latent_time_stepping.AE_models.VAE_encoder import VAEEncoder
+
+from latent_time_stepping.AE_models.autoencoder import Autoencoder
 
 from latent_time_stepping.AE_models.encoder_decoder import (
     Decoder, 
@@ -11,7 +14,7 @@ from latent_time_stepping.AE_models.encoder_decoder import (
 )
 from latent_time_stepping.datasets.AE_dataset import get_AE_dataloader
 from latent_time_stepping.AE_training.optimizers import Optimizer
-from latent_time_stepping.AE_training.train_steppers import WAETrainStepper
+from latent_time_stepping.AE_training.train_steppers import VAETrainStepper, WAETrainStepper
 from latent_time_stepping.AE_training.trainer import train
 
 torch.set_default_dtype(torch.float32)
@@ -25,8 +28,8 @@ with open(config_path) as f:
 STATE_PATH = 'data/processed_data/training_data/states.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
-TRAIN_SAMPLE_IDS = range(850)
-VAL_SAMPLE_IDS = range(850, 1000)
+TRAIN_SAMPLE_IDS = range(1000)
+VAL_SAMPLE_IDS = range(1000, 1200)
 
 state = torch.load(STATE_PATH)
 pars = torch.load(PARS_PATH)
@@ -37,18 +40,24 @@ train_pars = pars[TRAIN_SAMPLE_IDS]
 val_state = state[VAL_SAMPLE_IDS]
 val_pars = pars[VAL_SAMPLE_IDS]
 
-
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}.pt"
 
 CUDA = True
-DEVICE = torch.device('cuda' if CUDA else 'cpu')
+if CUDA:
+    DEVICE = torch.device('cuda' if CUDA else 'cpu')
+else:
+    DEVICE = torch.device('cpu')
 
 def main():
 
-    encoder = Encoder(**config['model_args']['encoder'])
+    if MODEL_TYPE == "VAE":
+        encoder = VAEEncoder(**config['model_args']['encoder'])
+    elif MODEL_TYPE == "WAE":
+        encoder = Encoder(**config['model_args']['encoder'])
+
     decoder = Decoder(**config['model_args']['decoder'])
 
-    model = UnsupervisedWassersteinAE(
+    model = Autoencoder(
         encoder=encoder,
         decoder=decoder,
     )
@@ -59,11 +68,18 @@ def main():
         args=config['optimizer_args'],
     )
 
-    train_stepper = WAETrainStepper(
-        model=model,
-        optimizer=optimizer,
-        **config['train_stepper_args'],
-    )
+    if MODEL_TYPE == "VAE":
+        train_stepper = VAETrainStepper(
+            model=model,
+            optimizer=optimizer,
+            **config['train_stepper_args'],
+        )
+    elif MODEL_TYPE == "WAE":
+        train_stepper = WAETrainStepper(
+            model=model,
+            optimizer=optimizer,
+            **config['train_stepper_args'],
+        )
 
     train_dataloader = get_AE_dataloader(
         state=train_state,
@@ -75,7 +91,7 @@ def main():
         pars=val_pars,
         **config['dataloader_args']
     )
-
+    
     train(
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,

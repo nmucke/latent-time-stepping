@@ -1,42 +1,38 @@
 dataloader_args:
-  batch_size: 128
+  batch_size: 1024
   shuffle: True
-  num_workers: 2
-  input_seq_len: 4
-  output_seq_len: 8
+  num_workers: 4
+  max_seq_len: 64
+  num_skip_steps: 4
   
 model_args:
   parameter_encoder_args: 
-    embed_dim: 16
-    num_heads: 4
-    embed_hidden_dim: 16
-    num_layers: 2
-    pars_dim: 2
-    input_seq_len: 4
-  time_stepping_decoder:
-    latent_dim: 16
-    embed_dim: 16
-    num_heads: 4
+    embed_dim: 32
+    num_heads: 2
     embed_hidden_dim: 32
     num_layers: 2
-    input_seq_len: 4
-    output_seq_len: 8
-
-
+    pars_dim: 2
+  time_stepping_decoder:
+    latent_dim: 16
+    embed_dim: 32
+    num_heads: 2
+    embed_hidden_dim: 32
+    num_layers: 3
+    max_seq_len: 64
 
 optimizer_args:
-  learning_rate: 1.0e-3
+  learning_rate: 5.0e-3
   weight_decay: 1.0e-8
   scheduler_args:
-    warmup: 10
-    max_iters: 50
+    warmup: 25
+    max_iters: 200
 
 train_stepper_args:
-  teacher_forcing_ratio: 0.9
-  teacher_forcing_ratio_reduction: 0.9
-  teacher_forcing_ratio_reduction_freq: 5
-
+  teacher_forcing_ratio: 1.0
+  teacher_forcing_ratio_reduction: 0.99
+  teacher_forcing_ratio_reduction_freq: 10000
 
 train_args:
-  num_epochs: 50
+  num_epochs: 200
+  patience: 10
 

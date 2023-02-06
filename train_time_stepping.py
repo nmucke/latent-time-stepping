@@ -24,8 +24,8 @@ with open(config_path) as f:
 LATENT_STATE_PATH = 'data/processed_data/training_data/latent_states.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
-TRAIN_SAMPLE_IDS = range(850)
-VAL_SAMPLE_IDS = range(850, 1000)
+TRAIN_SAMPLE_IDS = range(2500)
+VAL_SAMPLE_IDS = range(2500, 3000)
 
 latent_state = torch.load(LATENT_STATE_PATH)
 pars = torch.load(PARS_PATH)
@@ -80,5 +80,4 @@ def main():
     )
 
 if __name__ == "__main__":
-    
     main()

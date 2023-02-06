@@ -3,7 +3,7 @@ import torch
 from torch import nn
 import pdb
 
-class UnsupervisedWassersteinAE(nn.Module):
+class Autoencoder(nn.Module):
     """
     Unsupervised Wasserstein Autoencoder
     """
