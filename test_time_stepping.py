@@ -25,14 +25,14 @@ def main():
     num_time_steps = 2001
 
     time = np.linspace(0, 100, num_time_steps)
-    time = time[0::2]
+    time = time[0::4]
 
     x_vec = np.linspace(0, 1000, 256)
 
     preprocessor = torch.load(PREPROCESSOR_PATH)
 
     state = np.load(f'{STATE_PATH}{case}.npy')
-    state = state[:, :, 0::2]
+    state = state[:, :, 0::4]
     pars = np.load(f'{PARS_PATH}{case}.npy')
     pars = preprocessor.transform_pars(pars)
     pars = torch.tensor(pars, dtype=torch.get_default_dtype())
@@ -46,8 +46,8 @@ def main():
     latent_state = AE.encode(hf_trajectory)
     latent_state = latent_state.unsqueeze(0)
 
-    init_time_steps = 32
-    output_seq_len = 50
+    init_time_steps = 50
+    output_seq_len = 100
     pred_latent_state = time_stepper.multistep_prediction(
         latent_state[:, 0:init_time_steps],
         pars,

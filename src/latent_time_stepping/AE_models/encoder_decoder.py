@@ -5,6 +5,49 @@ from torch import nn
 import pdb
 import torch.nn.functional as F
 
+
+class LinearPadding(nn.Module):
+    def __init__(self, padding: int) -> None:
+        super().__init__()
+
+        self.padding = padding
+    
+    def _right_linear_extrapolation(self, x: torch.Tensor) -> torch.Tensor:
+
+        dx = 1
+        
+        slope = (x[:, :, -1] - x[:, :, -2]) / dx 
+        bias = x[:, :, -2]
+
+        pad = torch.zeros(x.shape[0], x.shape[1], self.padding)
+        pad = pad.to(x.device)
+        pad[:, :, 0] = 2*dx
+
+        padding_values = slope[:, :, None] * pad + bias[:, :, None]
+
+        return padding_values
+    
+    def _left_linear_extrapolation(self, x: torch.Tensor) -> torch.Tensor:
+
+        dx = 1
+        
+        slope = (x[:, :, 0] - x[:, :, 1]) / dx 
+        bias = x[:, :, 1]
+
+        padding_values = slope[:, :, None] * self.padding + bias[:, :, None]
+
+        return padding_values
+
+
+    def forward(self, x):
+
+        padding_left = self._left_linear_extrapolation(x)
+        padding_right = self._right_linear_extrapolation(x)
+
+        x = torch.cat([padding_left, x, padding_right], dim=-1)
+        
+        return x
+
 class ConvResNetBlock(nn.Module):
     def __init__(
         self, 
@@ -53,9 +96,6 @@ class ConvResNetBlock(nn.Module):
         x = self.skip_conv(x)
 
         return out + x
-
-
-
 
 class PositionalEmbedding(nn.Module):
     def __init__(self, embed_dim, seq_len=1000):
@@ -271,15 +311,26 @@ class UpSample(nn.Module):
     def __init__(
         self,
         channels: int,
+        kernel_size: int = 3,
         ) -> None:
         
         super(UpSample, self).__init__()
+
+        self.padding = kernel_size // 2
         
-        self.conv = nn.Conv1d(channels, channels, 3, padding=1)
+        self.conv = nn.Conv1d(
+            in_channels=channels, 
+            out_channels=channels, 
+            kernel_size=kernel_size, 
+            )
+
+        self.linear_padding = LinearPadding(padding=self.padding)
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
         x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
+        x = self.linear_padding(x)
+        #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
         
         return self.conv(x)
 
@@ -288,15 +339,22 @@ class DownSample(nn.Module):
     def __init__(
         self,
         channels: int,
+        kernel_size: int = 3,
         ) -> None:
         
         super(DownSample, self).__init__()
         
-        self.conv = nn.Conv1d(channels, channels, 3, stride=2, padding=0)
+        self.padding = kernel_size // 2
+        
+        self.conv = nn.Conv1d(channels, channels, kernel_size, stride=2, padding=0)
+
+        self.linear_padding = LinearPadding(padding=self.padding)
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
-        x = nn.functional.pad(x, (0, 1), mode="replicate")
+        x = self.linear_padding(x)
+
+        #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
 
         return self.conv(x)
 
@@ -322,6 +380,8 @@ class Encoder(nn.Module):
             self.padding = 2
         elif self.kernel_size == 3:
             self.padding = 1
+        elif self.kernel_size == 7:
+            self.padding = 2
 
         final_dim = 256//2**(len(self.num_channels)-1)
 
@@ -344,6 +404,7 @@ class Encoder(nn.Module):
             self.down_sample.append(
                 DownSample(
                     channels=self.num_channels[i+1],
+                    kernel_size=3#self.kernel_size,
                 )
             )
         
@@ -357,8 +418,15 @@ class Encoder(nn.Module):
                 bias=True,
             )
         )
-        self.final_dense_layers = nn.Linear(
+        self.dense_layers.append(
+            nn.Linear(
                 in_features=self.num_channels[-1],
+                out_features=self.num_channels[-2],
+                bias=True,
+            )
+        )
+        self.final_dense_layers = nn.Linear(
+                in_features=self.num_channels[-2],
                 out_features=self.latent_dim,
                 bias=False,
             )
@@ -483,6 +551,8 @@ class Decoder(nn.Module):
             self.padding = 2
         elif self.kernel_size == 3:
             self.padding = 1
+        elif self.kernel_size == 7:
+            self.padding = 3
 
 
         self.latent_dim = latent_dim
@@ -496,11 +566,18 @@ class Decoder(nn.Module):
 
         self.init_dense_layer = nn.Linear(
                 in_features=self.latent_dim,
-                out_features=self.num_channels[0],
+                out_features=self.num_channels[1],
                 bias=False,
             )
 
         self.dense_layers = nn.ModuleList()
+        self.dense_layers.append(
+            nn.Linear(
+                in_features=self.num_channels[1],
+                out_features=self.num_channels[0],
+                bias=True,
+            )
+        )
         self.dense_layers.append(
             nn.Linear(
                 in_features=self.num_channels[0],
@@ -539,6 +616,7 @@ class Decoder(nn.Module):
             self.up_sample.append(
                 UpSample(
                     channels=self.num_channels[i+1],
+                    kernel_size=3#self.kernel_size,
                 )
             )
         
@@ -546,7 +624,6 @@ class Decoder(nn.Module):
             in_channels=self.num_channels[-1],
             out_channels=self.num_channels[-1],
             kernel_size=self.kernel_size,
-            padding=self.padding,
             bias=False,
         )
 
@@ -727,5 +804,6 @@ class Decoder(nn.Module):
             x = up(x)
             x = self.activation(x)
 
+        x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
         x = self.final_conv(x)
         return x

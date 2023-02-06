@@ -10,8 +10,11 @@ class AEDataset(torch.utils.data.Dataset):
         state: torch.Tensor,
         pars: torch.Tensor,
         include_time: bool = False,
+        num_skip_steps: int = 4,
         ) -> None:
         super().__init__()
+
+        self.num_skip_steps = num_skip_steps
 
         self.state = state
         self.pars = pars
@@ -24,7 +27,7 @@ class AEDataset(torch.utils.data.Dataset):
 
 
     def _prepare_state_and_pars(self,):
-        self.state = self.state[:, : , :, 0::4]
+        self.state = self.state[:, : , :, 0::self.num_skip_steps]
 
         if self.include_time:
             self.time = torch.linspace(
@@ -76,6 +79,7 @@ def get_AE_dataloader(
     shuffle: bool,
     num_workers: int,
     include_time: bool,
+    num_skip_steps: int = 4,
     ) -> torch.utils.data.DataLoader:
     """Get the dataloader for the autoencoder."""
 
@@ -83,6 +87,7 @@ def get_AE_dataloader(
         state=state,
         pars=pars,
         include_time=include_time,
+        num_skip_steps=num_skip_steps,
         )
 
     dataloader = torch.utils.data.DataLoader(

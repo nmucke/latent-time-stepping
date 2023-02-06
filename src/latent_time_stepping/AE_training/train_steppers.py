@@ -10,29 +10,18 @@ class LatentRegressor(nn.Module):
 
     def __init__(
         self,
-        input_size: int,
-        hidden_size: int,
-        output_size: int,
+        latent_dim: int,
         ) -> None:
         
         super().__init__()
 
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.output_size = output_size
-        self.activation = nn.LeakyReLU()
-
-        self.output_activation = nn.Sigmoid()
-
-        self.linear1 = nn.Linear(self.input_size, output_size)
-        #self.linear2 = nn.Linear(self.hidden_size, self.output_size)
+        self.input_size = latent_dim
+        #self.activation = nn.LeakyReLU()
+        self.linear1 = nn.Linear(latent_dim, latent_dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.linear1(x)
-        #x = self.activation(x)
-        #x = self.linear2(x)
-
-        return x#self.output_activation(x)
+        return x
 
 
 class BaseTrainStepper():
@@ -73,6 +62,7 @@ class WAETrainStepper():
         self.latent_distribution_loss = 0.0
         self.counter = 0
 
+        '''
         self.latent_regressor = LatentRegressor(
             input_size=self.model.encoder.latent_dim,
             hidden_size=16,
@@ -83,6 +73,7 @@ class WAETrainStepper():
             self.latent_regressor.parameters(),
             lr=1e-3,
         )
+        '''
     
     def save_model(self, path: str) -> None:
         torch.save(self.model, path)
@@ -124,6 +115,12 @@ class WAETrainStepper():
         t: torch.Tensor,
         ) -> torch.Tensor:
 
+        pass
+
+
+
+
+
 
         '''
         latent_state = latent_state.to(self.device)
@@ -142,6 +139,8 @@ class WAETrainStepper():
         self.latent_regressor_optimizer.step()
 
         '''
+
+        '''
         t = t.to(self.device)
         t = t.unsqueeze(1)
         t = t/1000
@@ -158,6 +157,7 @@ class WAETrainStepper():
         weighted_latent_dist = latent_dist * t_dist
 
         return weighted_latent_dist.mean()
+        '''
     
     def train_step(
         self,

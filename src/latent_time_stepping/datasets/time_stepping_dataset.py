@@ -10,13 +10,16 @@ class TimeSteppingDataset(torch.utils.data.Dataset):
         state: torch.Tensor,
         pars: torch.Tensor,
         max_seq_len: int,
+        num_skip_steps: int = 2,
         ) -> None:
         super().__init__()
 
         state = state.to(torch.get_default_dtype())
         pars = pars.to(torch.get_default_dtype())
 
-        state = state[:, :, 0::2]
+        num_skip_steps = num_skip_steps
+
+        state = state[:, :, 0::num_skip_steps]
 
         self.input_state, self.output_state = self._prepare_multistep_state(
             state=state,
@@ -106,6 +109,7 @@ def get_time_stepping_dataloader(
     batch_size: int,
     shuffle: bool,
     num_workers: int,
+    num_skip_steps: int = 2,
     ) -> torch.utils.data.DataLoader:
     """Get the dataloader for the autoencoder."""
 
@@ -113,6 +117,7 @@ def get_time_stepping_dataloader(
         state=state,
         pars=pars,
         max_seq_len=max_seq_len,
+        num_skip_steps=num_skip_steps,
         )
 
     dataloader = torch.utils.data.DataLoader(
