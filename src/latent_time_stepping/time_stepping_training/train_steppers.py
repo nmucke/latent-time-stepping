@@ -57,7 +57,7 @@ class TimeSteppingTrainStepper():
     def update_teacher_forcing(self):
         self.teacher_forcing_counter += 1
 
-        if self.teacher_forcing_counter  % self.teacher_forcing_ratio_reduction_freq == 0:
+        if self.teacher_forcing_counter % self.teacher_forcing_ratio_reduction_freq == 0:
             self.teacher_forcing_ratio *= self.teacher_forcing_ratio_reduction
 
     def _loss_function(
@@ -79,14 +79,25 @@ class TimeSteppingTrainStepper():
 
         self.optimizer.zero_grad()
 
-        state_pred = self.model.masked_prediction(
-            x=input_state,
-            pars=pars,
-        )
+        if torch.rand(1) < self.teacher_forcing_ratio:
+
+            state_pred = self.model.masked_prediction(
+                input=input_state,
+                output=output_state,
+                pars=pars,
+            )
+        else:
+            state_pred = self.model.multistep_prediction(
+                input=input_state,
+                pars=pars,
+                output_seq_len=output_state.shape[1],
+            )
 
         loss = self._loss_function(output_state, state_pred)
 
         loss.backward()
+
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
 
         self.optimizer.step()
 
@@ -105,18 +116,13 @@ class TimeSteppingTrainStepper():
         ) -> None:
 
         self.model.eval()
-        output_seq_len = output_state.shape[1]
 
-        #state_pred = self.model.multistep_prediction(
-        #    x=input_state,
-        #    pars=pars,
-        #    output_seq_len=output_seq_len,
-        #)
         with torch.no_grad():
-            state_pred = self.model.masked_prediction(
-                    x=input_state,
-                    pars=pars,
-                )
+            state_pred = self.model.multistep_prediction(
+                input=input_state,
+                pars=pars,
+                output_seq_len=output_state.shape[1],
+            )
             loss = self._loss_function(output_state, state_pred)
 
         self.loss += loss.item()

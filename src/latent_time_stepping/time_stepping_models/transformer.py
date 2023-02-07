@@ -168,6 +168,7 @@ class DecoderLayer(nn.Module):
         #self.layernorm2 = nn.LayerNorm(normalized_shape=embed_dim, eps=1e-6)
         self.layernorm3 = nn.LayerNorm(normalized_shape=embed_dim, eps=1e-6)
 
+
     def forward(self, x, mask=None):
 
         x = self.layernorm1(x)  # (batch_size, input_seq_len, input_embed_dim)
@@ -186,14 +187,5 @@ class DecoderLayer(nn.Module):
 
         return x
 
-def normal_init(m, mean, std):
-    if isinstance(m, (nn.Linear, nn.Conv2d)):
-        m.weight.data.normal_(mean, std)
-        if m.bias.data is not None:
-            m.bias.data.zero_()
-    elif isinstance(m, (nn.BatchNorm2d, nn.BatchNorm1d)):
-        m.weight.data.fill_(1)
-        if m.bias.data is not None:
-            m.bias.data.zero_()
 
 
