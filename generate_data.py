@@ -21,7 +21,7 @@ class PipeflowEquations(BaseModel):
         self, **kwargs):
         super().__init__(**kwargs)
 
-        self.L = 2000
+        self.L = 1000
         self.d = 0.508
         self.A = np.pi*self.d**2/4
         self.c = 308.
@@ -261,13 +261,12 @@ def main():
         )
 
 
-    num_samples = 3000
+    num_samples = 2000
     leak_location_vec  = np.random.uniform(10, 990, num_samples)
     leak_size_vec = np.random.uniform(1., 2., num_samples)
     #leak_size_vec = scipy.stats.loguniform.rvs(1., 2., size=num_samples)
     
     ray.shutdown()
-    ray.init(num_cpus=25)
     ray.get([
         simulate_pipeflow.remote(
             leak_location=leak_location,
@@ -275,8 +274,11 @@ def main():
             pipe_DG=pipe_DG,
             idx=idx
         ) for (leak_location, leak_size, idx) in 
-        zip(leak_location_vec, leak_size_vec, range(num_samples))])
+        zip(leak_location_vec, leak_size_vec, range(3000, 3000+num_samples))])
 
 if __name__ == "__main__":
     
+    ray.shutdown()
+    ray.init(num_cpus=25)
     main()
+    ray.shutdown()

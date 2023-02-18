@@ -6,7 +6,7 @@ torch.set_default_dtype(torch.float32)
 
 MODEL_TYPE = "WAE"
 model = torch.load(f"trained_models/autoencoders/{MODEL_TYPE}.pt")
-model = model.to('cpu')
+model = model.to('cuda')
 
 STATE_PATH = 'data/processed_data/training_data/states.pt'
 
@@ -25,8 +25,10 @@ def main():
         hf_trajectory = state[i]
         hf_trajectory = hf_trajectory.transpose(1, 2)
         hf_trajectory = hf_trajectory.transpose(0, 1)
+
+        hf_trajectory = hf_trajectory.to('cuda')
     
-        latent_state[i] = model.encode(hf_trajectory).transpose(0, 1).detach()
+        latent_state[i] = model.encode(hf_trajectory).transpose(0, 1).to('cpu').detach()
 
     torch.save(latent_state, f"data/processed_data/training_data/latent_states.pt")
 

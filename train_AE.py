@@ -28,8 +28,8 @@ with open(config_path) as f:
 STATE_PATH = 'data/processed_data/training_data/states.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
-TRAIN_SAMPLE_IDS = range(1000)
-VAL_SAMPLE_IDS = range(1000, 1200)
+TRAIN_SAMPLE_IDS = range(4250)
+VAL_SAMPLE_IDS = range(4250, 5000)
 
 state = torch.load(STATE_PATH)
 pars = torch.load(PARS_PATH)
@@ -40,7 +40,7 @@ train_pars = pars[TRAIN_SAMPLE_IDS]
 val_state = state[VAL_SAMPLE_IDS]
 val_pars = pars[VAL_SAMPLE_IDS]
 
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}.pt"
+MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}_12.pt"
 
 CUDA = True
 if CUDA:

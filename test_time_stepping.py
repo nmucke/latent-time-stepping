@@ -45,9 +45,9 @@ def main():
         hf_trajectory = hf_trajectory.transpose(0, 1)
         
         latent_state = AE.encode(hf_trajectory)
-        latent_state = latent_state.unsqueeze(0)
+        latent_state = latent_state.unsqueeze(0) 
 
-        init_time_steps = 32
+        init_time_steps = 16
         output_seq_len = 400
         pred_latent_state = time_stepper.multistep_prediction(
             latent_state[:, 0:init_time_steps],

@@ -20,7 +20,7 @@ def main():
 
     preprocessor = Preprocessor(num_states=2, num_pars=2)
 
-    sample_ids = range(3000)
+    sample_ids = range(5000)
 
     # Fit the preprocessor
     pbar = tqdm(sample_ids, total=len(sample_ids))

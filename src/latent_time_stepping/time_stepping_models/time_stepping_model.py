@@ -150,7 +150,7 @@ class TimeSteppingModel(nn.Module):
         pars: torch.Tensor,
         output_seq_len: int,
         ) -> torch.Tensor:
-
+        
         pars = self.encode_pars(pars)
 
         out = input
