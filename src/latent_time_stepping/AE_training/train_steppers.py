@@ -62,6 +62,8 @@ class WAETrainStepper():
         self.latent_distribution_loss = 0.0
         self.counter = 0
 
+        self.recon_loss = torch.nn.MSELoss()
+
         '''
         self.latent_regressor = LatentRegressor(
             input_size=self.model.encoder.latent_dim,
@@ -89,7 +91,8 @@ class WAETrainStepper():
         state_pred: torch.Tensor,
         ) -> torch.Tensor:
 
-        return torch.nn.MSELoss()(state_pred, state)
+        return self.recon_loss(state_pred, state)
+    
     
     def _sample_prior(
         self,
@@ -116,11 +119,6 @@ class WAETrainStepper():
         ) -> torch.Tensor:
 
         pass
-
-
-
-
-
 
         '''
         latent_state = latent_state.to(self.device)
@@ -172,8 +170,8 @@ class WAETrainStepper():
 
         latent_state = self.model.encoder(state)
 
-        #latent_attraction = self._latent_time_attraction(latent_state, t)
-        #self._latent_time_attraction(latent_state, t)
+        latent_attraction = self._latent_time_attraction(latent_state, t)
+        self._latent_time_attraction(latent_state, t)
 
         state_pred = self.model.decoder(latent_state, pars)
 
@@ -228,6 +226,112 @@ class WAETrainStepper():
             'latent': self.latent_distribution_loss/self.counter,
         }
 
+
+class AETrainStepper():
+
+    def __init__(
+        self,
+        model: torch.nn.Module,
+        optimizer: Optimizer,
+        latent_loss_regu: float = 1.0,
+        include_time: bool = False,
+    ) -> None:
+    
+        self.model = model
+        self.optimizer = optimizer
+        self.latent_loss_regu = latent_loss_regu
+
+        self.include_time = include_time
+            
+        self.device = model.device
+
+        self.reconstruction_loss = 0.0
+        self.latent_distribution_loss = 0.0
+        self.counter = 0
+
+        self.recon_loss = torch.nn.MSELoss()
+
+    def save_model(self, path: str) -> None:
+        torch.save(self.model, path)
+    
+    def reset_loss(self):
+        self.reconstruction_loss = 0.0
+        self.latent_distribution_loss = 0.0
+        self.counter = 0
+
+    def _reconstruction_loss_function(
+        self,
+        state: torch.Tensor,
+        state_pred: torch.Tensor,
+        ) -> torch.Tensor:
+
+        return self.recon_loss(state_pred, state)
+    
+    def _sample_prior(
+        self,
+        latent_state: torch.Tensor,
+        ) -> torch.Tensor:
+
+        """Sample from a standard normal distribution"""
+        
+        return torch.randn_like(latent_state)
+
+    def train_step(
+        self,
+        state: torch.Tensor,
+        pars: torch.Tensor,
+        t: torch.Tensor,
+        ) -> None:
+
+        self.model.train()
+
+        self.optimizer.zero_grad()
+
+        latent_state = self.model.encoder(state)
+
+        state_pred = self.model.decoder(latent_state, pars)
+
+        reconstruction_loss = \
+            self._reconstruction_loss_function(state, state_pred)
+
+        loss = reconstruction_loss 
+
+        loss.backward()
+
+        self.optimizer.step()
+
+        self.reconstruction_loss += reconstruction_loss.item()
+        self.latent_distribution_loss += 0.0
+        self.counter += 1
+        
+        return {
+            'recon': self.reconstruction_loss/self.counter,
+            'latent': self.latent_distribution_loss/self.counter,
+        }
+
+    def val_step(
+        self,
+        state: torch.Tensor,
+        pars: torch.Tensor,        
+        ) -> None:
+
+        self.model.eval()
+
+        latent_state = self.model.encoder(state)
+
+        state_pred = self.model.decoder(latent_state, pars)
+
+        reconstruction_loss = \
+            self._reconstruction_loss_function(state, state_pred)
+
+        self.reconstruction_loss += reconstruction_loss.item()
+        self.latent_distribution_loss += 0.0
+        self.counter += 1
+
+        self.val_loss = {
+            'recon': self.reconstruction_loss/self.counter,
+            'latent': self.latent_distribution_loss/self.counter,
+        }
 
 class VAETrainStepper():
 

@@ -1,3 +1,4 @@
+import time
 from attr import dataclass
 import ray
 from data_assimilation.pytorch.PDE_models import PipeflowEquations
@@ -169,30 +170,41 @@ observation_operator_params = {
     'observation_index': np.arange(0, 256, 32)
 }
 model_error_params = {
-    'state_std': torch.Tensor([0.01]),
-    'pars_std': torch.Tensor([0.005, 0.005]),
-    'smoothing_factor': torch.Tensor([0.1, 0.1]),
+    'state_std': torch.Tensor([0.001]),
+    'pars_std': torch.Tensor([0.2, 0.2]),
+    'smoothing_factor': torch.Tensor([0.0001, 0.1]),
+    #0.0001
 }
 particle_filter_params = {
     'num_particles': 5000,
 }
 observation_params = {
-    'std': .01,
+    'std': .02,
 }
 likelihood_params = {
-    'std': .01,
+    'std': .02,
 }
 
-AE_TYPE = "WAE"
-AE = torch.load(f"trained_models/autoencoders/{AE_TYPE}.pt")
+save_string = 'particle_filter_solution_latent'
+
+AE_TYPE = "AE"
+AE_string = f"trained_models/autoencoders/{AE_TYPE}"
+time_stepper_string = f"trained_models/time_steppers/time_stepping"
+
+if AE_TYPE == "AE":
+    time_stepper_string += "_AE"
+    save_string += "_AE"
+AE_string += ".pt"
+AE = torch.load(AE_string)
 AE = AE.to('cpu')
 AE.eval()
 
-time_stepper = torch.load(f"trained_models/time_steppers/time_stepping.pt")
+time_stepper_string += ".pt"
+time_stepper = torch.load(time_stepper_string)
 time_stepper = time_stepper.to('cpu')
 time_stepper.eval()
 
-def main():
+def main(AE=AE):
 
     observation_operator = ObservationOperator(
         params=observation_operator_params
@@ -244,6 +256,7 @@ def main():
     state_init = init_states[0:particle_filter_params['num_particles'], :, 0:16]
     pars_init = init_pars[0:particle_filter_params['num_particles']]
 
+    t1 = time.time()
     state, pars = particle_filter.compute_filtered_solution(
         true_sol=true_sol,
         state_init=state_init,
@@ -258,13 +271,19 @@ def main():
 
     '''
     HF_state = np.zeros((state.shape[0], 2, 256, state.shape[-1]))
+    #state = state.to('cuda')
+    #pars = pars.to('cuda')
+    #AE = AE.to('cuda')
     with torch.no_grad():
         for i in range(state.shape[-1]):
             HF_state[:, :, :, i] = AE.decoder(state[:, :, i], pars[:, :, i]).detach().numpy()
     pars = pars.detach().numpy()
+    t2 = time.time()
+    print(f"Time: {t2 - t1}")
 
-    np.save(f"latent_state", HF_state)
-    np.save(f"latent_pars", pars)
+
+    np.save(f"{save_string}_state", HF_state)
+    np.save(f"{save_string}_pars", pars)
 
     mean_state = np.mean(HF_state, axis=0)
     mean_pars = np.mean(pars, axis=0)
@@ -345,6 +364,8 @@ def main():
 
     plt.show()
 
+    '''
+
     state_1 = HF_state[:, 1, 40, :]
     state_2 = HF_state[:, 1, 200, :]
 
@@ -424,6 +445,7 @@ def main():
     plt.colorbar()
     plt.plot(t_vec[0:496], true_pars[1]*np.ones(496), color='k', linewidth=3)
     plt.show()
+    '''
 
 if __name__ == '__main__':
 

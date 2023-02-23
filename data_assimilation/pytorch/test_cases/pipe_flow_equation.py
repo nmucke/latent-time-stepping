@@ -67,6 +67,8 @@ class ModelError(BaseModelError):
             torch.matmul(torch.diag(weights), pars_mean_shifted)
             )
         #self.pars_covariance = torch.diag(self.params['pars_std'])
+
+        self.params['pars_std'] = 0.7 * self.params['pars_std']
         '''
         self.pars_weighted_mean = torch.zeros(self.pars_dims)
         self.pars_var = torch.zeros(self.pars_dims)
@@ -96,11 +98,13 @@ class ModelError(BaseModelError):
             )
         pars_noise = torch.tensor(pars_noise, dtype=torch.float32)
 
+        '''
         r1 = pars - self.params['pars_std']#self.smoothing_factor*self.pars_covariance.diag()#
         r2 = pars + self.params['pars_std']#self.smoothing_factor*self.pars_covariance.diag()#self.params['pars_std']
         pars_noise = (r1 - r2) * torch.rand(pars.shape) + r2
         pars_noise[pars_noise<0] = 1e-8
         pars_noise[pars_noise>1] = 1 - 1e-8
+        '''
 
         '''
         pars_noise = torch.normal(
@@ -121,7 +125,7 @@ class ModelError(BaseModelError):
         """Add the model error to the state and parameters."""
         state_noise, pars_noise = self._sample_noise(state, pars)
 
-        state = state# + state_noise
+        state = state + state_noise
         pars = pars_noise
 
         return state, pars

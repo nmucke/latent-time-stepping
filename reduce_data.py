@@ -4,7 +4,7 @@ import torch
 import matplotlib.pyplot as plt
 torch.set_default_dtype(torch.float32)
 
-MODEL_TYPE = "WAE"
+MODEL_TYPE = "AE"
 model = torch.load(f"trained_models/autoencoders/{MODEL_TYPE}.pt")
 model = model.to('cuda')
 
@@ -30,7 +30,7 @@ def main():
     
         latent_state[i] = model.encode(hf_trajectory).transpose(0, 1).to('cpu').detach()
 
-    torch.save(latent_state, f"data/processed_data/training_data/latent_states.pt")
+    torch.save(latent_state, f"data/processed_data/training_data/latent_states_AE.pt")
 
 if __name__ == "__main__":
     

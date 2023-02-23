@@ -17,15 +17,16 @@ torch.set_default_dtype(torch.float32)
 
 MODEL_TYPE = "time_stepping"
 
+
 config_path = f"configs/{MODEL_TYPE}.yml"
 with open(config_path) as f:
     config = yaml.load(f, Loader=SafeLoader)
     
-LATENT_STATE_PATH = 'data/processed_data/training_data/latent_states.pt'
+LATENT_STATE_PATH = 'data/processed_data/training_data/latent_states_AE.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
-TRAIN_SAMPLE_IDS = range(2500)
-VAL_SAMPLE_IDS = range(2500, 3000)
+TRAIN_SAMPLE_IDS = range(4250)
+VAL_SAMPLE_IDS = range(4250, 5000)
 
 latent_state = torch.load(LATENT_STATE_PATH)
 pars = torch.load(PARS_PATH)
@@ -36,7 +37,7 @@ train_pars = pars[TRAIN_SAMPLE_IDS]
 val_state = latent_state[VAL_SAMPLE_IDS]
 val_pars = pars[VAL_SAMPLE_IDS]
 
-MODEL_SAVE_PATH = f"trained_models/time_steppers/{MODEL_TYPE}.pt"
+MODEL_SAVE_PATH = f"trained_models/time_steppers/{MODEL_TYPE}_AE.pt"
 
 CUDA = True
 DEVICE = torch.device('cuda' if CUDA else 'cpu')

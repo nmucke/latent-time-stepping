@@ -5,12 +5,12 @@ import torch
 import matplotlib.pyplot as plt
 torch.set_default_dtype(torch.float32)
 
-AE_TYPE = "WAE"
+AE_TYPE = "AE"
 AE = torch.load(f"trained_models/autoencoders/{AE_TYPE}.pt")
 AE = AE.to('cpu')
 AE.eval()
 
-time_stepper = torch.load(f"trained_models/time_steppers/time_stepping.pt")
+time_stepper = torch.load(f"trained_models/time_steppers/time_stepping_AE.pt")
 time_stepper = time_stepper.to('cpu')
 time_stepper.eval()
 
@@ -21,7 +21,7 @@ PREPROCESSOR_PATH = 'data/processed_data/trained_preprocessor.pt'
 
 def main():
 
-    for case in [0, 1, 2]:
+    for case in [1]:
 
         num_time_steps = 2001
 

@@ -10,13 +10,18 @@ model = torch.load(f"trained_models/autoencoders/{MODEL_TYPE}.pt")
 model = model.to('cpu')
 model.eval()
 
+MODEL_TYPE = "AE"
+model_AE = torch.load(f"trained_models/autoencoders/{MODEL_TYPE}.pt")
+model_AE = model_AE.to('cpu')
+model_AE.eval()
+
 STATE_PATH = 'data/raw_data/training_data/state/sample_'
 PARS_PATH = 'data/raw_data/training_data/pars/sample_'
 
 PREPROCESSOR_PATH = 'data/processed_data/trained_preprocessor.pt'
 
 def main():
-    num_samples = 10
+    num_samples = 6
     num_time_steps = 501#2001
 
     preprocessor = torch.load(PREPROCESSOR_PATH)
@@ -47,14 +52,83 @@ def main():
         pars = preprocessor.transform_pars(pars)
         pars = pars.repeat(num_time_steps, 1)
         
-        if MODEL_TYPE == "WAE":
+        if MODEL_TYPE != "VAE":
             latent_state[i] = model.encode(hf_trajectory)
-        elif MODEL_TYPE == "VAE":
+        else:
             latent_state[i], _, _ = model.encoder(hf_trajectory)
 
         recon_state = model.decoder(latent_state[i], pars)
         
         L2_error.append(torch.norm(hf_trajectory - recon_state)/torch.norm(hf_trajectory))
+
+        if i == 5:
+
+            tt = 5
+            recon_state = model.decoder(latent_state[i], pars).detach().numpy()
+            WAE_latent_state = latent_state[i]
+            AE_latent_state = model_AE.encoder(hf_trajectory)
+            
+            WAE_latent_state = WAE_latent_state[tt].unsqueeze(0)
+            AE_latent_state = AE_latent_state[tt].unsqueeze(0)
+            noise = torch.randn((500, 16))*0.5
+
+            WAE_latent_state = WAE_latent_state + noise
+            AE_latent_state = AE_latent_state + noise
+            
+            WAE_recon_state = model.decoder(WAE_latent_state, pars[0:500]).detach().numpy()
+            AE_recon_state = model_AE.decoder(AE_latent_state, pars[0:500]).detach().numpy()
+
+            WAE_recon_state_mean = WAE_recon_state.mean(axis=0)
+            AE_recon_state_mean = AE_recon_state.mean(axis=0)
+
+            WAE_recon_state_std = WAE_recon_state.std(axis=0)
+            AE_recon_state_std = AE_recon_state.std(axis=0)
+
+
+            plt.figure(figsize=(20, 10))
+            plt.subplot(2, 1, 1)
+            plt.plot(recon_state[tt, 0, :], label="Reconstructed", color='tab:orange')
+            plt.plot(hf_trajectory[tt, 0, :], label="High Fidelity", color='tab:blue')
+            plt.plot(WAE_recon_state_mean[0, :], label="WAE Reconstructed", color='tab:green')
+            plt.fill_between(
+                np.arange(0, 256), 
+                WAE_recon_state_mean[0, :] - WAE_recon_state_std[0, :],
+                WAE_recon_state_mean[0, :] + WAE_recon_state_std[0, :],
+                color='tab:green',
+                alpha=0.2
+                )
+            plt.plot(AE_recon_state_mean[0, :], label="AE Reconstructed", color='tab:red')
+            plt.fill_between(
+                np.arange(0, 256), 
+                AE_recon_state_mean[0, :] - AE_recon_state_std[0, :],
+                AE_recon_state_mean[0, :] + AE_recon_state_std[0, :],
+                color='tab:red',
+                alpha=0.2
+                )
+            plt.legend()
+            plt.subplot(2, 1, 2)
+            plt.plot(recon_state[tt, 1, :], label="Reconstructed", color='tab:orange')
+            plt.plot(hf_trajectory[tt, 1, :], label="High Fidelity", color='tab:blue')
+            plt.plot(WAE_recon_state_mean[1, :], label="WAE Reconstructed", color='tab:green')
+            plt.fill_between(
+                np.arange(0, 256), 
+                WAE_recon_state_mean[1, :] - WAE_recon_state_std[1, :],
+                WAE_recon_state_mean[1, :] + WAE_recon_state_std[1, :],
+                color='tab:green',
+                alpha=0.2
+                )
+            plt.plot(AE_recon_state_mean[1, :], label="AE Reconstructed", color='tab:red')
+            plt.fill_between(
+                np.arange(0, 256), 
+                AE_recon_state_mean[1, :] - AE_recon_state_std[1, :],
+                AE_recon_state_mean[1, :] + AE_recon_state_std[1, :],
+                color='tab:red',
+                alpha=0.2
+                )
+            plt.legend()
+            plt.show()
+            pdb.set_trace()
+
 
     print(f"Average L2 Error: {torch.mean(torch.stack(L2_error))}")
 

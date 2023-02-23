@@ -14,12 +14,16 @@ from latent_time_stepping.AE_models.encoder_decoder import (
 )
 from latent_time_stepping.datasets.AE_dataset import get_AE_dataloader
 from latent_time_stepping.AE_training.optimizers import Optimizer
-from latent_time_stepping.AE_training.train_steppers import VAETrainStepper, WAETrainStepper
+from latent_time_stepping.AE_training.train_steppers import (
+    AETrainStepper, 
+    VAETrainStepper, 
+    WAETrainStepper
+)
 from latent_time_stepping.AE_training.trainer import train
 
 torch.set_default_dtype(torch.float32)
 
-MODEL_TYPE = "WAE"
+MODEL_TYPE = "AE"
 
 config_path = f"configs/{MODEL_TYPE}.yml"
 with open(config_path) as f:
@@ -28,8 +32,8 @@ with open(config_path) as f:
 STATE_PATH = 'data/processed_data/training_data/states.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
-TRAIN_SAMPLE_IDS = range(4250)
-VAL_SAMPLE_IDS = range(4250, 5000)
+TRAIN_SAMPLE_IDS = range(3000)
+VAL_SAMPLE_IDS = range(2500, 3000)
 
 state = torch.load(STATE_PATH)
 pars = torch.load(PARS_PATH)
@@ -40,7 +44,7 @@ train_pars = pars[TRAIN_SAMPLE_IDS]
 val_state = state[VAL_SAMPLE_IDS]
 val_pars = pars[VAL_SAMPLE_IDS]
 
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}_12.pt"
+MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}.pt"
 
 CUDA = True
 if CUDA:
@@ -53,6 +57,8 @@ def main():
     if MODEL_TYPE == "VAE":
         encoder = VAEEncoder(**config['model_args']['encoder'])
     elif MODEL_TYPE == "WAE":
+        encoder = Encoder(**config['model_args']['encoder'])
+    elif MODEL_TYPE == "AE":
         encoder = Encoder(**config['model_args']['encoder'])
 
     decoder = Decoder(**config['model_args']['decoder'])
@@ -76,6 +82,12 @@ def main():
         )
     elif MODEL_TYPE == "WAE":
         train_stepper = WAETrainStepper(
+            model=model,
+            optimizer=optimizer,
+            **config['train_stepper_args'],
+        )
+    elif MODEL_TYPE == "AE":
+        train_stepper = AETrainStepper(
             model=model,
             optimizer=optimizer,
             **config['train_stepper_args'],

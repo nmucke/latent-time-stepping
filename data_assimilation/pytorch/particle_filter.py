@@ -29,13 +29,19 @@ def compute_prior_particle(
                 pars=pars[i],
                 )
 
+    #forward_model.time_stepping_model.to('cuda')
+    #state = state.to('cuda')
+    #pars = pars.to('cuda')
     state, t_vec = \
         forward_model.compute_forward_model(
             t_range=t_range, 
             state=state,
             pars=pars
             )
-    
+    #state = state.to('cpu').detach()
+    #pars = pars.to('cpu').detach()
+    state = state.detach()
+    pars = pars.detach()
     return state, pars, t_vec
 
 @ray.remote(num_returns=3)
@@ -199,7 +205,11 @@ class ParticleFilter():
         else:
             
             with torch.no_grad():
+                #state_ensemble = state_ensemble.to('cuda')
+                #pars_ensemble = pars_ensemble.to('cuda')
+                #AE = AE.to('cuda')
                 HF_state = AE.decoder(state_ensemble, pars_ensemble)
+                #HF_state = HF_state.to('cpu')
             likelihood = np.zeros(self.params['num_particles'])
             for i in range(self.params['num_particles']):
                 likelihood[i] = compute_likelihood(

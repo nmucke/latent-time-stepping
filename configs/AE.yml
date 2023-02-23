@@ -24,7 +24,6 @@ optimizer_args:
     max_iters: 1000
 
 train_stepper_args:
-  latent_loss_regu: 1.0e-4
   include_time: True
 
 train_args:

@@ -137,7 +137,7 @@ model_error_params = {
     'smoothing_factor': 0.8,
 }
 particle_filter_params = {
-    'num_particles': 15000,
+    'num_particles': 10000,
 }
 observation_params = {
     'std': .04,
@@ -195,7 +195,6 @@ def main():
     
     state_init = pipe_DG.initial_condition(pipe_DG.DG_vars.x.flatten('F'))
     pars_init = np.array([600, 1.5])
-    '''
     particle_filter.compute_filtered_solution(
         true_sol=true_sol,
         state_init=state_init,
@@ -268,7 +267,6 @@ def main():
     plt.savefig('particle_filter_solution.png')
 
     plt.show()
-    '''
     '''
 
     '''
@@ -365,6 +363,6 @@ def main():
 if __name__ == '__main__':
 
     ray.shutdown()
-    ray.init(num_cpus=25)
+    ray.init(num_cpus=20)
     main()
     ray.shutdown()
