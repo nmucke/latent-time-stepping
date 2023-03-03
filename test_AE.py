@@ -70,7 +70,8 @@ def main():
             
             WAE_latent_state = WAE_latent_state[tt].unsqueeze(0)
             AE_latent_state = AE_latent_state[tt].unsqueeze(0)
-            noise = torch.randn((500, 16))*0.5
+            noise_std = 0.75
+            noise = torch.randn((500, 16))*noise_std
 
             WAE_latent_state = WAE_latent_state + noise
             AE_latent_state = AE_latent_state + noise
@@ -83,7 +84,33 @@ def main():
 
             WAE_recon_state_std = WAE_recon_state.std(axis=0)
             AE_recon_state_std = AE_recon_state.std(axis=0)
-
+            
+            plt.figure()
+            #plt.plot(recon_state[tt, 1, :], label="Reconstructed", color='tab:orange')
+            plt.plot(hf_trajectory[tt, 1, :], label="High-fidelity", color='tab:blue', lw=2)
+            plt.plot(WAE_recon_state_mean[1, :], label="WAE", color='tab:green', lw=2)
+            plt.fill_between(
+                np.arange(0, 256), 
+                WAE_recon_state_mean[1, :] - WAE_recon_state_std[1, :],
+                WAE_recon_state_mean[1, :] + WAE_recon_state_std[1, :],
+                color='tab:green',
+                alpha=0.2
+                )
+            plt.plot(AE_recon_state_mean[1, :], label="AE", color='tab:red', lw=2)
+            plt.fill_between(
+                np.arange(0, 256), 
+                AE_recon_state_mean[1, :] - AE_recon_state_std[1, :],
+                AE_recon_state_mean[1, :] + AE_recon_state_std[1, :],
+                color='tab:red',
+                alpha=0.2
+                )
+            plt.legend()
+            plt.grid()
+            plt.xlabel("Space")
+            plt.ylabel("Velocity")
+            plt.savefig(f"AE_vs_WAE_noise{noise_std}.pdf")
+            plt.show()
+            pdb.set_trace()
 
             plt.figure(figsize=(20, 10))
             plt.subplot(2, 1, 1)

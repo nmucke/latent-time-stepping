@@ -187,7 +187,7 @@ likelihood_params = {
 
 save_string = 'particle_filter_solution_latent'
 
-AE_TYPE = "AE"
+AE_TYPE = "WAE"
 AE_string = f"trained_models/autoencoders/{AE_TYPE}"
 time_stepper_string = f"trained_models/time_steppers/time_stepping"
 
@@ -271,13 +271,13 @@ def main(AE=AE):
 
     '''
     HF_state = np.zeros((state.shape[0], 2, 256, state.shape[-1]))
-    #state = state.to('cuda')
-    #pars = pars.to('cuda')
-    #AE = AE.to('cuda')
+    state = state.to('cuda')
+    pars = pars.to('cuda')
+    AE = AE.to('cuda')
     with torch.no_grad():
         for i in range(state.shape[-1]):
-            HF_state[:, :, :, i] = AE.decoder(state[:, :, i], pars[:, :, i]).detach().numpy()
-    pars = pars.detach().numpy()
+            HF_state[:, :, :, i] = AE.decoder(state[:, :, i], pars[:, :, i]).to('cpu').detach().numpy()
+    pars = pars.to('cpu').detach().numpy()
     t2 = time.time()
     print(f"Time: {t2 - t1}")
 

@@ -9,7 +9,10 @@ from scipy.stats import (
     gaussian_kde,
     wasserstein_distance
 )
-from matplotlib.animation import FuncAnimation 
+from matplotlib.animation import FuncAnimation
+from data_assimilation.numpy.test_cases.pipe_flow_equation import ObservationOperator
+
+from data_assimilation.pytorch.observation_operator import BaseObservationOperator
    
 
 def animate_solution(
@@ -193,6 +196,18 @@ def main():
     x = np.linspace(0, 1000, 256)
 
 
+    observation_operator_params = {
+        'observation_index': np.arange(0, 256, 32)
+    }
+
+    observation_operator = ObservationOperator(
+        params=observation_operator_params
+        )
+    obs = observation_operator.get_observations(true_state)
+    obs = obs + np.random.normal(0, 0.04, obs.shape)
+    x_obs = x[observation_operator_params['observation_index']]    
+
+
     # Load high-fidelity particle filter results
     #HF_state = []
     HF_pars = []
@@ -271,17 +286,17 @@ def main():
     latent_std_pars_AE = np.std(latent_pars_AE, axis=0)
     
     animate_solution(
-        HF_sol=HF_mean_state[1, :, :], 
+        #HF_sol=HF_mean_state[1, :, :], 
         true_sol=true_state[1, :, :],
-        latent_sol=latent_mean_state[1, :, :],
-        latent_AE_sol=latent_mean_state_AE[1, :, :],
-        HF_std=1.96*HF_std_state[1, :, :],
-        latent_std=1.96*latent_std_state[1, :, :],
-        latent_AE_std=1.96*latent_std_state_AE[1, :, :],
+        #latent_sol=latent_mean_state[1, :, :],
+        #latent_AE_sol=latent_mean_state_AE[1, :, :],
+        #HF_std=1.96*HF_std_state[1, :, :],
+        #latent_std=1.96*latent_std_state[1, :, :],
+        #latent_AE_std=1.96*latent_std_state_AE[1, :, :],
         obs_index=obs_index,
         t=t_vec, 
         x=x, 
-        save_path='particle_filter_solution'
+        save_path='true_sol'
         )
 
     num_x_kde = 100
@@ -316,9 +331,9 @@ def main():
 
 
 
-    plot_time = 50
+    plot_time = 380
     plt.figure()
-    plt.plot(x, HF_mean_state[1, :, plot_time], label='HF Particle Filter', linewidth=3, color='tab:blue')
+    plt.plot(x, HF_mean_state[1, :, plot_time], label='High-fidelity', linewidth=3, color='tab:blue')
     plt.fill_between(
         x,
         HF_mean_state[1, :, plot_time] - HF_std_state[1, :, plot_time],
@@ -326,7 +341,7 @@ def main():
         alpha=0.25,
         color='tab:blue'
         )
-    plt.plot(x, latent_mean_state[1, :, plot_time], label='HF Particle Filter', linewidth=3, color='tab:green')
+    plt.plot(x, latent_mean_state[1, :, plot_time], label='Transformer + WAE', linewidth=3, color='tab:green')
     plt.fill_between(
         x,
         latent_mean_state[1, :, plot_time] - latent_std_state[1, :, plot_time],
@@ -335,21 +350,37 @@ def main():
         color='tab:green'
         )
     
+    plt.plot(x, latent_mean_state_AE[1, :, plot_time], label='Transformer + AE', linewidth=3, color='tab:red')
+    plt.fill_between(
+        x,
+        latent_mean_state_AE[1, :, plot_time] - latent_std_state_AE[1, :, plot_time],
+        latent_mean_state_AE[1, :, plot_time] + latent_std_state_AE[1, :, plot_time],
+        alpha=0.25,
+        color='tab:red'
+        )
+    
+    
     plt.plot(
         x, 
         true_state[1, :, plot_time], 
         label='True State', linewidth=2, color='tab:orange'
         )
-    '''
+        
     plt.plot(
-        true_sol.obs_x,
-        true_sol.observations[-1, :, -1],
+        x_obs,
+        obs[0, :, plot_time],
         '.',
-        label='observations', markersize=20)
+        label='observations', markersize=20,
+        color='k'
+        )
+        
     plt.grid()
     plt.legend()
-    '''
+    plt.xlabel('Space')
+    plt.ylabel('Velocity')
+    plt.savefig(f'particle_filter_solution_t{plot_time}.pdf')
     plt.show()
+    pdb.set_trace()
 
 
     wasserstein_error_pars_1 = wasserstein_distance(
@@ -479,8 +510,8 @@ if __name__ == '__main__':
     WAE = [14.748, 14.412, 8.489, 11.267, 10.245, 5.653, 4.795]
     AE = [177, 115.579, 120.687, 113.142, 160.437, 127.111, 125.154]
     plt.figure()
-    plt.plot(num_samples, WAE, label='Transformer + WAE', linewidth=3)
-    plt.plot(num_samples, AE, label='Transformer + AE', linewidth=3)
+    plt.semilogy(num_samples, WAE, '.-', label='Transformer + WAE', linewidth=3, markersize=15)
+    plt.semilogy(num_samples, AE, '.-', label='Transformer + AE', linewidth=3, markersize=15)
     plt.xlabel('Number of samples')
     plt.ylabel('Wasserstein distance')
     plt.legend()
