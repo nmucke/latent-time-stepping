@@ -83,6 +83,7 @@ class WAETrainStepper():
     def reset_loss(self):
         self.reconstruction_loss = 0.0
         self.latent_distribution_loss = 0.0
+        self.consistency_loss = 0.0
         self.counter = 0
 
     def _reconstruction_loss_function(
@@ -157,6 +158,16 @@ class WAETrainStepper():
         return weighted_latent_dist.mean()
         '''
     
+    def _latent_consistency_loss_function(
+        self,
+        latent_state: torch.Tensor,
+        latent_pred: torch.Tensor,
+        ) -> torch.Tensor:
+
+        latent_loss = self.recon_loss(latent_state, latent_pred) 
+
+        return latent_loss
+
     def train_step(
         self,
         state: torch.Tensor,
@@ -170,10 +181,15 @@ class WAETrainStepper():
 
         latent_state = self.model.encoder(state)
 
-        latent_attraction = self._latent_time_attraction(latent_state, t)
-        self._latent_time_attraction(latent_state, t)
+        #latent_attraction = self._latent_time_attraction(latent_state, t)
+        #self._latent_time_attraction(latent_state, t)
 
         state_pred = self.model.decoder(latent_state, pars)
+
+        latent_pred = self.model.encoder(state_pred)
+
+        consistency_loss = \
+            self._latent_consistency_loss_function(latent_state, latent_pred)
 
         reconstruction_loss = \
             self._reconstruction_loss_function(state, state_pred)
@@ -181,8 +197,10 @@ class WAETrainStepper():
         latent_distribution_loss = \
             self._latent_distribution_loss_function(latent_state)
 
-        loss = \
-            reconstruction_loss + self.latent_loss_regu*latent_distribution_loss
+        loss = reconstruction_loss \
+            + self.latent_loss_regu * latent_distribution_loss \
+            + 1e-2 * consistency_loss
+            
 
         #loss += 1e-4*latent_attraction
 
@@ -191,12 +209,14 @@ class WAETrainStepper():
         self.optimizer.step()
 
         self.reconstruction_loss += reconstruction_loss.item()
-        self.latent_distribution_loss += latent_distribution_loss.item()
+        self.latent_distribution_loss += latent_distribution_loss.item()#latent_distribution_loss.item()
+        self.consistency_loss += consistency_loss.item()
         self.counter += 1
         
         return {
             'recon': self.reconstruction_loss/self.counter,
             'latent': self.latent_distribution_loss/self.counter,
+            'consistency': self.consistency_loss/self.counter,
         }
 
     def val_step(

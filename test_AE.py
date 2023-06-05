@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 torch.set_default_dtype(torch.float32)
 
 MODEL_TYPE = "WAE"
-model = torch.load(f"trained_models/autoencoders/{MODEL_TYPE}.pt")
+model = torch.load(f"trained_models/autoencoders/{MODEL_TYPE}_smoothness.pt")
 model = model.to('cpu')
 model.eval()
 
@@ -33,7 +33,6 @@ def main():
         ))
     
     L2_error = []
-    pbar = tqdm(range(num_samples), desc="Encoding Trajectories")
 
     pbar = tqdm(
             range(num_samples),
@@ -48,7 +47,7 @@ def main():
         hf_trajectory = hf_trajectory.transpose(0, 1)
 
         pars = np.load(f'{PARS_PATH}{i}.npy')
-        pars = torch.tensor(pars, dtype=torch.get_default_dtype())
+        pars = torch.tensor(pars, dtype=torch.get_default_dtype()) 
         pars = preprocessor.transform_pars(pars)
         pars = pars.repeat(num_time_steps, 1)
         
@@ -60,7 +59,7 @@ def main():
         recon_state = model.decoder(latent_state[i], pars)
         
         L2_error.append(torch.norm(hf_trajectory - recon_state)/torch.norm(hf_trajectory))
-
+        '''
         if i == 5:
 
             tt = 5
@@ -155,6 +154,7 @@ def main():
             plt.legend()
             plt.show()
             pdb.set_trace()
+        '''
 
 
     print(f"Average L2 Error: {torch.mean(torch.stack(L2_error))}")

@@ -4,10 +4,10 @@ import yaml
 from yaml.loader import SafeLoader
 import torch
 
+import ray
+
 from latent_time_stepping.AE_models.VAE_encoder import VAEEncoder
-
 from latent_time_stepping.AE_models.autoencoder import Autoencoder
-
 from latent_time_stepping.AE_models.encoder_decoder import (
     Decoder, 
     Encoder
@@ -23,36 +23,17 @@ from latent_time_stepping.AE_training.trainer import train
 
 torch.set_default_dtype(torch.float32)
 
-MODEL_TYPE = "WAE"
 
-config_path = f"configs/{MODEL_TYPE}.yml"
-with open(config_path) as f:
-    config = yaml.load(f, Loader=SafeLoader)
+def fitness_function(config, train_loader, test_loader, static_config):
 
-STATE_PATH = 'data/processed_data/training_data/states.pt'
-PARS_PATH = 'data/processed_data/training_data/pars.pt'
+    MODEL_TYPE = static_config['model_type']
 
-TRAIN_SAMPLE_IDS = range(3000)
-VAL_SAMPLE_IDS = range(2500, 3000)
+    CUDA = True
+    if CUDA:
+        DEVICE = torch.device('cuda' if CUDA else 'cpu')
+    else:
+        DEVICE = torch.device('cpu')
 
-state = torch.load(STATE_PATH)
-pars = torch.load(PARS_PATH)
-
-train_state = state[TRAIN_SAMPLE_IDS]
-train_pars = pars[TRAIN_SAMPLE_IDS]
-
-val_state = state[VAL_SAMPLE_IDS]
-val_pars = pars[VAL_SAMPLE_IDS]
-
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}_smoothness.pt"
-
-CUDA = True
-if CUDA:
-    DEVICE = torch.device('cuda' if CUDA else 'cpu')
-else:
-    DEVICE = torch.device('cpu')
-
-def main():
 
     if MODEL_TYPE == "VAE":
         encoder = VAEEncoder(**config['model_args']['encoder'])
@@ -112,7 +93,3 @@ def main():
         print_progress=True,
         **config['train_args'],
     )
-
-if __name__ == "__main__":
-    
-    main()

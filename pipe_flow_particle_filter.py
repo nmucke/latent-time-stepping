@@ -137,13 +137,13 @@ model_error_params = {
     'smoothing_factor': 0.8,
 }
 particle_filter_params = {
-    'num_particles': 10000,
+    'num_particles': 200,
 }
 observation_params = {
     'std': .04,
 }
 likelihood_params = {
-    'std': .04,
+    'std': .1,
 }
 
 CASE = 0
@@ -193,16 +193,19 @@ def main():
         likelihood_params=likelihood_params,
         )
     
+
     state_init = pipe_DG.initial_condition(pipe_DG.DG_vars.x.flatten('F'))
     pars_init = np.array([600, 1.5])
+    
+    '''
     particle_filter.compute_filtered_solution(
         true_sol=true_sol,
         state_init=state_init,
         pars_init=pars_init,
-        save_path=SAVE_PATH,
+        save_path=None,
         )
-
     '''
+
     state, pars = particle_filter.compute_filtered_solution(
         true_sol=true_sol,
         state_init=state_init,
@@ -210,8 +213,8 @@ def main():
         save_path=None # SAVE_PATH,
         )
 
-    #np.save(f'HF_particle_filter_solution_state.npy', state)
-    #np.save(f'HF_particle_filter_solution_pars.npy', pars)
+    np.save(f'HF_particle_filter_solution_state.npy', state)
+    np.save(f'HF_particle_filter_solution_pars.npy', pars)
 
     mean_state = np.mean(state, axis=0)
     mean_pars = np.mean(pars, axis=0)
@@ -267,7 +270,6 @@ def main():
     plt.savefig('particle_filter_solution.png')
 
     plt.show()
-    '''
 
     '''
 

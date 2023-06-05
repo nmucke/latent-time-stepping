@@ -10,7 +10,12 @@ description = "A simple package template"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    "numpy ~= 1.23.5"
+    "numpy ~= 1.23.5",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "matplotlib",
+    "pip install git+https://github.com/nmucke/discontinuous-galerkin.git@master",
 ]
 
 [project.urls]

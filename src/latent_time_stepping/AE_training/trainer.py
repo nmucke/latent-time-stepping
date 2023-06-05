@@ -24,7 +24,8 @@ def train(
     model_save_path: str,
     train_stepper: BaseTrainStepper,
     print_progress: bool = True,
-    patience: int = None
+    patience: int = None,
+    return_val_metrics: bool = False,
 ) -> None:
 
     if patience is not None:
@@ -51,6 +52,7 @@ def train(
 
             loss = train_stepper.train_step(state, pars, t)
 
+
             if i % 100 == 0:
                 pbar.set_postfix(loss)
         
@@ -75,7 +77,9 @@ def train(
             if train_stepper.val_loss['recon'] < early_stopper.best_loss:
                 early_stopper.best_loss = train_stepper.val_loss['recon']
                 early_stopper.num_non_improving_epochs = 0
-                train_stepper.save_model(model_save_path)
+
+                if model_save_path is not None:
+                    train_stepper.save_model(model_save_path)
             else:
                 early_stopper.num_non_improving_epochs += 1
                 if early_stopper.num_non_improving_epochs >= early_stopper.patience:
@@ -83,9 +87,14 @@ def train(
                     break
                 
     if patience is None:
-        train_stepper.save_model(model_save_path)
+        if model_save_path is not None:
+            train_stepper.save_model(model_save_path)
     
-    train_stepper.save_model(model_save_path)
+    if model_save_path is not None:                                                              
+        train_stepper.save_model(model_save_path)
+
+    if return_val_metrics:
+        return early_stopper.best_loss
     
 
 '''
