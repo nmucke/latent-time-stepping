@@ -15,7 +15,6 @@ dependencies = [
     "torchvision",
     "torchaudio",
     "matplotlib",
-    "pip install git+https://github.com/nmucke/discontinuous-galerkin.git@master",
 ]
 
 [project.urls]
