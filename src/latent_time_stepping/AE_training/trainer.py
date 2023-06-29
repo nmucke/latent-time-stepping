@@ -9,13 +9,12 @@ from latent_time_stepping.AE_training.optimizers import Optimizer
 from latent_time_stepping.AE_training.train_steppers import BaseTrainStepper
 
 
+
 @dataclass
 class EarlyStopping:
     num_non_improving_epochs: int = 0
     best_loss: float = float('inf')
     patience: int = 10
-
-
 
 def train(
     train_dataloader: torch.utils.data.DataLoader,
@@ -27,6 +26,7 @@ def train(
     patience: int = None,
     return_val_metrics: bool = False,
 ) -> None:
+    
 
     if patience is not None:
         early_stopper = EarlyStopping(patience=patience)

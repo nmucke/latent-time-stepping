@@ -4,8 +4,8 @@ import yaml
 from yaml.loader import SafeLoader
 import torch
 
+from latent_time_stepping.utils import create_directory
 from latent_time_stepping.AE_models.VAE_encoder import VAEEncoder
-
 from latent_time_stepping.AE_models.autoencoder import Autoencoder
 
 from latent_time_stepping.AE_models.encoder_decoder import (
@@ -32,8 +32,8 @@ with open(config_path) as f:
 STATE_PATH = 'data/processed_data/training_data/states.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
-TRAIN_SAMPLE_IDS = range(3000)
-VAL_SAMPLE_IDS = range(2500, 3000)
+TRAIN_SAMPLE_IDS = range(300)
+VAL_SAMPLE_IDS = range(300, 400)
 
 state = torch.load(STATE_PATH)
 pars = torch.load(PARS_PATH)
@@ -44,7 +44,12 @@ train_pars = pars[TRAIN_SAMPLE_IDS]
 val_state = state[VAL_SAMPLE_IDS]
 val_pars = pars[VAL_SAMPLE_IDS]
 
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}_smoothness.pt"
+MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}"
+create_directory(MODEL_SAVE_PATH)
+
+# Save config file
+with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as outfile:
+    yaml.dump(config, outfile, default_flow_style=False)
 
 CUDA = True
 if CUDA:
@@ -107,7 +112,7 @@ def main():
     train(
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
-        model_save_path=MODEL_SAVE_PATH,
+        model_save_path=f'{MODEL_SAVE_PATH}/model.pt',
         train_stepper=train_stepper,
         print_progress=True,
         **config['train_args'],
