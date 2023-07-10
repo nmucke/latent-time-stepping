@@ -4,6 +4,9 @@
 data/
 particle_filter_results/
 
+# Ignore oracle config
+oracle_config.yml
+
 # Ignore figures
 figures/
 
