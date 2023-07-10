@@ -40,6 +40,41 @@ def pars_dict_to_array_single_phase(pars_dict):
 
     return pars
 
+def sol_to_state_multi_phase(sol, t_vec, PDE_model):
+
+    x = np.linspace(PDE_model.DG_vars.x[0, 0], PDE_model.DG_vars.x[-1, -1], 512)
+
+    A_l = np.zeros((len(x), len(t_vec)))
+    p = np.zeros((len(x), len(t_vec)))
+    u_m = np.zeros((len(x), len(t_vec)))
+    for t in range(sol.shape[-1]):
+        A_l[:, t] = PDE_model.evaluate_solution(x, sol_nodal=sol[0, :, t])
+        p[:, t] = PDE_model.evaluate_solution(x, sol_nodal=sol[1, :, t])
+        u_m[:, t] = PDE_model.evaluate_solution(x, sol_nodal=sol[2, :, t])
+    
+    alpha_l = A_l / PDE_model.A
+
+    alpha_l = alpha_l[:, 1:]
+    p = p[:, 1:]
+    u_m = u_m[:, 1:]                        
+
+    alpha_l = np.expand_dims(alpha_l, axis=0)
+    p = np.expand_dims(p, axis=0)
+    u_m = np.expand_dims(u_m, axis=0)
+
+    state = np.concatenate((alpha_l, p, u_m), axis=0)
+
+    return state
+
+def pars_dict_to_array_multi_phase(pars_dict):
+    pars = np.zeros((2,))
+
+    pars[0] = pars_dict['leak_location']
+    pars[1] = pars_dict['leak_size']    
+
+    return pars
+
+
 def save_data_single_phase(idx, pars, state):
     np.save(f'data/raw_data/training_data/pars/sample_{idx}.npy', pars)
     np.save(f'data/raw_data/training_data/state/sample_{idx}.npy', state)
@@ -72,7 +107,7 @@ def simulate_pipeflow(
 
     init = PDE_model.initial_condition(PDE_model.DG_vars.x.flatten('F'))
 
-    t_final = 100.
+    t_final = 5000.
     sol, t_vec = PDE_model.solve(
         t=0, 
         q_init=init, 
@@ -92,12 +127,28 @@ def simulate_pipeflow(
         )
 
 
-        pdb.set_trace()
 
 
     elif phase == 'multi':
         state = sol_to_state_multi_phase(sol, t_vec, PDE_model)
         pars = pars_dict_to_array_multi_phase(parameters_of_interest)
+        x = np.linspace(PDE_model.DG_vars.x[0, 0], PDE_model.DG_vars.x[-1, -1], 512)
+
+        plt.figure()
+        plt.plot(x, state[-1, :, 50])
+        plt.plot(x, state[-1, :, 150])
+        plt.plot(x, state[-1, :, 200])
+        plt.plot(x, state[-1, :, -1])
+        plt.show()
+
+
+        plt.figure()
+        plt.plot(x, state[0, :, 50])
+        plt.plot(x, state[0, :, 150])
+        plt.plot(x, state[0, :, 200])
+        plt.plot(x, state[0, :, -1])
+        plt.show()
+        pdb.set_trace()
 
     return None
 

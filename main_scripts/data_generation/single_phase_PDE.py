@@ -6,7 +6,6 @@ from discontinuous_galerkin.start_up_routines.start_up_1D import StartUp1D
 import matplotlib.pyplot as plt
 import pdb
 
-from matplotlib.animation import FuncAnimation
 
 class PipeflowEquations(BaseModel):
     """Single phase equation model class."""
@@ -40,6 +39,16 @@ class PipeflowEquations(BaseModel):
 
         self.Cv = self.A/np.sqrt(self.rho_ref/2 * ((self.A/(self.A_orifice*Cd))**2-1))
         self.leak_location = leak_location
+        
+        self.xElementL = np.int32(self.leak_location / self.basic_args['xmax'] * self.DG_vars.K)
+
+        self.lagrange = []
+        l = np.zeros(self.DG_vars.N + 1)
+        rl = 2 * (self.leak_location - self.DG_vars.VX[self.xElementL]) / self.DG_vars.deltax - 1
+        for i in range(0, self.DG_vars.N + 1):
+            l[i] = JacobiP(np.array([rl]), 0, 0, i)
+        self.lagrange = np.linalg.solve(np.transpose(self.DG_vars.V), l)    
+
 
 
     def density_to_pressure(self, rho):
@@ -141,13 +150,6 @@ class PipeflowEquations(BaseModel):
 
         point_source = np.zeros((self.DG_vars.Np*self.DG_vars.K))
         if t>0:
-            '''
-            x = pipe_DG.DG_vars.x.flatten('F')
-            width = 50
-            point_source = \
-                (np.heaviside(x-500 + width/2, 1) - np.heaviside(x-500-width/2, 1))
-            point_source *= 1/width
-            '''
             leak = self.leakage(pressure=p, rho_m=rho).flatten('F')
 
             s[0] = -leak
