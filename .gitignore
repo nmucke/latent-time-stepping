@@ -2,6 +2,7 @@
 
 # Ignore data
 data/
+particle_filter_results/
 
 # Ignore figures
 figures/
@@ -15,6 +16,9 @@ figures/
 *.ppm
 *.avi
 *.mov
+*.gif
+*.png
+*.npy
 
 # Exclude MacOS files
 *.DS_Store
