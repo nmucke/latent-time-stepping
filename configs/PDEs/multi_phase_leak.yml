@@ -1,16 +1,16 @@
 basic_args:
     xmin: 0
-    xmax: 500
-    num_elements: 500
+    xmax: 5000
+    num_elements: 1000
     num_states: 3
-    polynomial_order: 3
+    polynomial_order: 2
     polynomial_type: 'legendre'
 
 steady_state:
     newton_params:
         solver: 'direct'
         max_newton_iter: 200
-        newton_tol: 1.0e-8
+        newton_tol: 1.0e-6
         num_jacobian_reuses: 1000
         
 numerical_flux_args:
@@ -22,13 +22,13 @@ stabilizer_args:
     second_derivative_upper_bound: 1.0e-8
 
 time_integrator_args:
-    type: 'implicit_euler'
-    step_size: 0.05
+    type: 'BDF2'
+    step_size: 0.01
     newton_params:
-        solver: 'krylov'
+        solver: 'direct'
         max_newton_iter: 200
-        newton_tol: 1.0e-8
-        num_jacobian_reuses: 25
+        newton_tol: 1.0e-6
+        num_jacobian_reuses: 2500
 
 BC_args:
     type: 'dirichlet'

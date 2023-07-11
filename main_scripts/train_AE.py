@@ -24,16 +24,25 @@ from latent_time_stepping.AE_training.trainer import train
 torch.set_default_dtype(torch.float32)
 
 MODEL_TYPE = "WAE"
+CUDA = True
 
-config_path = f"configs/{MODEL_TYPE}.yml"
-with open(config_path) as f:
-    config = yaml.load(f, Loader=SafeLoader)
-
+FROM_ORACLE = False
 STATE_PATH = 'data/processed_data/training_data/states.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
 TRAIN_SAMPLE_IDS = range(300)
 VAL_SAMPLE_IDS = range(300, 400)
+
+
+MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}"
+
+
+config_path = f"configs/{MODEL_TYPE}.yml"
+with open(config_path) as f:
+    config = yaml.load(f, Loader=SafeLoader)
+
+
+BUCKET_NAME = "bucket-20230222-1753"
 
 state = torch.load(STATE_PATH)
 pars = torch.load(PARS_PATH)
@@ -44,14 +53,12 @@ train_pars = pars[TRAIN_SAMPLE_IDS]
 val_state = state[VAL_SAMPLE_IDS]
 val_pars = pars[VAL_SAMPLE_IDS]
 
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}"
 create_directory(MODEL_SAVE_PATH)
 
 # Save config file
 with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as outfile:
     yaml.dump(config, outfile, default_flow_style=False)
 
-CUDA = True
 if CUDA:
     DEVICE = torch.device('cuda' if CUDA else 'cpu')
 else:

@@ -4,6 +4,7 @@ from discontinuous_galerkin.base.base_model import BaseModel
 from discontinuous_galerkin.start_up_routines.start_up_1D import StartUp1D
 import matplotlib.pyplot as plt
 import pdb
+import oci
 import scipy.stats
 import yaml
 
@@ -13,12 +14,12 @@ from generate_data_utils import simulate_pipeflow
 from single_phase_PDE import PipeflowEquations as PipeflowEquations_single_phase
 from multi_phase_PDE import PipeflowEquations as PipeflowEquations_multi_phase
 
-TEST_CASE = 'single_phase_leak'
+TEST_CASE = 'multi_phase_leak'
 
 DISTRIBUTED = True
-NUM_CPUS = 25
+NUM_CPUS = 60
 
-NUM_SAMPLES = 25
+NUM_SAMPLES = 5000
 TRAIN_OR_TEST = 'train'
 
 TO_ORACLE = True
@@ -45,7 +46,7 @@ if TEST_CASE == 'single_phase_leak':
 elif TEST_CASE == 'multi_phase_leak':
     
     model_parameters = {
-        'L': 10000, # meters
+        'L': 5000, # meters
         'd': 0.2, # meters
         'A': np.pi*0.2**2/4, # meters^2
         'c': 308., # m/s
@@ -65,6 +66,8 @@ elif TEST_CASE == 'multi_phase_leak':
 
 def main():
 
+
+
     if TEST_CASE == 'single_phase_leak':
         pipe_equations = PipeflowEquations_single_phase
     elif TEST_CASE == 'multi_phase_leak':
@@ -81,7 +84,7 @@ def main():
         leak_location_vec = np.random.uniform(10, 1990, NUM_SAMPLES)
         leak_size_vec = np.random.uniform(0.1, 1.0, NUM_SAMPLES)
     elif TEST_CASE == 'multi_phase_leak':
-        leak_location_vec = np.random.uniform(0, 10000, NUM_SAMPLES)
+        leak_location_vec = np.random.uniform(10, 4990, NUM_SAMPLES)
         leak_size_vec = np.random.uniform(0.01, 0.1, NUM_SAMPLES)
 
 
@@ -92,7 +95,7 @@ def main():
             remote_list.append(simulate_pipeflow_remote.remote(
                 PDE_model=pipe_equations,
                 PDE_args=config,
-                t_final=500.0,
+                t_final=250.0,
                 model_parameters=model_parameters,
                 parameters_of_interest={
                     'leak_size': leak_size_vec[idx],
@@ -110,7 +113,7 @@ def main():
             _ = simulate_pipeflow(
                 PDE_model=pipe_equations,
                 PDE_args=config,
-                t_final=500.0,
+                t_final=250.0,
                 model_parameters=model_parameters,
                 parameters_of_interest={
                     'leak_size': leak_size_vec[idx],

@@ -275,7 +275,7 @@ class PipeflowEquations(BaseModel):
     def boundary_conditions(self, t=0, q=None):
         """Compute the boundary conditions."""
 
-        inflow_noise = self.inflow_boundary_noise[len(self.t_vec)]*10
+        #inflow_noise = self.inflow_boundary_noise[len(self.t_vec)]*10
         
         t_start = 10000000.
         t_end = 200000000.
@@ -289,7 +289,7 @@ class PipeflowEquations(BaseModel):
         else:
             gas_mass_inflow = 0.2 #+ self.added_boundary_noise# * np.sin(2*np.pi*t/50)
 
-        liquid_mass_inflow = 20.0 + inflow_noise
+        liquid_mass_inflow = 20.0# + inflow_noise
 
         if len(q.shape) == 1:
             rho_g = self.pressure_to_density(q[1]*self.p_outlet)
