@@ -11,6 +11,70 @@ from matplotlib.animation import FuncAnimation
 
 from scipy.linalg import eig
 
+class Brownian():
+    """
+    A Brownian motion class constructor
+    """
+    def __init__(self,x0=0):
+        """
+        Init class
+        """
+        assert (type(x0)==float or type(x0)==int or x0 is None), "Expect a float or None for the initial value"
+        
+        self.x0 = float(x0)
+    
+    def gen_random_walk(self,n_step=100):
+        """
+        Generate motion by random walk
+        
+        Arguments:
+            n_step: Number of steps
+            
+        Returns:
+            A NumPy array with `n_steps` points
+        """
+        # Warning about the small number of steps
+        if n_step < 30:
+            print("WARNING! The number of steps is small. It may not generate a good stochastic process sequence!")
+        
+        w = np.ones(n_step)*self.x0
+        
+        for i in range(1,n_step):
+            # Sampling from the Normal distribution with probability 1/2
+            yi = np.random.choice([1,-1])
+            # Weiner process
+            w[i] = w[i-1]+(yi/np.sqrt(n_step))
+        
+        return w
+    
+    def gen_normal(self,n_step=100):
+        """
+        Generate motion by drawing from the Normal distribution
+        
+        Arguments:
+            n_step: Number of steps
+            
+        Returns:
+            A NumPy array with `n_steps` points
+        """
+        if n_step < 30:
+            print("WARNING! The number of steps is small. It may not generate a good stochastic process sequence!")
+        
+        w = np.ones(n_step)*self.x0
+        
+        for i in range(1,n_step):
+            # Sampling from the Normal distribution
+            yi = np.random.normal()
+            # Weiner process
+            w[i] = w[i-1]+(yi/np.sqrt(n_step))
+        
+        return w
+    
+def moving_average(a, n=3) :
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
 class PipeflowEquations(BaseModel):
     """Multiphase equation model class."""
 
@@ -29,7 +93,6 @@ class PipeflowEquations(BaseModel):
         self.D_orifice = 0.01
         self.A_orifice = np.pi*(self.D_orifice/2)**2
         self.Cv = self.A/np.sqrt(self.rho_g_norm/2 * ((self.A/(self.A_orifice*self.Cd))**2-1))
-        print(f'Cv: {self.Cv:.2E}')
 
         self.conservative_or_primitive = 'primitive'
 
@@ -184,6 +247,15 @@ class PipeflowEquations(BaseModel):
 
         return init
     
+    def start_solver(self):
+
+        brownian = Brownian()
+
+        window_size = 600
+        self.inflow_boundary_noise = brownian.gen_normal(n_step=np.int64(self.t_final/self.step_size + window_size + 1))
+        self.inflow_boundary_noise = moving_average(self.inflow_boundary_noise, n=window_size)
+        self.inflow_boundary_noise = np.abs(self.inflow_boundary_noise)
+
 
     def BC_eqs(self, q, gas_mass_inflow, liquid_mass_inflow):
 
@@ -203,8 +275,7 @@ class PipeflowEquations(BaseModel):
     def boundary_conditions(self, t=0, q=None):
         """Compute the boundary conditions."""
 
-        inflow_noise = self.inflow_boundary_noise[len(self.t_vec)]*5
-        outflow_noise = self.outflow_boundary_noise[len(self.t_vec)]/500
+        inflow_noise = self.inflow_boundary_noise[len(self.t_vec)]*10
         
         t_start = 10000000.
         t_end = 200000000.
@@ -244,7 +315,7 @@ class PipeflowEquations(BaseModel):
             }
             BC_state_2 = {
                 'left': None,
-                'right': 1. + outflow_noise#self.p_outlet,
+                'right': 1. #self.p_outlet,
             }
             BC_state_3 = {
                 'left': u_m,#,
@@ -353,9 +424,20 @@ class PipeflowEquations(BaseModel):
         
         s = np.zeros((self.DG_vars.num_states,self.DG_vars.Np*self.DG_vars.K))
 
-        
         point_source = np.zeros((self.DG_vars.Np*self.DG_vars.K))
         if t>0.:
+
+            '''
+            x = self.DG_vars.x.flatten('F')
+            width = 50
+            point_source = \
+                (np.heaviside(x-self.leak_location + width/2, 1) - np.heaviside(x-self.leak_location-width/2, 1))
+            point_source *= 1/width
+
+            leak_mass = self.Cv * np.sqrt(rho_m * (p - self.p_amb)) * point_source
+            s[0] = -alpha_g * leak_mass
+            s[1] = -alpha_l * leak_mass
+            '''
             leak = self.leakage(pressure=p, rho_m=rho_m).flatten('F')
             s[0] = -alpha_g * leak
             s[1] = -alpha_l * leak

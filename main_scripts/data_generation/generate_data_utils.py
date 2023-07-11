@@ -1,3 +1,4 @@
+import os
 import time
 import numpy as np
 from discontinuous_galerkin.base.base_model import BaseModel
@@ -9,6 +10,8 @@ import yaml
 
 from matplotlib.animation import FuncAnimation
 import ray
+
+from oracle import ObjectStorageClientWrapper
 
 from single_phase_PDE import PipeflowEquations
 
@@ -75,9 +78,52 @@ def pars_dict_to_array_multi_phase(pars_dict):
     return pars
 
 
-def save_data_single_phase(idx, pars, state):
-    np.save(f'data/raw_data/training_data/pars/sample_{idx}.npy', pars)
-    np.save(f'data/raw_data/training_data/state/sample_{idx}.npy', state)
+def save_data(
+    idx: int, 
+    pars: np.ndarray, 
+    state: np.ndarray,
+    path: str, 
+    to_oracle: bool =False
+    ):
+
+    pars_path = f'{path}/pars'
+    state_path = f'{path}/state'
+
+    if to_oracle:
+
+        bucket_name = "bucket-20230222-1753"
+
+        # save files locally first
+        np.save(f'pars_sample_{idx}.npy', pars)
+        np.save(f'state_sample_{idx}.npy', state)
+        
+        # upload to oracle
+        object_storage_client = ObjectStorageClientWrapper(bucket_name)
+
+        object_storage_client.put_object(
+            destination_path=f'{pars_path}/sample_{idx}.npy',
+            source_path=f'pars_sample_{idx}.npy'
+        )
+
+        object_storage_client.put_object(
+            destination_path=f'{state_path}/sample_{idx}.npy',
+            source_path=f'state_sample_{idx}.npy'
+        )
+
+        # remove local files
+        os.remove(f'pars_sample_{idx}.npy')
+        os.remove(f'state_sample_{idx}.npy')
+    
+    else:
+
+        # Create directory if it does not exist
+        if not os.path.exists(pars_path):
+            os.makedirs(pars_path)
+        if not os.path.exists(state_path):
+            os.makedirs(state_path)
+
+        np.save(f'{pars_path}/sample_{idx}.npy', pars)
+        np.save(f'{state_path}/sample_{idx}.npy', state)
 
     print('Saved data for sample {}'.format(idx))
 
@@ -87,10 +133,13 @@ def save_data_single_phase(idx, pars, state):
 def simulate_pipeflow(
     PDE_model: BaseModel,
     PDE_args: dict,
+    t_final: float,
     model_parameters: dict = None,
     parameters_of_interest: dict = None,
     phase: str = 'single',
-    idx: int = 0
+    idx: int = 0,
+    train_or_test: str = 'train',
+    to_oracle: bool = False
     ):
 
     steady_state = PDE_args['steady_state']
@@ -107,48 +156,35 @@ def simulate_pipeflow(
 
     init = PDE_model.initial_condition(PDE_model.DG_vars.x.flatten('F'))
 
-    t_final = 5000.
     sol, t_vec = PDE_model.solve(
         t=0, 
         q_init=init, 
         t_final=t_final, 
         steady_state_args=steady_state,
-        print_progress=True
+        print_progress=False
         )
 
     if phase == 'single':
         state = sol_to_state_single_phase(sol, t_vec, PDE_model)
         pars = pars_dict_to_array_single_phase(parameters_of_interest)
 
-        save_data_single_phase(
-            idx=idx,
-            pars=pars,
-            state=state
-        )
-
-
-
-
     elif phase == 'multi':
         state = sol_to_state_multi_phase(sol, t_vec, PDE_model)
         pars = pars_dict_to_array_multi_phase(parameters_of_interest)
         x = np.linspace(PDE_model.DG_vars.x[0, 0], PDE_model.DG_vars.x[-1, -1], 512)
 
-        plt.figure()
-        plt.plot(x, state[-1, :, 50])
-        plt.plot(x, state[-1, :, 150])
-        plt.plot(x, state[-1, :, 200])
-        plt.plot(x, state[-1, :, -1])
-        plt.show()
+    if to_oracle:
+        path = f'{phase}_phase/{train_or_test}'
+    else:
+        path = f'data/{phase}_phase/{train_or_test}'
 
-
-        plt.figure()
-        plt.plot(x, state[0, :, 50])
-        plt.plot(x, state[0, :, 150])
-        plt.plot(x, state[0, :, 200])
-        plt.plot(x, state[0, :, -1])
-        plt.show()
-        pdb.set_trace()
+    save_data(
+        idx=idx,
+        pars=pars,
+        state=state,
+        path=path,
+        to_oracle=to_oracle
+    )
 
     return None
 

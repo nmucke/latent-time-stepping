@@ -3,7 +3,7 @@ basic_args:
     xmax: 2000
     num_elements: 200
     num_states: 2
-    polynomial_order: 4
+    polynomial_order: 3
     polynomial_type: 'legendre'
 
 steady_state:
@@ -23,7 +23,7 @@ stabilizer_args:
 
 time_integrator_args:
     type: 'BDF2'
-    step_size: 0.05
+    step_size: 0.01
     newton_params:
         solver: 'direct'
         max_newton_iter: 200

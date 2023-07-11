@@ -23,7 +23,7 @@ class ObjectStorageClientWrapper:
         config = oci.config.from_file() 
         self.object_storage_client = oci.object_storage.ObjectStorageClient(config)
 
-        self.namespace = object_storage_client.get_namespace().data 
+        self.namespace = self.object_storage_client.get_namespace().data 
 
         self.bucket_name = bucket_name
 
@@ -36,7 +36,7 @@ class ObjectStorageClientWrapper:
         )
 
     def get_object(self, source_path, destination_path):
-        return download_from_object_storage(
+        download_from_object_storage(
             source_path=source_path,
             destination_path=destination_path,
             object_storage_client=self.object_storage_client,

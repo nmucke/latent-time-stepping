@@ -13,13 +13,20 @@ from generate_data_utils import simulate_pipeflow
 from single_phase_PDE import PipeflowEquations as PipeflowEquations_single_phase
 from multi_phase_PDE import PipeflowEquations as PipeflowEquations_multi_phase
 
-TEST_CASE = 'multi_phase_leak'
+TEST_CASE = 'single_phase_leak'
+
+DISTRIBUTED = True
+NUM_CPUS = 25
+
+NUM_SAMPLES = 25
+TRAIN_OR_TEST = 'train'
+
+TO_ORACLE = True
 
 # Load .yml config file
 with open(f'configs/PDEs/{TEST_CASE}.yml', 'r') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
     
-
 if TEST_CASE == 'single_phase_leak':
     model_parameters = {
         'L': 2000,
@@ -56,8 +63,6 @@ elif TEST_CASE == 'multi_phase_leak':
         'leak_location': 500,
     }
 
-
-
 def main():
 
     if TEST_CASE == 'single_phase_leak':
@@ -65,33 +70,64 @@ def main():
     elif TEST_CASE == 'multi_phase_leak':
         pipe_equations = PipeflowEquations_multi_phase
 
-    simulate_pipeflow(
-        PDE_model=pipe_equations,
-        PDE_args=config,
-        model_parameters=model_parameters,
-        parameters_of_interest={
-            'leak_size': 0.1,
-            'leak_location': 5500,
-        },
-        phase='single' if TEST_CASE == 'single_phase_leak' else 'multi',
-        idx=0
-    )
-    pdb.set_trace()
+    if DISTRIBUTED:
+        ray.shutdown()
+        ray.init(num_cpus=NUM_CPUS)
+        simulate_pipeflow_remote = ray.remote(simulate_pipeflow)
+        remote_list = []
 
-        
-    ray.shutdown()
-    ray.get([
-        simulate_pipeflow.remote(
-            leak_location=leak_location,
-            leak_size=leak_size,
-            pipe_DG=pipe_DG,
-            idx=idx
-        ) for (leak_location, leak_size, idx) in 
-        zip(leak_location_vec, leak_size_vec, range(3000, 3000+num_samples))])
+
+    if TEST_CASE == 'single_phase_leak':
+        leak_location_vec = np.random.uniform(10, 1990, NUM_SAMPLES)
+        leak_size_vec = np.random.uniform(0.1, 1.0, NUM_SAMPLES)
+    elif TEST_CASE == 'multi_phase_leak':
+        leak_location_vec = np.random.uniform(0, 10000, NUM_SAMPLES)
+        leak_size_vec = np.random.uniform(0.01, 0.1, NUM_SAMPLES)
+
+
+
+    for idx in range(NUM_SAMPLES):
+
+        if DISTRIBUTED:
+            remote_list.append(simulate_pipeflow_remote.remote(
+                PDE_model=pipe_equations,
+                PDE_args=config,
+                t_final=500.0,
+                model_parameters=model_parameters,
+                parameters_of_interest={
+                    'leak_size': leak_size_vec[idx],
+                    'leak_location': leak_location_vec[idx],
+                },
+                phase='single' if TEST_CASE == 'single_phase_leak' else 'multi',
+                idx=idx,
+                train_or_test=TRAIN_OR_TEST,
+                to_oracle=TO_ORACLE,
+                )
+            )
+
+
+        else:
+            _ = simulate_pipeflow(
+                PDE_model=pipe_equations,
+                PDE_args=config,
+                t_final=500.0,
+                model_parameters=model_parameters,
+                parameters_of_interest={
+                    'leak_size': leak_size_vec[idx],
+                    'leak_location': leak_location_vec[idx],
+                },
+                phase='single' if TEST_CASE == 'single_phase_leak' else 'multi',
+                idx=idx,
+                train_or_test=TRAIN_OR_TEST,
+                to_oracle=TO_ORACLE,
+            )
+    
+    ray.get(remote_list)
+
+    if DISTRIBUTED:
+        ray.shutdown()
+
 
 if __name__ == "__main__":
     
-    #ray.shutdown()
-    #ray.init(num_cpus=25)
     main()
-    #ray.shutdown()
