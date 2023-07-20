@@ -25,7 +25,7 @@ BUCKET_NAME = "bucket-20230222-1753"
 
 LOCAL_LOAD_PATH = f'data/raw_data/training_data'
 LOCAL_SAVE_PATH = f'data/processed_data/{TRAIN_OR_TEST}'
-if LOCAL_OR_ORACLE == 'local':
+if True:# LOCAL_OR_ORACLE == 'local':
     if not os.path.exists(LOCAL_SAVE_PATH):
         os.makedirs(LOCAL_SAVE_PATH)
 
@@ -115,11 +115,14 @@ def main():
 
         object_storage_client.put_object(
             destination_path=f'{ORACLE_SAVE_PATH}/states.pt',
+            source_path=f'{LOCAL_SAVE_PATH}/states.pt',
         )
         object_storage_client.put_object(
             destination_path=f'{ORACLE_SAVE_PATH}/pars.pt',
+            source_path=f'{LOCAL_SAVE_PATH}/pars.pt',
         )
 
+        
     elif LOCAL_OR_ORACLE == 'local':
 
         torch.save(processed_states, f'{LOCAL_SAVE_PATH}/states.pt')
