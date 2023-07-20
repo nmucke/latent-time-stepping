@@ -16,12 +16,14 @@ class AEDataset(torch.utils.data.Dataset):
         preprocessor: Preprocessor = None,
         load_entire_dataset: bool = False,
         num_skip_steps: int = 4,
+        end_time_index: float = None,
         num_samples: int = None,
         ) -> None:
         super().__init__()
 
         self.num_samples = num_samples
         self.num_skip_steps = num_skip_steps
+        self.end_time_index = end_time_index
 
         self.preprocessor = preprocessor
         self.load_entire_dataset = load_entire_dataset
@@ -55,6 +57,11 @@ class AEDataset(torch.utils.data.Dataset):
             source_path=f'{self.oracle_path}/pars/sample_{index}.npy'
         )
 
+        print(state.shape)
+
+        if self.end_time_index is not None:
+            state = state[:, :, :self.end_time_index]
+
         state = state[:, :, 0::self.num_skip_steps]
         
         state = torch.tensor(state, dtype=torch.get_default_dtype())
@@ -66,6 +73,9 @@ class AEDataset(torch.utils.data.Dataset):
 
         state = np.load(f'{self.local_path}/state/sample_{index}.npy')
         pars = np.load(f'{self.local_path}/pars/sample_{index}.npy')
+
+        if self.end_time_index is not None:
+            state = state[:, :, :self.end_time_index]
 
         state = state[:, :, 0::self.num_skip_steps]
 
