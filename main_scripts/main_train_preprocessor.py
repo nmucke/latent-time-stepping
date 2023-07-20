@@ -13,7 +13,7 @@ from latent_time_stepping.preprocessor import Preprocessor
 
 torch.set_default_dtype(torch.float32)
 
-NUM_SAMPLES = 2500
+NUM_SAMPLES = 6000
 NUM_SKIP_STEPS = 5
 END_TIME_INDEX = 25000
 
