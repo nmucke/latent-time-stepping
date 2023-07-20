@@ -13,6 +13,8 @@ from latent_time_stepping.preprocessor import Preprocessor
 
 torch.set_default_dtype(torch.float32)
 
+NUM_SAMPLES = 2500
+
 LOCAL_OR_ORACLE = 'oracle'
 PHASE = 'single'
 TRAIN_OR_TEST = 'train'
@@ -44,13 +46,13 @@ def main():
         dataset = AEDataset(
             oracle_path=ORACLE_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
-            num_samples=5000,
+            num_samples=NUM_SAMPLES,
         )
     else:
         dataset = AEDataset(
             local_path=LOCAL_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
-            num_samples=5000,
+            num_samples=NUM_SAMPLES,
         )
     dataloader = torch.utils.data.DataLoader(
         dataset,
@@ -77,14 +79,14 @@ def main():
         dataset = AEDataset(
             oracle_path=ORACLE_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
-            num_samples=5000,
+            num_samples=NUM_SAMPLES,
             preprocessor=preprocessor,
         )
     else:
         dataset = AEDataset(
             local_path=LOCAL_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
-            num_samples=5000,
+            num_samples=NUM_SAMPLES,
             preprocessor=preprocessor,
         )
     dataloader = torch.utils.data.DataLoader(
