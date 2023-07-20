@@ -15,7 +15,7 @@ torch.set_default_dtype(torch.float32)
 
 NUM_SAMPLES = 2500
 
-LOCAL_OR_ORACLE = 'oracle'
+LOCAL_OR_ORACLE = 'local'
 PHASE = 'single'
 TRAIN_OR_TEST = 'train'
 
@@ -103,9 +103,9 @@ def main():
     for i, (state, pars) in pbar:
         processed_states.append(state)
         processed_pars.append(pars)
-    
-    processed_states = torch.stack(processed_states)
-    processed_pars = torch.stack(processed_pars)
+        
+    processed_states = torch.cat(processed_states, dim=0)
+    processed_pars = torch.cat(processed_pars, dim=0)
 
     torch.save(processed_states, f'{LOCAL_SAVE_PATH}/states.pt')
     torch.save(processed_pars, f'{LOCAL_SAVE_PATH}/pars.pt')
