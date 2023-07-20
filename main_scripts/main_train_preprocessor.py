@@ -14,13 +14,15 @@ from latent_time_stepping.preprocessor import Preprocessor
 torch.set_default_dtype(torch.float32)
 
 NUM_SAMPLES = 2500
+NUM_SKIP_STEPS = 5
 END_TIME_INDEX = 25000
 
 LOCAL_OR_ORACLE = 'oracle'
-PHASE = 'single'
+PHASE = 'multi'
 TRAIN_OR_TEST = 'train'
 
-NUM_SKIP_STEPS = 4
+NUM_WORKERS = 64
+BATCH_SIZE = 40
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/{TRAIN_OR_TEST}'
 ORACLE_SAVE_PATH = f'{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
@@ -39,6 +41,11 @@ if not os.path.exists(TRAINED_PREPROCESSOR_SAVE_PATH):
     os.makedirs(TRAINED_PREPROCESSOR_SAVE_PATH)
 
 TRAINED_PREPROCESSOR_SAVE_PATH += '/single_phase_preprocessor.pt'
+
+if PHASE == 'single':
+    NUM_STATES = 2
+elif PHASE == 'multi':
+    NUM_STATES = 3
 
 def main():
 
@@ -59,12 +66,12 @@ def main():
         )
     dataloader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=32,
+        batch_size=BATCH_SIZE,
         shuffle=False,
-        num_workers=32,
+        num_workers=NUM_WORKERS,
     )
 
-    preprocessor = Preprocessor(num_states=2, num_pars=2)
+    preprocessor = Preprocessor(num_states=NUM_STATES, num_pars=2)
 
     # Fit the preprocessor
     pbar = tqdm(enumerate(dataloader), total=len(dataloader))
@@ -96,9 +103,9 @@ def main():
         )
     dataloader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=32,
+        batch_size=BATCH_SIZE,
         shuffle=False,
-        num_workers=32,
+        num_workers=NUM_WORKERS,
     )
 
     # Transform the data
