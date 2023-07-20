@@ -12,7 +12,7 @@ from latent_time_stepping.AE_models.encoder_decoder import (
     Decoder, 
     Encoder
 )
-from latent_time_stepping.datasets.AE_dataset import get_AE_dataloader
+from latent_time_stepping.datasets.AE_dataset import AEDataset, get_AE_dataloader
 from latent_time_stepping.AE_training.optimizers import Optimizer
 from latent_time_stepping.AE_training.train_steppers import (
     AETrainStepper, 
@@ -26,21 +26,27 @@ torch.set_default_dtype(torch.float32)
 MODEL_TYPE = "WAE"
 CUDA = True
 
-FROM_ORACLE = False
+PHASE = "single"
+
+ORACLE_PATH = None#f'{PHASE}_phase/train'
+
+dataset = AEDataset(
+    oracle_path=ORACLE_PATH,
+    include_time=True,
+    num_skip_steps=4,
+)
+
 STATE_PATH = 'data/processed_data/training_data/states.pt'
 PARS_PATH = 'data/processed_data/training_data/pars.pt'
 
 TRAIN_SAMPLE_IDS = range(300)
 VAL_SAMPLE_IDS = range(300, 400)
 
-
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{MODEL_TYPE}"
-
 
 config_path = f"configs/{MODEL_TYPE}.yml"
 with open(config_path) as f:
     config = yaml.load(f, Loader=SafeLoader)
-
 
 BUCKET_NAME = "bucket-20230222-1753"
 

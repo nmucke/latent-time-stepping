@@ -17,12 +17,12 @@ from multi_phase_PDE import PipeflowEquations as PipeflowEquations_multi_phase
 TEST_CASE = 'multi_phase_leak'
 
 DISTRIBUTED = True
-NUM_CPUS = 60
+NUM_CPUS = 10
 
-NUM_SAMPLES = 5000
-TRAIN_OR_TEST = 'train'
+NUM_SAMPLES = 10
+TRAIN_OR_TEST = 'test'
 
-TO_ORACLE = True
+TO_ORACLE = False
 
 # Load .yml config file
 with open(f'configs/PDEs/{TEST_CASE}.yml', 'r') as f:

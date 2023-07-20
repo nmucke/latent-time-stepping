@@ -49,8 +49,6 @@ class PipeflowEquations(BaseModel):
             l[i] = JacobiP(np.array([rl]), 0, 0, i)
         self.lagrange = np.linalg.solve(np.transpose(self.DG_vars.V), l)    
 
-
-
     def density_to_pressure(self, rho):
         """Compute the pressure from the density."""
         return self.c**2*(rho - self.rho_ref) + self.p_ref

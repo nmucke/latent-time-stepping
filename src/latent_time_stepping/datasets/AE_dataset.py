@@ -1,100 +1,114 @@
+import numpy as np
 import torch
 import pdb
 import matplotlib.pyplot as plt
+
+from latent_time_stepping.oracle.oracle import ObjectStorageClientWrapper
+from latent_time_stepping.preprocessor import Preprocessor
 
 class AEDataset(torch.utils.data.Dataset):
     """Dataset"""
 
     def __init__(
         self,
-        state: torch.Tensor,
-        pars: torch.Tensor,
-        include_time: bool = False,
+        local_path: str = None,
+        oracle_path: str = None,
+        preprocessor: Preprocessor = None,
+        load_entire_dataset: bool = False,
         num_skip_steps: int = 4,
+        num_samples: int = None,
         ) -> None:
         super().__init__()
 
+        self.num_samples = num_samples
         self.num_skip_steps = num_skip_steps
 
-        self.state = state
-        self.pars = pars
-        self.include_time = include_time
+        self.preprocessor = preprocessor
+        self.load_entire_dataset = load_entire_dataset
 
-        self.state = self.state.to(torch.get_default_dtype())
-        self.pars = self.pars.to(torch.get_default_dtype())
+        self.oracle_path = oracle_path
+        self.local_path = local_path
 
-        self._prepare_state_and_pars()
+        if oracle_path is not None:
+            bucket_name = "bucket-20230222-1753"
 
+            self.oracle_path = oracle_path
+            self.object_storage_client = ObjectStorageClientWrapper(bucket_name)
 
-    def _prepare_state_and_pars(self,):
-        self.state = self.state[:, : , :, 0::self.num_skip_steps]
+        elif local_path is not None:
+            self.local_path = local_path
 
-        if self.include_time:
-            self.time = torch.linspace(
-                0,
-                1000,
-                self.state.shape[-1],
-            )
-
-            self.time = self.time.unsqueeze(0)
-            self.time = self.time.repeat(self.state.shape[0], 1)
-            self.time = self.time.flatten()
-
-        self.state = self.state.transpose(2, 3)
-        self.state = self.state.transpose(1, 2)
-
-        self.pars = self.pars.unsqueeze(1)
-        self.pars = self.pars.repeat(1, self.state.shape[1], 1)
-        self.pars = self.pars.reshape(
-            -1,
-            self.pars.shape[-1],
-            )
-
-        self.state = self.state.reshape(
-            -1,
-            self.state.shape[2],
-            self.state.shape[3],
-            )
+        if self.load_entire_dataset:
+            self._load_entire_dataset()
+    
 
     def __len__(self) -> int:
-        return self.pars.shape[0]
+        return self.num_samples
+
+    def _get_oracle_data_sample(self, index: int):
+        
+        state = self.object_storage_client.get_object(
+            source_path=f'{self.oracle_path}/state/sample_{index}.npy'
+        )
+        
+        pars = self.object_storage_client.get_object(
+            source_path=f'{self.oracle_path}/pars/sample_{index}.npy'
+        )
+
+        state = state[:, :, 0::self.num_skip_steps]
+        
+        state = torch.tensor(state, dtype=torch.get_default_dtype())
+        pars = torch.tensor(pars, dtype=torch.get_default_dtype())
+
+        return state, pars
+    
+    def _get_local_data_sample(self, index: int):                                                      
+
+        state = np.load(f'{self.local_path}/state/sample_{index}.npy')
+        pars = np.load(f'{self.local_path}/pars/sample_{index}.npy')
+
+        state = state[:, :, 0::self.num_skip_steps]
+
+        state = torch.tensor(state, dtype=torch.get_default_dtype())
+        pars = torch.tensor(pars, dtype=torch.get_default_dtype())
+
+        return state, pars
+    
+    def _load_entire_dataset(self,):
+
+
+        if self.oracle_path is not None:
+            self.state = self.object_storage_client.get_object(
+                source_path=f'{self.oracle_path}/state.pt'
+            )
+            self.pars = self.object_storage_client.get_object(
+                source_path=f'{self.oracle_path}/pars.pt'
+            )
+
+        elif self.local_path is not None:
+            self.state = torch.load(
+                f'{self.local_path}/state.pt'
+            ).to(torch.get_default_dtype())
+
+            self.pars = torch.load(
+                f'{self.local_path}/pars.pt'
+            ).to(torch.get_default_dtype())
 
     def __getitem__(self, index: int) -> torch.Tensor:
-
-        state = self.state[index]
-
-        pars = self.pars[index]
-
-        if self.include_time:
-            time = self.time[index]
-            return state, pars, time
             
+        if self.load_entire_dataset:
+            state = self.state[index]
+            pars = self.pars[index]
+
         else:
-            return state, pars, 0
+            if self.oracle_path is not None:
+                state, pars = self._get_oracle_data_sample(index)
 
-def get_AE_dataloader(
-    state: torch.Tensor,
-    pars: torch.Tensor,
-    batch_size: int,
-    shuffle: bool,
-    num_workers: int,
-    include_time: bool,
-    num_skip_steps: int = 4,
-    ) -> torch.utils.data.DataLoader:
-    """Get the dataloader for the autoencoder."""
+            else:
+                state, pars = self._get_local_data_sample(index)
 
-    dataset = AEDataset(
-        state=state,
-        pars=pars,
-        include_time=include_time,
-        num_skip_steps=num_skip_steps,
-        )
+        if self.preprocessor is not None:
+            state = self.preprocessor.transform_state(state)
+            pars = self.preprocessor.transform_pars(pars)
 
-    dataloader = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=shuffle,
-        num_workers=num_workers,
-        )
-
-    return dataloader
+        return state, pars

@@ -1,3 +1,4 @@
+import pdb
 import torch
 import torch.nn as nn
 
@@ -11,16 +12,16 @@ class Preprocessor(nn.Module):
         self.pars_max = [-1e12 for _ in range(num_pars)]
 
     def partial_fit_state(self, state):
-        
-        for i in range(state.shape[0]):
-            self.state_min[i] = min(self.state_min[i], state[i].min())
-            self.state_max[i] = max(self.state_max[i], state[i].max())
+
+        for i in range(state.shape[1]):
+            self.state_min[i] = min(self.state_min[i], state[:, i].min())
+            self.state_max[i] = max(self.state_max[i], state[:, i].max())
     
     def partial_fit_pars(self, pars):
 
-        for i in range(pars.shape[0]):
-            self.pars_min[i] = min(self.pars_min[i], pars[i].min())
-            self.pars_max[i] = max(self.pars_max[i], pars[i].max())
+        for i in range(pars.shape[1]):
+            self.pars_min[i] = min(self.pars_min[i], pars[:, i].min())
+            self.pars_max[i] = max(self.pars_max[i], pars[:, i].max())
 
     def transform_state(self, state, ensemble=False):
         """Transform the state to be between 0 and 1."""
