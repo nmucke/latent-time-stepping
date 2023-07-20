@@ -1,4 +1,5 @@
 
+from typing import Any, Mapping
 import torch
 from torch import nn
 import pdb
@@ -30,6 +31,11 @@ class Autoencoder(nn.Module):
         """Forward pass"""
         return self.decoder(z)
     
+    def load_state_dict(self, state_dict: dict) -> None:
+        self.encoder.load_state_dict(state_dict['encoder'])
+        self.decoder.load_state_dict(state_dict['decoder'])
+        
+
     @property
     def device(self):
         return next(self.parameters()).device.type

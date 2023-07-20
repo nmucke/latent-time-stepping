@@ -53,6 +53,13 @@ class Optimizer():
             patience=5,
             verbose=True,
         )
+
+    def load_state_dict(self, state_dict: dict) -> None:
+        self.encoder.load_state_dict(state_dict['encoder'])
+        self.decoder.load_state_dict(state_dict['decoder'])
+
+        self.encoder_scheduler.load_state_dict(state_dict['encoder_scheduler'])
+        self.decoder_scheduler.load_state_dict(state_dict['decoder_scheduler'])
     
     def zero_grad(self) -> None:
         self.encoder.zero_grad()

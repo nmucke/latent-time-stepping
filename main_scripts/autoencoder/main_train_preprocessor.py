@@ -10,10 +10,13 @@ from latent_time_stepping.datasets.AE_dataset import AEDataset
 from latent_time_stepping.oracle.oracle import ObjectStorageClientWrapper
 
 from latent_time_stepping.preprocessor import Preprocessor
+from latent_time_stepping.utils import create_directory
 
 torch.set_default_dtype(torch.float32)
 
 NUM_SAMPLES = 2500
+SAMPLE_IDS = range(NUM_SAMPLES)
+
 NUM_SKIP_STEPS = 5
 END_TIME_INDEX = 25000
 
@@ -30,15 +33,10 @@ BUCKET_NAME = "bucket-20230222-1753"
 
 LOCAL_LOAD_PATH = f'data/raw_data/training_data'
 LOCAL_SAVE_PATH = f'data/processed_data/{TRAIN_OR_TEST}'
-if True:# LOCAL_OR_ORACLE == 'local':
-    if not os.path.exists(LOCAL_SAVE_PATH):
-        os.makedirs(LOCAL_SAVE_PATH)
+create_directory(LOCAL_SAVE_PATH)
 
 TRAINED_PREPROCESSOR_SAVE_PATH = 'trained_preprocessors'
-
-# Check if path exists
-if not os.path.exists(TRAINED_PREPROCESSOR_SAVE_PATH):
-    os.makedirs(TRAINED_PREPROCESSOR_SAVE_PATH)
+create_directory(TRAINED_PREPROCESSOR_SAVE_PATH)
 
 TRAINED_PREPROCESSOR_SAVE_PATH += '/single_phase_preprocessor.pt'
 
@@ -54,14 +52,14 @@ def main():
         dataset = AEDataset(
             oracle_path=ORACLE_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
-            num_samples=NUM_SAMPLES,
+            sample_ids=SAMPLE_IDS,
             end_time_index=END_TIME_INDEX,
         )
     else:
         dataset = AEDataset(
             local_path=LOCAL_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
-            num_samples=NUM_SAMPLES,
+            sample_ids=SAMPLE_IDS,
             end_time_index=END_TIME_INDEX,
         )
     dataloader = torch.utils.data.DataLoader(
@@ -82,14 +80,13 @@ def main():
     # Save the preprocessor   
     torch.save(preprocessor, TRAINED_PREPROCESSOR_SAVE_PATH)
 
-
     ############### Save processed data #####################
 
     if LOCAL_OR_ORACLE == 'oracle':
         dataset = AEDataset(
             oracle_path=ORACLE_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
-            num_samples=NUM_SAMPLES,
+            sample_ids=SAMPLE_IDS,
             end_time_index=END_TIME_INDEX,
             preprocessor=preprocessor,
         )
@@ -97,7 +94,7 @@ def main():
         dataset = AEDataset(
             local_path=LOCAL_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
-            num_samples=NUM_SAMPLES,
+            sample_ids=SAMPLE_IDS,
             end_time_index=END_TIME_INDEX,
             preprocessor=preprocessor,
         )
@@ -122,17 +119,6 @@ def main():
     processed_states = processed_states.numpy()
     processed_pars = processed_pars.numpy()
 
-    np.savez_compressed(
-        f'{LOCAL_SAVE_PATH}/states.npz',
-        processed_states,
-    )
-    np.savez_compressed(
-        f'{LOCAL_SAVE_PATH}/pars.npz',
-        processed_pars,
-    )
-
-    #torch.save(processed_states, f'{LOCAL_SAVE_PATH}/states.pt')
-    #torch.save(processed_pars, f'{LOCAL_SAVE_PATH}/pars.pt')
 
     # Save the processed data
     if LOCAL_OR_ORACLE == 'oracle':
@@ -140,20 +126,24 @@ def main():
         object_storage_client = ObjectStorageClientWrapper(BUCKET_NAME)
 
         object_storage_client.put_object(
+            data=processed_states,
             destination_path=f'{ORACLE_SAVE_PATH}/states.npz',
-            source_path=f'{LOCAL_SAVE_PATH}/states.npz',
         )
         object_storage_client.put_object(
+            data=processed_pars,
             destination_path=f'{ORACLE_SAVE_PATH}/pars.npz',
-            source_path=f'{LOCAL_SAVE_PATH}/pars.npz',
         )
 
-    '''
     elif LOCAL_OR_ORACLE == 'local':
 
-        torch.save(processed_states, f'{LOCAL_SAVE_PATH}/states.pt')
-        torch.save(processed_pars, f'{LOCAL_SAVE_PATH}/pars.pt')
-    '''
+        np.savez_compressed(
+            f'{LOCAL_SAVE_PATH}/states.npz',
+            data=processed_states
+        )
+        np.savez_compressed(
+            f'{LOCAL_SAVE_PATH}/pars.npz',
+            data=processed_pars,
+    )
 
 if __name__ == "__main__":
     

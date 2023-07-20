@@ -29,6 +29,7 @@ def upload_to_object_storage(
     with open(source_path, "rb") as in_file: 
         object_storage_client.put_object(namespace,bucket_name,destination_path,in_file) 
 
+
 def download_from_object_storage(
     source_path,
     destination_path,
@@ -54,18 +55,29 @@ class ObjectStorageClientWrapper:
 
         self.fs = ocifs.OCIFileSystem(config)
 
-    def put_object(self, destination_path, source_path):
+    def put_object(self, data, destination_path): #, source_path):
+
+        with self.fs.open(f'{self.bucket_name}@{self.namespace}/{destination_path}', 'wb') as f:
+            if destination_path[-3:] == 'npz':
+                np.savez_compressed(f, data=data)
+            else:
+                np.save(f, data)
+
+        '''
         upload_to_object_storage(
             source_path=source_path,
             destination_path=destination_path,
             object_storage_client=self.object_storage_client,
             namespace=self.namespace
         )
+        '''
 
     def get_object(self, source_path):
 
         with self.fs.open(f'{self.bucket_name}@{self.namespace}/{source_path}', 'rb') as f:
             data = np.load(f)
+            if source_path[-3:] == 'npz':
+                data=data['data']
 
         return data
 

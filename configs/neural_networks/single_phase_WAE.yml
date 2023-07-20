@@ -2,8 +2,6 @@ dataloader_args:
   batch_size: 64
   shuffle: True
   num_workers: 1
-  include_time: True
-  num_skip_steps: 4
   
 model_args:
   encoder:
