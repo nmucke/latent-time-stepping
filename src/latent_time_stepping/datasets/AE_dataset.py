@@ -61,6 +61,9 @@ class AEDataset(torch.utils.data.Dataset):
             state = state[:, :, :self.end_time_index]
 
         state = state[:, :, 0::self.num_skip_steps]
+
+        #state = state.astype('float32')
+        #pars = pars.astype('float32')                                                   
         
         state = torch.tensor(state, dtype=torch.get_default_dtype())
         pars = torch.tensor(pars, dtype=torch.get_default_dtype())

@@ -13,12 +13,12 @@ from latent_time_stepping.preprocessor import Preprocessor
 
 torch.set_default_dtype(torch.float32)
 
-NUM_SAMPLES = 6000
+NUM_SAMPLES = 2500
 NUM_SKIP_STEPS = 5
 END_TIME_INDEX = 25000
 
-LOCAL_OR_ORACLE = 'oracle'
-PHASE = 'multi'
+LOCAL_OR_ORACLE = 'local'
+PHASE = 'single'
 TRAIN_OR_TEST = 'train'
 
 NUM_WORKERS = 64
@@ -119,8 +119,20 @@ def main():
     processed_states = torch.cat(processed_states, dim=0)
     processed_pars = torch.cat(processed_pars, dim=0)
 
-    torch.save(processed_states, f'{LOCAL_SAVE_PATH}/states.pt')
-    torch.save(processed_pars, f'{LOCAL_SAVE_PATH}/pars.pt')
+    processed_states = processed_states.numpy()
+    processed_pars = processed_pars.numpy()
+
+    np.savez_compressed(
+        f'{LOCAL_SAVE_PATH}/states.npz',
+        processed_states,
+    )
+    np.savez_compressed(
+        f'{LOCAL_SAVE_PATH}/pars.npz',
+        processed_pars,
+    )
+
+    #torch.save(processed_states, f'{LOCAL_SAVE_PATH}/states.pt')
+    #torch.save(processed_pars, f'{LOCAL_SAVE_PATH}/pars.pt')
 
     # Save the processed data
     if LOCAL_OR_ORACLE == 'oracle':
@@ -128,20 +140,20 @@ def main():
         object_storage_client = ObjectStorageClientWrapper(BUCKET_NAME)
 
         object_storage_client.put_object(
-            destination_path=f'{ORACLE_SAVE_PATH}/states.pt',
-            source_path=f'{LOCAL_SAVE_PATH}/states.pt',
+            destination_path=f'{ORACLE_SAVE_PATH}/states.npz',
+            source_path=f'{LOCAL_SAVE_PATH}/states.npz',
         )
         object_storage_client.put_object(
-            destination_path=f'{ORACLE_SAVE_PATH}/pars.pt',
-            source_path=f'{LOCAL_SAVE_PATH}/pars.pt',
+            destination_path=f'{ORACLE_SAVE_PATH}/pars.npz',
+            source_path=f'{LOCAL_SAVE_PATH}/pars.npz',
         )
 
-        
+    '''
     elif LOCAL_OR_ORACLE == 'local':
 
         torch.save(processed_states, f'{LOCAL_SAVE_PATH}/states.pt')
         torch.save(processed_pars, f'{LOCAL_SAVE_PATH}/pars.pt')
-    
+    '''
 
 if __name__ == "__main__":
     
