@@ -57,7 +57,6 @@ class AEDataset(torch.utils.data.Dataset):
             source_path=f'{self.oracle_path}/pars/sample_{index}.npy'
         )
 
-        print(state.shape)
 
         if self.end_time_index is not None:
             state = state[:, :, :self.end_time_index]
