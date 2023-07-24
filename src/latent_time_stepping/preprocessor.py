@@ -25,7 +25,6 @@ class Preprocessor(nn.Module):
 
     def transform_state(self, state, ensemble=False):
         """Transform the state to be between 0 and 1."""
-
         if ensemble:
             for i in range(state.shape[1]):
                 state[:, i] = (state[:, i] - self.state_min[i])/(self.state_max[i] - self.state_min[i])

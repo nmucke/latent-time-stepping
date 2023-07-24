@@ -11,18 +11,18 @@ import yaml
 from matplotlib.animation import FuncAnimation
 import ray
 from generate_data_utils import simulate_pipeflow
-from single_phase_PDE import PipeflowEquations as PipeflowEquations_single_phase
-from multi_phase_PDE import PipeflowEquations as PipeflowEquations_multi_phase
+from single_phase_PDE import PipeflowEquations as PipeflowEquationsSinglePhase
+from multi_phase_PDE import PipeflowEquations as PipeflowEquationsMultiPhase
 
 TEST_CASE = 'multi_phase_leak'
 
 DISTRIBUTED = True
-NUM_CPUS = 10
+NUM_CPUS = 30
 
-NUM_SAMPLES = 10
+NUM_SAMPLES = 100
 TRAIN_OR_TEST = 'test'
 
-TO_ORACLE = False
+TO_ORACLE = True
 
 # Load .yml config file
 with open(f'configs/PDEs/{TEST_CASE}.yml', 'r') as f:
@@ -66,12 +66,10 @@ elif TEST_CASE == 'multi_phase_leak':
 
 def main():
 
-
-
     if TEST_CASE == 'single_phase_leak':
-        pipe_equations = PipeflowEquations_single_phase
+        pipe_equations = PipeflowEquationsSinglePhase
     elif TEST_CASE == 'multi_phase_leak':
-        pipe_equations = PipeflowEquations_multi_phase
+        pipe_equations = PipeflowEquationsMultiPhase
 
     if DISTRIBUTED:
         ray.shutdown()

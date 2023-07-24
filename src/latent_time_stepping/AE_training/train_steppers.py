@@ -63,7 +63,7 @@ class BaseAETrainStepper():
                 'model_state_dict': model_save_dict,
                 'optimizer_state_dict': optimizer_save_dict,
             },
-            self.model_save_path,
+            f'{self.model_save_path}/model.pt',
         )
 
         # save best loss to file
@@ -79,11 +79,11 @@ class BaseAETrainStepper():
     
     def end_epoch(self) -> None:
         
-        self.optimizer.step_scheduler(self.val_loss)
+        self.optimizer.step_scheduler(self.val_loss['recon'])
 
-        if self.val_loss['recon_loss'] < self.best_loss:
-            self.best_loss = self.val_loss
-            self._save_model(self.model_save_path, self.val_loss)
+        if self.val_loss['recon'] < self.best_loss:
+            self.best_loss = self.val_loss['recon']
+            self._save_model()
         
         self._reset_loss()
 
@@ -105,7 +105,6 @@ class WAETrainStepper(BaseAETrainStepper):
         model_save_path: str,
         latent_loss_regu: float = 1.0,
         consistency_loss_regu: float = None,
-        include_time: bool = False,
     ) -> None:
         
         super().__init__(model, optimizer, model_save_path)
@@ -113,10 +112,9 @@ class WAETrainStepper(BaseAETrainStepper):
         self.latent_loss_regu = latent_loss_regu
         self.consistency_loss_regu = consistency_loss_regu
 
-        self.include_time = include_time
-            
         self.reconstruction_loss = 0.0
         self.latent_distribution_loss = 0.0
+        self.consistency_loss = 0.0
 
         self.recon_loss = torch.nn.MSELoss()
 
@@ -161,6 +159,9 @@ class WAETrainStepper(BaseAETrainStepper):
         self,
         latent_state: torch.Tensor,
         ) -> torch.Tensor:
+
+        latent_state = latent_state.permute(0, 2, 1)
+        latent_state = latent_state.reshape(-1, latent_state.shape[-1])
 
         z = self._sample_prior(latent_state)
 
@@ -227,6 +228,8 @@ class WAETrainStepper(BaseAETrainStepper):
         pars: torch.Tensor,
         ) -> None:
 
+        self.counter += 1
+
         state = state.to(self.device)
         pars = pars.to(self.device)
 
@@ -255,20 +258,29 @@ class WAETrainStepper(BaseAETrainStepper):
             consistency_loss = \
                 self._latent_consistency_loss_function(latent_state, latent_pred)
             loss += self.consistency_loss_regu * consistency_loss
+            
+            self.consistency_loss += consistency_loss.item()
+            self.consistency_loss += consistency_loss/self.counter
+            self.consistency_loss = consistency_loss.item()
+        
+        else:
+            self.consistency_loss = None
 
         loss.backward()
         self.optimizer.step()
 
+        # chheck if loss is NaN
+
         self.reconstruction_loss += reconstruction_loss.item()
         self.latent_distribution_loss += latent_distribution_loss.item()
-        self.consistency_loss += consistency_loss.item()
-        self.counter += 1
-        
-        return {
+
+        output = {
             'recon': self.reconstruction_loss/self.counter,
             'latent': self.latent_distribution_loss/self.counter,
-            'consistency': self.consistency_loss/self.counter,
+            'consistency': self.consistency_loss,
         }
+        
+        return output
 
     def val_step(
         self,

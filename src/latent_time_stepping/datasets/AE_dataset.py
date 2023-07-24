@@ -3,7 +3,7 @@ import torch
 import pdb
 import matplotlib.pyplot as plt
 
-from latent_time_stepping.oracle.oracle import ObjectStorageClientWrapper
+from latent_time_stepping.oracle import ObjectStorageClientWrapper
 from latent_time_stepping.preprocessor import Preprocessor
 
 class AEDataset(torch.utils.data.Dataset):
@@ -106,7 +106,7 @@ class AEDataset(torch.utils.data.Dataset):
             )['data'][self.sample_ids]
             
         self.state = torch.tensor(self.state, dtype=torch.get_default_dtype())
-        self.pars = torch.tensor(self.pars, dtype=torch.get_default_dtype())        
+        self.pars = torch.tensor(self.pars, dtype=torch.get_default_dtype())   
 
     def __getitem__(self, index: int) -> torch.Tensor:        
             

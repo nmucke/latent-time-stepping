@@ -11,11 +11,11 @@ class Autoencoder(nn.Module):
 
     def __init__(
         self,
-        encoder: nn.Module,
-        decoder: nn.Module,
+        encoder: nn.Module = None,
+        decoder: nn.Module = None,
         ):
         super().__init__()
-
+        
         self.encoder = encoder
         self.decoder = decoder
     
@@ -23,9 +23,9 @@ class Autoencoder(nn.Module):
         """Encode"""
         return self.encoder(x)
     
-    def decode(self, x):
+    def decode(self, x, pars=None):
         """Decode"""
-        return self.decoder(x)
+        return self.decoder(x, pars)
             
     def forward(self, z):
         """Forward pass"""

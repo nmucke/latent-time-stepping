@@ -1,3 +1,4 @@
+import pdb
 from pickletools import optimize
 import numpy as np
 import torch
@@ -41,7 +42,7 @@ class Optimizer():
         self.encoder_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             self.encoder,
             mode='min',
-            factor=0.9,
+            factor=0.95,
             patience=5,
             verbose=True,
         )

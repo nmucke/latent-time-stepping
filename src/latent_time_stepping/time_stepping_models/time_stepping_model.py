@@ -1,5 +1,6 @@
 import math
 import pdb
+from typing import Any, Mapping
 import torch
 import torch.nn as nn
 from latent_time_stepping.time_stepping_models.parameter_encoder import ParameterEncoder
@@ -150,6 +151,8 @@ class TimeSteppingModel(nn.Module):
         pars: torch.Tensor,
         output_seq_len: int,
         ) -> torch.Tensor:
+
+        input = input.permute(0, 2, 1)
         
         pars = self.encode_pars(pars)
 
@@ -164,9 +167,13 @@ class TimeSteppingModel(nn.Module):
             #x = out[:, -1:] + x
 
             out = torch.cat([out, x], dim=1)
+        
+        out = out[:, -output_seq_len:]
+        
+        out = out.permute(0, 2, 1)
 
-        return out[:, -output_seq_len:]
-
+        return out
+    
     def masked_prediction(
         self,
         input: torch.Tensor,
@@ -174,6 +181,8 @@ class TimeSteppingModel(nn.Module):
         pars: torch.Tensor,
         ) -> torch.Tensor:
 
+        input = input.permute(0, 2, 1)
+        output = output.permute(0, 2, 1)
 
         input_seq_len = input.shape[1]
         output_seq_len = output.shape[1]
@@ -201,6 +210,7 @@ class TimeSteppingModel(nn.Module):
         out = out[:, -output_seq_len:]
 
         #out = x[:, -input_seq_len:] + out[:, -input_seq_len:]
+        out = out.permute(0, 2, 1)
 
         return out
 

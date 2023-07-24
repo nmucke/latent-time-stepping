@@ -1,0 +1,42 @@
+dataset_args:
+  input_seq_len: 16
+  output_seq_len: 32
+
+dataloader_args:
+  batch_size: 1024
+  shuffle: True
+  num_workers: 4
+  
+model_args:
+  parameter_encoder_args: 
+    embed_dim: 16
+    num_heads: 2
+    embed_hidden_dim: 32
+    num_layers: 2
+    pars_dim: 2
+  time_stepping_decoder:
+    latent_dim: 16
+    embed_dim: 16
+    num_heads: 4
+    embed_hidden_dim: 32
+    num_layers: 4
+    input_seq_len: 16
+    output_seq_len: 32
+
+optimizer_args:
+  learning_rate: 7.5e-4
+  weight_decay: 1.0e-6
+  scheduler_args:
+    warmup: 25
+    max_iters: 400
+
+train_stepper_args:
+  teacher_forcing_ratio: 1.0
+  teacher_forcing_ratio_reduction: 0.95
+  teacher_forcing_ratio_reduction_freq: 5
+  mixed_precision: True
+
+train_args:
+  num_epochs: 400
+  patience: 25
+

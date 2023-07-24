@@ -490,6 +490,22 @@ class Encoder(nn.Module):
         )
         '''
 
+    def _reshape_input(
+        self, 
+        x: torch.Tensor,
+        batch_size: int,
+        num_states: int,
+        num_x: int,
+        num_time_steps: int,        
+        ) -> torch.Tensor:
+
+
+        x = x.permute(0, 3, 1, 2)
+        x = x.reshape(batch_size*num_time_steps, num_states, num_x)
+
+        return x
+
+
     def forward(self, x):
         '''
         for (conv, down, batch_norm) in zip(self.conv_list, self.down, self.batchnorm_list):
@@ -510,6 +526,13 @@ class Encoder(nn.Module):
         x = self.fc1(x)
         '''
         
+        batch_size = x.shape[0]
+        num_states = x.shape[1]
+        num_x = x.shape[2]
+        num_time_steps = x.shape[3]
+
+        x = self._reshape_input(x, batch_size, num_states, num_x, num_time_steps)
+
         for (resnet_block, down_sample) in zip(self.resnet_blocks, self.down_sample):
             x = resnet_block(x)
             x = self.activation(x)
@@ -522,6 +545,9 @@ class Encoder(nn.Module):
             x = self.activation(x)
         
         x = self.final_dense_layers(x)
+        
+        x = x.reshape(batch_size, num_time_steps, self.latent_dim)
+        x = x.permute(0, 2, 1)
 
         return x
 
@@ -531,6 +557,7 @@ class Decoder(nn.Module):
         self,
         num_channels: list = None,
         kernel_size: list = None,
+        num_states: int = 2,
         latent_dim: int = 16,
         pars_dim: int = 2,    
         ):
@@ -540,7 +567,7 @@ class Decoder(nn.Module):
         init_dim = 4
         
         if num_channels is None:
-            num_channels = [128, 64, 32, 2]
+            num_channels = [128, 64, 32, num_states]
         self.num_channels = num_channels
 
         if kernel_size is None:
@@ -749,6 +776,19 @@ class Decoder(nn.Module):
         )
         '''
 
+    def _reshape_input(
+        self,
+        x: torch.Tensor,
+        batch_size: int,
+        latent_dim: int,
+        num_time_steps: int,
+    ) -> torch.Tensor:
+
+        x = x.permute(0, 2, 1)
+        x = x.reshape(batch_size*num_time_steps, latent_dim)
+
+        return x
+
     def forward(self, x, pars):
         '''
         pars = self.pars_encoder(pars)
@@ -783,11 +823,20 @@ class Decoder(nn.Module):
         x = self.output_conv(x)
         '''
 
+        batch_size = x.shape[0]
+        latent_dim = x.shape[1]
+        num_time_steps = x.shape[2]
+
+        x = self._reshape_input(x, batch_size, latent_dim, num_time_steps)
+
+
         pars = self.pars_embed_1(pars)
         pars = self.activation(pars)
         pars = self.pars_embed_2(pars)
         pars = self.activation(pars)
         pars = self.pars_unflatten(pars)
+        
+        pars = pars.tile((num_time_steps, 1, 1))
 
         x = self.init_dense_layer(x)
         x = self.activation(x)
@@ -806,4 +855,8 @@ class Decoder(nn.Module):
 
         x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
         x = self.final_conv(x)
+
+        x = x.reshape(batch_size, num_time_steps, self.num_channels[-1], x.shape[-1])
+        x = x.permute(0, 2, 3, 1)
+        
         return x

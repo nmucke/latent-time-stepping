@@ -11,7 +11,7 @@ import yaml
 from matplotlib.animation import FuncAnimation
 import ray
 
-from latent_time_stepping.oracle.oracle import ObjectStorageClientWrapper
+from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
 from single_phase_PDE import PipeflowEquations
 

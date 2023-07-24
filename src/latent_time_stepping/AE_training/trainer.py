@@ -42,22 +42,24 @@ def train(
             pbar = enumerate(train_dataloader)
 
         
-        ########## Start epoch ##########
+        #################### Start epoch ####################
+
         train_stepper.start_epoch()
 
         # Train
         for i, (state, pars) in pbar:
             loss = train_stepper.train_step(state, pars)
 
-            if i % 100 == 0:
+            if i % 10 == 0:
                 pbar.set_postfix(loss)
         
         # Validate
-        for i, (state, pars, t) in enumerate(val_dataloader):
+        for i, (state, pars) in enumerate(val_dataloader):
             train_stepper.val_step(state, pars)
 
         val_loss = train_stepper.end_epoch()
-        ########## End epoch ##########
+        
+        #################### End epoch ####################
         
         # Print val loss
         if print_progress:

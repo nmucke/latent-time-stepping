@@ -7,14 +7,14 @@ import pickle
 
 import matplotlib.pyplot as plt
 from latent_time_stepping.datasets.AE_dataset import AEDataset
-from latent_time_stepping.oracle.oracle import ObjectStorageClientWrapper
+from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
 from latent_time_stepping.preprocessor import Preprocessor
 from latent_time_stepping.utils import create_directory
 
 torch.set_default_dtype(torch.float32)
 
-NUM_SAMPLES = 2500
+NUM_SAMPLES = 2000
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 NUM_SKIP_STEPS = 5
@@ -24,21 +24,21 @@ LOCAL_OR_ORACLE = 'local'
 PHASE = 'single'
 TRAIN_OR_TEST = 'train'
 
-NUM_WORKERS = 64
+NUM_WORKERS = 20
 BATCH_SIZE = 40
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/{TRAIN_OR_TEST}'
 ORACLE_SAVE_PATH = f'{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
 BUCKET_NAME = "bucket-20230222-1753"
 
-LOCAL_LOAD_PATH = f'data/raw_data/training_data'
-LOCAL_SAVE_PATH = f'data/processed_data/{TRAIN_OR_TEST}'
+LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
+LOCAL_SAVE_PATH = f'data/{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
 create_directory(LOCAL_SAVE_PATH)
 
 TRAINED_PREPROCESSOR_SAVE_PATH = 'trained_preprocessors'
 create_directory(TRAINED_PREPROCESSOR_SAVE_PATH)
 
-TRAINED_PREPROCESSOR_SAVE_PATH += '/single_phase_preprocessor.pt'
+TRAINED_PREPROCESSOR_SAVE_PATH += f'/{PHASE}_phase_preprocessor.pt'
 
 if PHASE == 'single':
     NUM_STATES = 2

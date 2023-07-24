@@ -33,15 +33,16 @@ class ParameterEncoder(nn.Module):
             in_features=pars_dim,
             out_features=embed_dim
         )
-        self.unflatten = nn.Unflatten(
-            dim=1, 
-            unflattened_size=(1, embed_dim)
-            )
 
         self.out_dense_layer = nn.Linear(
             in_features=embed_dim,
             out_features=embed_dim
         )
+        
+        self.unflatten = nn.Unflatten(
+            dim=1, 
+            unflattened_size=(1, embed_dim)
+            )
         
         '''
         self.initial_conv_layer = nn.Conv1d(

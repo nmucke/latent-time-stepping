@@ -24,6 +24,10 @@ class Optimizer():
             self.optimizer,
             **self.args['scheduler_args']
         )
+
+    def load_state_dict(self, state_dict: dict) -> None:
+        self.optimizer.load_state_dict(state_dict['optimizer'])
+        self.scheduler.load_state_dict(state_dict['scheduler'])
     
     def zero_grad(self) -> None:
         self.optimizer.zero_grad()

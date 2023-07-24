@@ -5,7 +5,7 @@ import numpy as np
 import yaml
 from yaml.loader import SafeLoader
 import torch
-from latent_time_stepping.oracle.oracle import ObjectStorageClientWrapper
+from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
 from latent_time_stepping.utils import create_directory
 from latent_time_stepping.AE_models.VAE_encoder import VAEEncoder
@@ -43,7 +43,7 @@ else:
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/processed_data/train'
-LOCAL_LOAD_PATH = f'data/processed_data/train'
+LOCAL_LOAD_PATH = f'data/{PHASE}_phase/processed_data/train'
 
 NUM_SAMPLES = 2000
 TRAIN_RATIO = 0.8
@@ -62,8 +62,6 @@ with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as outfile:
 
 def main():
 
-
-
     if LOCAL_OR_ORACLE == 'oracle':
         train_dataset = AEDataset(
             oracle_path=ORACLE_LOAD_PATH,
@@ -75,7 +73,7 @@ def main():
             sample_ids=VAL_SAMPLE_IDS,
             load_entire_dataset=True,
         )
-    else:
+    elif LOCAL_OR_ORACLE == 'local':
         train_dataset = AEDataset(
             local_path=LOCAL_LOAD_PATH,
             sample_ids=TRAIN_SAMPLE_IDS,
