@@ -1,5 +1,6 @@
 
 import pdb
+import pickle
 import numpy as np
 from tqdm import tqdm
 import torch
@@ -28,8 +29,9 @@ model = load_trained_AE_model(
     device=DEVICE,
 )
 
-PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pt'
-preprocessor = torch.load(PREPROCESSOR_PATH, map_location=DEVICE)
+PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
+with open(PREPROCESSOR_PATH, 'rb') as f:
+    preprocessor = pickle.load(f)
 
 LOCAL_OR_ORACLE = 'local'
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'

@@ -7,7 +7,10 @@ import yaml
 from latent_time_stepping.datasets.AE_dataset import AEDataset
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
-from latent_time_stepping.utils import load_trained_AE_model, load_trained_time_stepping_model
+from latent_time_stepping.utils import (
+    load_trained_AE_model, 
+    load_trained_time_stepping_model
+)
 torch.set_default_dtype(torch.float32)
 
 
@@ -23,12 +26,12 @@ AE_model_path = f"trained_models/autoencoders/{PHASE}_phase_{AE_MODEL_TYPE}"
 
 time_stepping_model_path = f"trained_models/time_steppers/{PHASE}_phase_{TIME_STEPPING_MODEL_TYPE}"
 
-PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pt'
+PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
 
 BUCKET_NAME = "trained_models"
 ORACLE_AE_SAVE_PATH = f'{PHASE}_phase/autoencoders/{AE_MODEL_TYPE}'
 ORACLE_TIME_STEPPING_SAVE_PATH = f'{PHASE}_phase/time_steppers/{TIME_STEPPING_MODEL_TYPE}'
-ORACLE_PREPROCESSOR_SAVE_PATH = f'{PHASE}_phase/preprocessor.pt'
+ORACLE_PREPROCESSOR_SAVE_PATH = f'{PHASE}_phase/preprocessor.pkl'
 
 def main():
     object_storage_client = ObjectStorageClientWrapper(BUCKET_NAME)
@@ -54,8 +57,10 @@ def main():
         )
 
     ##### load preprocessor #####
+    preprocessor = object_storage_client.get_preprocessor(
+        source_path=ORACLE_PREPROCESSOR_SAVE_PATH,
+    )
 
-    '''
     ##### load AE model #####
     if AE_model_path is not None:
         state_dict, config = object_storage_client.get_model(
@@ -78,7 +83,6 @@ def main():
             config=config,
             device=DEVICE,
             )
-    '''
 
 
 if __name__ == '__main__':

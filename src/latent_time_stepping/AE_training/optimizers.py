@@ -42,7 +42,7 @@ class Optimizer():
         self.encoder_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             self.encoder,
             mode='min',
-            factor=0.95,
+            factor=0.9,
             patience=5,
             verbose=True,
         )

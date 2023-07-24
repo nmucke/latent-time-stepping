@@ -261,7 +261,7 @@ class WAETrainStepper(BaseAETrainStepper):
             print_latent_distribution_loss = self.latent_distribution_loss/self.counter
 
         else:
-            self.latent_distribution_loss = None
+            print_latent_distribution_loss = None
 
         if self.consistency_loss_regu is not None:
             latent_pred = self.model.encoder(state_pred)
@@ -273,7 +273,7 @@ class WAETrainStepper(BaseAETrainStepper):
             print_consistency_loss = self.consistency_loss/self.counter
         
         else:
-            self.consistency_loss = None
+            print_consistency_loss = None
 
         loss.backward()
         self.optimizer.step()

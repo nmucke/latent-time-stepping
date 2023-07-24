@@ -2,6 +2,7 @@ from array import array
 import os 
 from pathlib import Path
 import pdb
+import pickle
 import numpy as np 
 import oci 
 from multiprocessing import Process 
@@ -120,17 +121,22 @@ class ObjectStorageClientWrapper:
     def put_preprocessor(self, source_path, destination_path):
 
         # Load the model
-        preprocessor = torch.load(source_path)
+        #preprocessor = torch.load(source_path)
+        with open(source_path, 'rb') as f:
+            preprocessor = pickle.load(f)
 
         # Upload the model to object storage
         with self.fs.open(f'{self.bucket_name}@{self.namespace}/{destination_path}', 'wb') as f:
-            torch.save(preprocessor, f)
+            pickle.dump(preprocessor, f)
+            #torch.save(preprocessor, f)
 
     def get_preprocessor(self, source_path):
         
-        # Load the model
+        # Load the preprocessor from object storage
         with self.fs.open(f'{self.bucket_name}@{self.namespace}/{source_path}', 'rb') as f:
-            preprocessor = torch.load(f)
+            preprocessor = pickle.load(f)
+
+            #preprocessor = torch.load(f)
 
         return preprocessor
 

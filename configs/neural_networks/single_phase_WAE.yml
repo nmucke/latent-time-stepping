@@ -22,7 +22,7 @@ optimizer_args:
     max_iters: 2000
 
 train_stepper_args:
-  latent_loss_regu: 1.0e-3
+  latent_loss_regu: null # 1.0e-3
   consistency_loss_regu: 1.0e-3
 
 train_args:

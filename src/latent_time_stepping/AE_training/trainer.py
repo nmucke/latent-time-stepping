@@ -4,11 +4,8 @@ from tqdm import tqdm
 import pdb
 from dataclasses import dataclass
 
-
 from latent_time_stepping.AE_training.optimizers import Optimizer
 from latent_time_stepping.AE_training.train_steppers import BaseAETrainStepper
-
-
 
 @dataclass
 class EarlyStopping:

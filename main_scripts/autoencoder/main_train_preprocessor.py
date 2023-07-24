@@ -38,7 +38,7 @@ create_directory(LOCAL_SAVE_PATH)
 TRAINED_PREPROCESSOR_SAVE_PATH = 'trained_preprocessors'
 create_directory(TRAINED_PREPROCESSOR_SAVE_PATH)
 
-TRAINED_PREPROCESSOR_SAVE_PATH += f'/{PHASE}_phase_preprocessor.pt'
+TRAINED_PREPROCESSOR_SAVE_PATH += f'/{PHASE}_phase_preprocessor.pkl'
 
 if PHASE == 'single':
     NUM_STATES = 2
@@ -78,7 +78,11 @@ def main():
         preprocessor.partial_fit_pars(pars)
 
     # Save the preprocessor   
-    torch.save(preprocessor, TRAINED_PREPROCESSOR_SAVE_PATH)
+    with open(TRAINED_PREPROCESSOR_SAVE_PATH, 'wb') as f:
+        pickle.dump(preprocessor, f)
+            
+        
+    #torch.save(preprocessor, TRAINED_PREPROCESSOR_SAVE_PATH)
 
     ############### Save processed data #####################
 
@@ -132,6 +136,16 @@ def main():
         object_storage_client.put_numpy_object(
             data=processed_pars,
             destination_path=f'{ORACLE_SAVE_PATH}/pars.npz',
+        )
+
+
+        object_storage_client = ObjectStorageClientWrapper(
+            bucket_name='trained_models'
+        )
+
+        object_storage_client.put_preprocessor(
+            source_path=TRAINED_PREPROCESSOR_SAVE_PATH,
+            destination_path=f'{PHASE}_phase/preprocessor.pkl',
         )
 
     elif LOCAL_OR_ORACLE == 'local':
