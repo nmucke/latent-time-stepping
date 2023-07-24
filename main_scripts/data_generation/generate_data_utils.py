@@ -100,12 +100,12 @@ def save_data(
         # upload to oracle
         object_storage_client = ObjectStorageClientWrapper(bucket_name)
 
-        object_storage_client.put_object(
+        object_storage_client.put_numpy_object(
             destination_path=f'{pars_path}/sample_{idx}.npy',
             source_path=f'pars_sample_{idx}.npy'
         )
 
-        object_storage_client.put_object(
+        object_storage_client.put_numpy_object(
             destination_path=f'{state_path}/sample_{idx}.npy',
             source_path=f'state_sample_{idx}.npy'
         )

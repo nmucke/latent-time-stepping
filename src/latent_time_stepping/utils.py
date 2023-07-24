@@ -25,12 +25,19 @@ def create_directory(directory):
         os.makedirs(directory)
 
 
-def load_trained_AE_model(model_load_path, model_type, device):
+def load_trained_AE_model(
+    model_load_path = None, 
+    state_dict = None,
+    config = None,
+    model_type = 'WAE', 
+    device = 'cpu'
+    ):
 
-    state_dict = torch.load(f'{model_load_path}/model.pt', map_location=device)
+    if model_load_path is not None:
+        state_dict = torch.load(f'{model_load_path}/model.pt', map_location=device)
 
-    with open(f'{model_load_path}/config.yml') as f:
-        config = yaml.load(f, Loader=yaml.SafeLoader)
+        with open(f'{model_load_path}/config.yml') as f:
+            config = yaml.load(f, Loader=yaml.SafeLoader)
 
     if model_type == "VAE":
         encoder = VAEEncoder(**config['model_args']['encoder'])
@@ -51,15 +58,17 @@ def load_trained_AE_model(model_load_path, model_type, device):
     return model
 
 def load_trained_time_stepping_model(
-    model_load_path,
-    model_type,
-    device,
+    model_load_path = None, 
+    state_dict = None,
+    config = None,
+    device = 'cpu',
 ):
+    
+    if model_load_path is not None:
+        state_dict = torch.load(f'{model_load_path}/model.pt', map_location=device)
 
-    state_dict = torch.load(f'{model_load_path}/model.pt', map_location=device)
-
-    with open(f'{model_load_path}/config.yml') as f:
-        config = yaml.load(f, Loader=yaml.SafeLoader)
+        with open(f'{model_load_path}/config.yml') as f:
+            config = yaml.load(f, Loader=yaml.SafeLoader)
 
     pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
     model = TimeSteppingModel(

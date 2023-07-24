@@ -23,7 +23,7 @@ optimizer_args:
 
 train_stepper_args:
   latent_loss_regu: 1.0e-3
-  consistency_loss_regu: null #1.0e-3
+  consistency_loss_regu: 1.0e-3
 
 train_args:
   num_epochs: 2000

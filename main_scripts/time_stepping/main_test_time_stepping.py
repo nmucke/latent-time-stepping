@@ -33,7 +33,6 @@ AE = load_trained_AE_model(
 time_stepping_model_path = f"trained_models/time_steppers/{PHASE}_phase_{TIME_STEPPING_MODEL_TYPE}"
 time_stepper = load_trained_time_stepping_model(
     model_load_path=time_stepping_model_path,
-    model_type=TIME_STEPPING_MODEL_TYPE,
     device=DEVICE,
 )
 input_seq_len = time_stepper.input_seq_len
@@ -47,7 +46,7 @@ LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/test'
 
-SAMPLE_IDS = range(2,3)
+SAMPLE_IDS = range(1)
 
 if LOCAL_OR_ORACLE == 'oracle':
     dataset = AEDataset(

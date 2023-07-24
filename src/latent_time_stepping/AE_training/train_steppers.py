@@ -242,16 +242,26 @@ class WAETrainStepper(BaseAETrainStepper):
         #latent_attraction = self._latent_time_attraction(latent_state, t)
         #self._latent_time_attraction(latent_state, t)
 
+        loss = 0.0
+
         state_pred = self.model.decoder(latent_state, pars)
 
         reconstruction_loss = \
             self._reconstruction_loss_function(state, state_pred)
+        
+        loss += reconstruction_loss
 
-        latent_distribution_loss = \
-            self._latent_distribution_loss_function(latent_state)
+        if self.latent_loss_regu is not None:
+            latent_distribution_loss = \
+                self._latent_distribution_loss_function(latent_state)
 
-        loss = reconstruction_loss \
-            + self.latent_loss_regu * latent_distribution_loss 
+            loss += self.latent_loss_regu * latent_distribution_loss 
+            
+            self.latent_distribution_loss += latent_distribution_loss.item()
+            print_latent_distribution_loss = self.latent_distribution_loss/self.counter
+
+        else:
+            self.latent_distribution_loss = None
 
         if self.consistency_loss_regu is not None:
             latent_pred = self.model.encoder(state_pred)
@@ -260,8 +270,7 @@ class WAETrainStepper(BaseAETrainStepper):
             loss += self.consistency_loss_regu * consistency_loss
             
             self.consistency_loss += consistency_loss.item()
-            self.consistency_loss += consistency_loss/self.counter
-            self.consistency_loss = consistency_loss.item()
+            print_consistency_loss = self.consistency_loss/self.counter
         
         else:
             self.consistency_loss = None
@@ -272,12 +281,11 @@ class WAETrainStepper(BaseAETrainStepper):
         # chheck if loss is NaN
 
         self.reconstruction_loss += reconstruction_loss.item()
-        self.latent_distribution_loss += latent_distribution_loss.item()
 
         output = {
             'recon': self.reconstruction_loss/self.counter,
-            'latent': self.latent_distribution_loss/self.counter,
-            'consistency': self.consistency_loss,
+            'latent': print_latent_distribution_loss,
+            'consistency': print_consistency_loss,
         }
         
         return output

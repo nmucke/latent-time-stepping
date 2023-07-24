@@ -49,11 +49,11 @@ class AEDataset(torch.utils.data.Dataset):
 
     def _get_oracle_data_sample(self, index: int):
         
-        state = self.object_storage_client.get_object(
+        state = self.object_storage_client.get_numpy_object(
             source_path=f'{self.oracle_path}/state/sample_{index}.npy'
         )
         
-        pars = self.object_storage_client.get_object(
+        pars = self.object_storage_client.get_numpy_object(
             source_path=f'{self.oracle_path}/pars/sample_{index}.npy'
         )
 
@@ -88,11 +88,11 @@ class AEDataset(torch.utils.data.Dataset):
     def _load_entire_dataset(self,):
 
         if self.oracle_path is not None:
-            self.state = self.object_storage_client.get_object(
+            self.state = self.object_storage_client.get_numpy_object(
                 source_path=f'{self.oracle_path}/states.npz'
             )[self.sample_ids]
             
-            self.pars = self.object_storage_client.get_object(
+            self.pars = self.object_storage_client.get_numpy_object(
                 source_path=f'{self.oracle_path}/pars.npz'
             )[self.sample_ids]
 

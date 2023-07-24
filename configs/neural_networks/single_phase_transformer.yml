@@ -28,7 +28,7 @@ optimizer_args:
   weight_decay: 1.0e-6
   scheduler_args:
     warmup: 25
-    max_iters: 400
+    max_iters: 1000
 
 train_stepper_args:
   teacher_forcing_ratio: 1.0
@@ -37,6 +37,6 @@ train_stepper_args:
   mixed_precision: True
 
 train_args:
-  num_epochs: 400
-  patience: 25
+  num_epochs: 1000
+  patience: 100
 

@@ -125,11 +125,11 @@ def main():
 
         object_storage_client = ObjectStorageClientWrapper(BUCKET_NAME)
 
-        object_storage_client.put_object(
+        object_storage_client.put_numpy_object(
             data=processed_states,
             destination_path=f'{ORACLE_SAVE_PATH}/states.npz',
         )
-        object_storage_client.put_object(
+        object_storage_client.put_numpy_object(
             data=processed_pars,
             destination_path=f'{ORACLE_SAVE_PATH}/pars.npz',
         )
