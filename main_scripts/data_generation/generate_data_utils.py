@@ -94,25 +94,25 @@ def save_data(
         bucket_name = "bucket-20230222-1753"
 
         # save files locally first
-        np.save(f'pars_sample_{idx}.npy', pars)
-        np.save(f'state_sample_{idx}.npy', state)
+        #np.save(f'pars_sample_{idx}.npy', pars)
+        #np.save(f'state_sample_{idx}.npy', state)
         
         # upload to oracle
         object_storage_client = ObjectStorageClientWrapper(bucket_name)
 
         object_storage_client.put_numpy_object(
-            destination_path=f'{pars_path}/sample_{idx}.npy',
-            source_path=f'pars_sample_{idx}.npy'
+            data=state,
+            destination_path=f'{state_path}/sample_{idx}.npz',
         )
 
         object_storage_client.put_numpy_object(
-            destination_path=f'{state_path}/sample_{idx}.npy',
-            source_path=f'state_sample_{idx}.npy'
+            data=pars,
+            destination_path=f'{pars_path}/sample_{idx}.npz',
         )
 
         # remove local files
-        os.remove(f'pars_sample_{idx}.npy')
-        os.remove(f'state_sample_{idx}.npy')
+        #os.remove(f'pars_sample_{idx}.npy')
+        #os.remove(f'state_sample_{idx}.npy')
     
     else:
 
@@ -185,6 +185,8 @@ def simulate_pipeflow(
         path=path,
         to_oracle=to_oracle
     )
+
+    PDE_args['steady_state'] = steady_state
 
     return None
 

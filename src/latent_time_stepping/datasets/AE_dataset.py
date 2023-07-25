@@ -105,6 +105,7 @@ class AEDataset(torch.utils.data.Dataset):
                 f'{self.local_path}/pars.npz'
             )['data'][self.sample_ids]
             
+        print(f"Loaded entire dataset. Shape: {self.state.shape}")
         self.state = torch.tensor(self.state, dtype=torch.get_default_dtype())
         self.pars = torch.tensor(self.pars, dtype=torch.get_default_dtype())   
 

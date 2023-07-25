@@ -14,12 +14,12 @@ from generate_data_utils import simulate_pipeflow
 from single_phase_PDE import PipeflowEquations as PipeflowEquationsSinglePhase
 from multi_phase_PDE import PipeflowEquations as PipeflowEquationsMultiPhase
 
-TEST_CASE = 'multi_phase_leak'
+TEST_CASE = 'single_phase_leak'
 
-DISTRIBUTED = True
-NUM_CPUS = 30
+DISTRIBUTED = False
+NUM_CPUS = 5
 
-NUM_SAMPLES = 100
+NUM_SAMPLES = 30
 TRAIN_OR_TEST = 'test'
 
 TO_ORACLE = True
@@ -44,7 +44,6 @@ if TEST_CASE == 'single_phase_leak':
     }
     
 elif TEST_CASE == 'multi_phase_leak':
-    
     model_parameters = {
         'L': 5000, # meters
         'd': 0.2, # meters
