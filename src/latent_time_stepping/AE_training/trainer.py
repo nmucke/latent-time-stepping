@@ -1,3 +1,4 @@
+import numpy as np
 from torch import nn
 import torch
 from tqdm import tqdm
@@ -45,6 +46,12 @@ def train(
 
         # Train
         for i, (state, pars) in pbar:
+            
+            # pick N random integers from 0 to len(train_dataloader)
+             
+            idx = np.random.randint(0, state.shape[-1], size=state.shape[-1]//8)
+            state = state[:, :, :, idx]
+
             loss = train_stepper.train_step(state, pars)
 
             if i % 10 == 0:
@@ -52,6 +59,9 @@ def train(
         
         # Validate
         for i, (state, pars) in enumerate(val_dataloader):
+            idx = np.random.randint(0, state.shape[-1], size=state.shape[-1]//16)
+            state = state[:, :, :, idx]
+
             train_stepper.val_step(state, pars)
 
         val_loss = train_stepper.end_epoch()

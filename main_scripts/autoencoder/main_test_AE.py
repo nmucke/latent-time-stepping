@@ -17,6 +17,8 @@ DEVICE = 'cpu'
 PHASE = "single"
 MODEL_TYPE = "WAE"
 
+LOCAL_OR_ORACLE = 'oracle'
+
 if PHASE == "single":
     NUM_STATES = 2
 elif PHASE == "multi":
@@ -33,7 +35,6 @@ PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
 with open(PREPROCESSOR_PATH, 'rb') as f:
     preprocessor = pickle.load(f)
 
-LOCAL_OR_ORACLE = 'oracle'
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 ORACLE_LOAD_PATH = f'{PHASE}_phase/test'
 

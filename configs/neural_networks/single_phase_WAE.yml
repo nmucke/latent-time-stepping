@@ -1,16 +1,16 @@
 dataloader_args:
   batch_size: 4
   shuffle: True
-  num_workers: 1
+  num_workers: 2
   
 model_args:
   encoder:
     num_channels: [2, 8, 16, 32, 64, 128]
-    kernel_size: 5
+    kernel_size: 3
     latent_dim: 16
   decoder:
     num_channels: [128, 64, 32, 16, 8, 2]
-    kernel_size: 5
+    kernel_size: 3
     latent_dim: 16
     pars_dim: 2
 
@@ -22,7 +22,7 @@ optimizer_args:
     max_iters: 2000
 
 train_stepper_args:
-  latent_loss_regu: null # 1.0e-3
+  latent_loss_regu: #1.0e-3
   consistency_loss_regu: 1.0e-3
 
 train_args:
