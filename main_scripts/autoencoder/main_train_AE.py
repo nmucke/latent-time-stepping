@@ -77,7 +77,7 @@ def main():
 
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset,
-        [int(0.8*len(dataset)), int(0.2*len(dataset))]
+        [int(TRAIN_RATIO*len(dataset)), int(VAL_RATIO*len(dataset))]
     )
     
     train_dataloader = torch.utils.data.DataLoader(
