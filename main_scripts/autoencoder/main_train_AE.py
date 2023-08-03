@@ -63,27 +63,22 @@ with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as outfile:
 def main():
 
     if LOCAL_OR_ORACLE == 'oracle':
-        train_dataset = AEDataset(
+        dataset = AEDataset(
             oracle_path=ORACLE_LOAD_PATH,
             sample_ids=TRAIN_SAMPLE_IDS,
-            load_entire_dataset=True,
-        )
-        val_dataset = AEDataset(
-            oracle_path=ORACLE_LOAD_PATH,
-            sample_ids=VAL_SAMPLE_IDS,
             load_entire_dataset=True,
         )
     elif LOCAL_OR_ORACLE == 'local':
-        train_dataset = AEDataset(
+        dataset = AEDataset(
             local_path=LOCAL_LOAD_PATH,
             sample_ids=TRAIN_SAMPLE_IDS,
             load_entire_dataset=True,
         )
-        val_dataset = AEDataset(
-            local_path=LOCAL_LOAD_PATH,
-            sample_ids=VAL_SAMPLE_IDS,
-            load_entire_dataset=True,
-        )
+
+    train_dataset, val_dataset = torch.utils.data.random_split(
+        dataset,
+        [int(0.8*len(dataset)), int(0.2*len(dataset))]
+    )
     
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset,
