@@ -1,4 +1,5 @@
 import pdb
+import pickle
 import numpy as np
 from tqdm import tqdm
 import torch
@@ -37,16 +38,17 @@ time_stepper = load_trained_time_stepping_model(
 )
 input_seq_len = time_stepper.input_seq_len
 
-PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pt'
-preprocessor = torch.load(PREPROCESSOR_PATH, map_location=DEVICE)
+PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
+with open(PREPROCESSOR_PATH, 'rb') as f:
+    preprocessor = pickle.load(f)
 
-LOCAL_OR_ORACLE = 'local'
+LOCAL_OR_ORACLE = 'oracle'
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/test'
 
-SAMPLE_IDS = range(1)
+SAMPLE_IDS = range(10, 11)
 
 if LOCAL_OR_ORACLE == 'oracle':
     dataset = AEDataset(
@@ -70,6 +72,8 @@ dataloader = torch.utils.data.DataLoader(
 
 def main():
 
+    num_steps = 2000
+
     for i, (state, pars) in enumerate(dataloader):
         state = state.to(DEVICE)
         pars = pars.to(DEVICE)
@@ -79,7 +83,7 @@ def main():
         pred_latent_state = time_stepper.multistep_prediction(
             latent_state[:, :, 0:input_seq_len],
             pars,
-            output_seq_len=400,
+            output_seq_len=num_steps,
             )
         pred_latent_state = torch.cat(
             [latent_state[:, :, 0:input_seq_len], pred_latent_state],
@@ -100,13 +104,13 @@ def main():
 
     num_latent_to_plot = 2
     plt.figure()
-    plt.plot(latent_state[0, 0, :], label='latent state', color='tab:blue')
+    plt.plot(latent_state[0, 0, :num_steps], label='latent state', color='tab:blue')
     for i in range(1, num_latent_to_plot):
-        plt.plot(latent_state[0, i, :], color='tab:blue')
+        plt.plot(latent_state[0, i, :num_steps], color='tab:blue')
 
-    plt.plot(pred_latent_state[0, 0, :], label='pred latent state', color='tab:orange')
+    plt.plot(pred_latent_state[0, 0, :num_steps], label='pred latent state', color='tab:orange')
     for i in range(1, num_latent_to_plot):
-        plt.plot(pred_latent_state[0, i, :], color='tab:orange')                        
+        plt.plot(pred_latent_state[0, i, :num_steps], color='tab:orange')                        
     plt.legend()
     plt.show()
 

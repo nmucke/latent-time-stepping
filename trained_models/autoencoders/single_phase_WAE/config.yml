@@ -5,7 +5,7 @@ dataloader_args:
 model_args:
   decoder:
     kernel_size: 3
-    latent_dim: 16
+    latent_dim: 8
     num_channels:
     - 128
     - 64
@@ -16,7 +16,7 @@ model_args:
     pars_dim: 2
   encoder:
     kernel_size: 3
-    latent_dim: 16
+    latent_dim: 8
     num_channels:
     - 2
     - 8
