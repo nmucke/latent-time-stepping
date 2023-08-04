@@ -11,13 +11,13 @@ from latent_time_stepping.oracle import ObjectStorageClientWrapper
 from latent_time_stepping.datasets.AE_dataset import AEDataset
 
 
-PHASE = "single"
+PHASE = "multi"
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/train'
 ORACLE_SAVE_PATH = f'{PHASE}_phase/raw_data/train'
 
-NUM_SAMPLES = 2000
+NUM_SAMPLES = 6000
 
 TRAIN_SAMPLE_IDS = range(NUM_SAMPLES)
 
