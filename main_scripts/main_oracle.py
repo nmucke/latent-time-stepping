@@ -2,7 +2,7 @@ import os
 import pdb
 from matplotlib import pyplot as plt
 import numpy as np
-import tqdm
+from tqdm import tqdm
 import yaml
 from yaml.loader import SafeLoader
 import torch
@@ -45,6 +45,7 @@ def main():
         state = state.squeeze().numpy()
         pars = pars.squeeze().numpy()
 
+        '''
         object_storage_client_wrapper.put_numpy_object(
             data=state, 
             destination_path=f'{ORACLE_SAVE_PATH}/state/sample_{i}.npz'
@@ -53,6 +54,7 @@ def main():
             data=pars, 
             destination_path=f'{ORACLE_SAVE_PATH}/pars/sample_{i}.npz'
         ) 
+        '''
 
 
 if __name__ == "__main__":

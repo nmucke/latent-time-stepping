@@ -126,4 +126,17 @@ class AEDataset(torch.utils.data.Dataset):
             state = self.preprocessor.transform_state(state)
             pars = self.preprocessor.transform_pars(pars)
 
+
+        state = state.squeeze().numpy()
+        pars = pars.squeeze().numpy()
+
+        self.object_storage_client.put_numpy_object(
+            data=state, 
+            destination_path=f'single_phase/raw_data/train/state/sample_{index}.npz'
+        ) 
+        self.object_storage_client.put_numpy_object(
+            data=pars, 
+            destination_path=f'single_phase/raw_data/train/pars/sample_{index}.npz'
+        ) 
+
         return state, pars

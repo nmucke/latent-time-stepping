@@ -50,9 +50,9 @@ SAMPLE_IDS = range(NUM_SAMPLES)
 
 def main():
 
-    data = np.load(f'data/multi_phase/processed_data/train/states.npz')['data']
-    print(data.size * data.itemsize*0.000000001)
-    pdb.set_trace()
+    #data = np.load(f'data/multi_phase/processed_data/train/states.npz')['data']
+    #print(data.size * data.itemsize*0.000000001)
+    #pdb.set_trace()
 
     dataset = TimeSteppingDataset(
         local_path=LOCAL_LOAD_PATH,
