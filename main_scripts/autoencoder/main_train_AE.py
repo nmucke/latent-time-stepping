@@ -49,8 +49,7 @@ NUM_SAMPLES = 2000
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 
-TRAIN_SAMPLE_IDS = range(int(TRAIN_RATIO*NUM_SAMPLES))
-VAL_SAMPLE_IDS = range(int(TRAIN_RATIO*NUM_SAMPLES), NUM_SAMPLES)
+TRAIN_SAMPLE_IDS = range(NUM_SAMPLES)
 
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
 with open(config_path) as f:

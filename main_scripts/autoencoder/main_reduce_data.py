@@ -9,7 +9,7 @@ from latent_time_stepping.oracle import ObjectStorageClientWrapper
 from latent_time_stepping.utils import create_directory, load_trained_AE_model
 torch.set_default_dtype(torch.float32)
 
-DEVICE = 'cpu'
+DEVICE = 'cuda'
 
 PHASE = "single"
 MODEL_TYPE = "WAE"
@@ -78,6 +78,8 @@ def main():
     
     pbar = tqdm(enumerate(dataloader), total=len(dataloader))
     for i, (state, _pars) in pbar:
+
+        state = state.to(DEVICE)
         
         latent_state[i] = model.encode(state).detach().cpu()[0]
         pars[i] = _pars.detach().cpu()[0]        
