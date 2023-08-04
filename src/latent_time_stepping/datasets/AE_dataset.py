@@ -15,7 +15,7 @@ class AEDataset(torch.utils.data.Dataset):
         oracle_path: str = None,
         preprocessor: Preprocessor = None,
         load_entire_dataset: bool = False,
-        num_skip_steps: int = 4,
+        num_skip_steps: int = 1,
         end_time_index: float = None,
         sample_ids: int = None,
         ) -> None:
@@ -132,11 +132,11 @@ class AEDataset(torch.utils.data.Dataset):
 
         self.object_storage_client.put_numpy_object(
             data=state, 
-            destination_path=f'multi_phase/raw_data/train/state/sample_{index}.npz'
+            destination_path=f'single_phase/raw_data/train/state/sample_{index}.npz'
         ) 
         self.object_storage_client.put_numpy_object(
             data=pars, 
-            destination_path=f'multi_phase/raw_data/train/pars/sample_{index}.npz'
+            destination_path=f'single_phase/raw_data/train/pars/sample_{index}.npz'
         ) 
 
         return state, pars
