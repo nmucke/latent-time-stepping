@@ -14,7 +14,7 @@ torch.set_default_dtype(torch.float32)
 
 DEVICE = 'cpu'
 
-PHASE = "single"
+PHASE = "multi"
 MODEL_TYPE = "WAE"
 
 LOCAL_OR_ORACLE = 'oracle'
@@ -95,10 +95,10 @@ def main():
     
     plt.figure(figsize=(20, 10))
     plt.subplot(2, 4, 1)
-    plt.plot(recon_state[0, :, 100], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[0, :, 100], label="High Fidelity", color='tab:blue')
-    plt.plot(recon_state[0, 0, -1], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[0, 0, -1], label="High Fidelity", color='tab:blue')
+    plt.plot(recon_state[2, :, 100], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[2, :, 100], label="High Fidelity", color='tab:blue')
+    plt.plot(recon_state[2, :, -1], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[2, :, -1], label="High Fidelity", color='tab:blue')
     plt.legend()
     plt.subplot(2, 4, 2)
     plt.plot(recon_state[1, :, 100], label="Reconstructed", color='tab:orange')
