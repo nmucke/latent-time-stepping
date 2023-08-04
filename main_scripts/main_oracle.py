@@ -35,17 +35,14 @@ def main():
         sample_ids=TRAIN_SAMPLE_IDS,
         load_entire_dataset=False,
         #preprocessor=preprocessor,
+        num_skip_steps=1,
     )
 
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=1,
         shuffle=False,
-        num_workers=30,
-    )
-
-    object_storage_client_wrapper = ObjectStorageClientWrapper(
-        bucket_name="bucket-20230222-1753"
+        num_workers=64,
     )
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader))
