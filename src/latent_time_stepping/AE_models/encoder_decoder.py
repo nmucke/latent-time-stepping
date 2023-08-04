@@ -364,6 +364,7 @@ class Encoder(nn.Module):
         num_channels: list = None,
         kernel_size: list = None,
         latent_dim: int = 16,
+        space_dim: int = 256,
         ):
         super().__init__()
         
@@ -383,7 +384,7 @@ class Encoder(nn.Module):
         elif self.kernel_size == 7:
             self.padding = 2
 
-        final_dim = 256//2**(len(self.num_channels)-1)
+        final_dim = space_dim//2**(len(self.num_channels)-1)
 
         self.latent_dim = latent_dim
 
@@ -560,6 +561,7 @@ class Decoder(nn.Module):
         num_states: int = 2,
         latent_dim: int = 16,
         pars_dim: int = 2,    
+        space_dim: int = 256,
         ):
         super().__init__()
 
@@ -585,7 +587,7 @@ class Decoder(nn.Module):
         self.latent_dim = latent_dim
         self.activation = nn.LeakyReLU()
 
-        init_dim = 256//2**(len(self.num_channels)-1)
+        init_dim = space_dim//2**(len(self.num_channels)-1)
 
         self.latent_dim = latent_dim
 

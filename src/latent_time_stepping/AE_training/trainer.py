@@ -48,7 +48,6 @@ def train(
         for i, (state, pars) in pbar:
             
             # pick N random integers from 0 to len(train_dataloader)
-             
             idx = np.random.randint(0, state.shape[-1], size=state.shape[-1]//8)
             state = state[:, :, :, idx]
 

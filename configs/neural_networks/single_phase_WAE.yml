@@ -8,11 +8,13 @@ model_args:
     num_channels: [2, 8, 16, 32, 64, 128]
     kernel_size: 3
     latent_dim: 8
+    space_dim: 256
   decoder:
     num_channels: [128, 64, 32, 16, 8, 2]
     kernel_size: 3
     latent_dim: 8
     pars_dim: 2
+    space_dim: 256
 
 optimizer_args:
   learning_rate: 5.0e-4

@@ -27,9 +27,9 @@ from latent_time_stepping.AE_training.trainer import train
 torch.set_default_dtype(torch.float32)
 
 CONTIUE_TRAINING = False
-LOCAL_OR_ORACLE = 'local'
+LOCAL_OR_ORACLE = 'oracle'
 
-PHASE = "single"
+PHASE = "multi"
 
 MODEL_TYPE = "WAE"
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
@@ -65,13 +65,13 @@ def main():
         dataset = AEDataset(
             oracle_path=ORACLE_LOAD_PATH,
             sample_ids=TRAIN_SAMPLE_IDS,
-            load_entire_dataset=True,
+            load_entire_dataset=False,
         )
     elif LOCAL_OR_ORACLE == 'local':
         dataset = AEDataset(
             local_path=LOCAL_LOAD_PATH,
             sample_ids=TRAIN_SAMPLE_IDS,
-            load_entire_dataset=True,
+            load_entire_dataset=False,
         )
 
     train_dataset, val_dataset = torch.utils.data.random_split(

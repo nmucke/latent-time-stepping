@@ -36,7 +36,7 @@ with open(PREPROCESSOR_PATH, 'rb') as f:
     preprocessor = pickle.load(f)
 
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
-ORACLE_LOAD_PATH = f'{PHASE}_phase/test'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
 NUM_SAMPLES = 2
 SAMPLE_IDS = range(NUM_SAMPLES)
@@ -45,6 +45,7 @@ if LOCAL_OR_ORACLE == 'oracle':
     dataset = AEDataset(
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
+        num_skip_steps=1,
         preprocessor=preprocessor,
     )
 elif LOCAL_OR_ORACLE == 'local':
@@ -62,6 +63,7 @@ dataloader = torch.utils.data.DataLoader(
 )
 
 def main():
+
 
     L2_error = []
 

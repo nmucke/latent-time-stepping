@@ -50,11 +50,11 @@ class AEDataset(torch.utils.data.Dataset):
     def _get_oracle_data_sample(self, index: int):
         
         state = self.object_storage_client.get_numpy_object(
-            source_path=f'{self.oracle_path}/state/sample_{index}.npy'
+            source_path=f'{self.oracle_path}/state/sample_{index}.npz'
         )
         
         pars = self.object_storage_client.get_numpy_object(
-            source_path=f'{self.oracle_path}/pars/sample_{index}.npy'
+            source_path=f'{self.oracle_path}/pars/sample_{index}.npz'
         )
 
         if self.end_time_index is not None:
@@ -71,10 +71,9 @@ class AEDataset(torch.utils.data.Dataset):
         return state, pars
     
     def _get_local_data_sample(self, index: int):                                                      
-
-        state = np.load(f'{self.local_path}/state/sample_{index}.npy')
-        pars = np.load(f'{self.local_path}/pars/sample_{index}.npy')
-
+        
+        state = np.load(f'{self.local_path}/state/sample_{index}.npz')
+        pars = np.load(f'{self.local_path}/pars/sample_{index}.npz')
         if self.end_time_index is not None:
             state = state[:, :, :self.end_time_index]
 
@@ -126,31 +125,7 @@ class AEDataset(torch.utils.data.Dataset):
             state = self.preprocessor.transform_state(state)
             pars = self.preprocessor.transform_pars(pars)
 
-            state = state.squeeze().numpy()
-            pars = pars.squeeze().numpy()
-
-            self.object_storage_client.put_numpy_object(
-                data=state, 
-                destination_path=f'multi_phase/processed_data/train/state/sample_{index}.npz'
-            ) 
-            self.object_storage_client.put_numpy_object(
-                data=pars, 
-                destination_path=f'multi_phase/processed_data/train/pars/sample_{index}.npz'
-            ) 
-
-            return state, pars
-
-
         state = state.squeeze().numpy()
         pars = pars.squeeze().numpy()
-
-        self.object_storage_client.put_numpy_object(
-            data=state, 
-            destination_path=f'multi_phase/raw_data/train/state/sample_{index}.npz'
-        ) 
-        self.object_storage_client.put_numpy_object(
-            data=pars, 
-            destination_path=f'multi_phase/raw_data/train/pars/sample_{index}.npz'
-        ) 
 
         return state, pars

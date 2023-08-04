@@ -12,7 +12,7 @@ from latent_time_stepping.oracle import ObjectStorageClientWrapper
 from latent_time_stepping.datasets.AE_dataset import AEDataset
 
 
-PHASE = "multi"
+PHASE = "singler"
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/train'
@@ -28,7 +28,6 @@ with open(PREPROCESSOR_PATH, 'rb') as f:
     preprocessor = pickle.load(f)
     
 def main():
-
 
     dataset = AEDataset(
         oracle_path=ORACLE_LOAD_PATH,
