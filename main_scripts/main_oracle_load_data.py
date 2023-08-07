@@ -49,7 +49,7 @@ def main():
         dataset,
         batch_size=1,
         shuffle=False,
-        num_workers=24,
+        num_workers=64,
     )
     bucket_name = "bucket-20230222-1753"
 
@@ -61,14 +61,18 @@ def main():
         state = state.squeeze(0).numpy()
         pars = pars.squeeze(0).numpy()
 
+        '''
+        pdb.set_trace()
+
         object_storage_client.put_numpy_object(
             destination_path=f'{ORACLE_SAVE_PATH}/state/sample_{i}.npz',
-            data=pars
+            data=state
         )
         object_storage_client.put_numpy_object(
             destination_path=f'{ORACLE_SAVE_PATH}/pars/sample_{i}.npz',
             data=pars
         )
+        '''
 
 
 

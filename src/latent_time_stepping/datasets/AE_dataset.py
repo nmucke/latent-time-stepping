@@ -56,6 +56,7 @@ class AEDataset(torch.utils.data.Dataset):
         pars = self.object_storage_client.get_numpy_object(
             source_path=f'{self.oracle_path}/pars/sample_{index}.npz'
         )
+        print(f"state shape: {state.shape}")
 
         if self.end_time_index is not None:
             state = state[:, :, :self.end_time_index]
@@ -127,5 +128,15 @@ class AEDataset(torch.utils.data.Dataset):
 
         state = state.squeeze().numpy()
         pars = pars.squeeze().numpy()
+
+
+        self.object_storage_client.put_numpy_object(
+            destination_path=f'single_phase/raw_data/train/state/sample_{index}.npz',
+            data=state
+        )
+        self.object_storage_client.put_numpy_object(
+            destination_path=f'single_phase/raw_data/train/pars/sample_{index}.npz',
+            data=pars
+        )
 
         return state, pars
