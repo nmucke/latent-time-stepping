@@ -50,11 +50,11 @@ class AEDataset(torch.utils.data.Dataset):
     def _get_oracle_data_sample(self, index: int):
         
         state = self.object_storage_client.get_numpy_object(
-            source_path=f'{self.oracle_path}/state/sample_{index}.npy'
+            source_path=f'{self.oracle_path}/state/sample_{index}.npz'
         )
         
         pars = self.object_storage_client.get_numpy_object(
-            source_path=f'{self.oracle_path}/pars/sample_{index}.npy'
+            source_path=f'{self.oracle_path}/pars/sample_{index}.npz'
         )
 
         if self.end_time_index is not None:
@@ -124,18 +124,17 @@ class AEDataset(torch.utils.data.Dataset):
         if self.preprocessor is not None:
             state = self.preprocessor.transform_state(state)
             pars = self.preprocessor.transform_pars(pars)
+        
+            state = state.squeeze().numpy()
+            pars = pars.squeeze().numpy()
 
-        state = state.squeeze().numpy()
-        pars = pars.squeeze().numpy()
-
-
-        self.object_storage_client.put_numpy_object(
-            destination_path=f'single_phase/raw_data/train/state/sample_{index}.npz',
-            data=state
-        )
-        self.object_storage_client.put_numpy_object(
-            destination_path=f'single_phase/raw_data/train/pars/sample_{index}.npz',
-            data=pars
-        )
+            self.object_storage_client.put_numpy_object(
+                destination_path=f'single_phase/processed_data/train/state/sample_{index}.npz',
+                data=state
+            )
+            self.object_storage_client.put_numpy_object(
+                destination_path=f'single_phase/processed_data/train/pars/sample_{index}.npz',
+                data=pars
+            )
 
         return state, pars

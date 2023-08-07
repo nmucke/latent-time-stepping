@@ -17,9 +17,9 @@ PHASE = "single"
 TRAIN_OR_TEST = 'train'
 
 BUCKET_NAME = "bucket-20230222-1753"
-ORACLE_LOAD_PATH = f'{PHASE}_phase/{TRAIN_OR_TEST}'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 
-ORACLE_SAVE_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
+ORACLE_SAVE_PATH = f'{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
 
 NUM_SAMPLES = 2000
 
@@ -41,8 +41,8 @@ def main():
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=TRAIN_SAMPLE_IDS,
         load_entire_dataset=False,
-        #preprocessor=preprocessor,
-        num_skip_steps=1,
+        preprocessor=preprocessor,
+        num_skip_steps=4,
     )
 
     dataloader = torch.utils.data.DataLoader(
