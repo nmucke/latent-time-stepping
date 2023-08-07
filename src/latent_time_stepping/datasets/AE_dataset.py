@@ -50,11 +50,11 @@ class AEDataset(torch.utils.data.Dataset):
     def _get_oracle_data_sample(self, index: int):
         
         state = self.object_storage_client.get_numpy_object(
-            source_path=f'{self.oracle_path}/state/sample_{index}.npz'
+            source_path=f'{self.oracle_path}/state/sample_{index}.npy'
         )
         
         pars = self.object_storage_client.get_numpy_object(
-            source_path=f'{self.oracle_path}/pars/sample_{index}.npz'
+            source_path=f'{self.oracle_path}/pars/sample_{index}.npy'
         )
         print(f"state shape: {state.shape}")
 
