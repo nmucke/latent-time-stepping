@@ -27,7 +27,7 @@ from latent_time_stepping.AE_training.trainer import train
 torch.set_default_dtype(torch.float32)
 
 CONTIUE_TRAINING = False
-LOCAL_OR_ORACLE = 'oracle'
+LOCAL_OR_ORACLE = 'local'
 
 PHASE = "multi"
 
