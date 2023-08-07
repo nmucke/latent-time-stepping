@@ -45,7 +45,7 @@ BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/processed_data/train'
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/processed_data/train'
 
-NUM_SAMPLES = 2000
+NUM_SAMPLES = 100
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 

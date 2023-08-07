@@ -13,7 +13,7 @@ from latent_time_stepping.datasets.AE_dataset import AEDataset
 from latent_time_stepping.utils import create_directory
 
 
-PHASE = "single"
+PHASE = "multi"
 
 TRAIN_OR_TEST = 'train'
 
@@ -22,7 +22,7 @@ BUCKET_NAME = "bucket-20230222-1753"
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
 
-NUM_SAMPLES = 2000
+NUM_SAMPLES = 100
 
 TRAIN_SAMPLE_IDS = range(NUM_SAMPLES)
 

@@ -77,8 +77,8 @@ class AEDataset(torch.utils.data.Dataset):
     
     def _get_local_data_sample(self, index: int):                                                      
         
-        state = np.load(f'{self.local_path}/state/sample_{index}.npz')
-        pars = np.load(f'{self.local_path}/pars/sample_{index}.npz')
+        state = np.load(f'{self.local_path}/state/sample_{index}.npz')['data']
+        pars = np.load(f'{self.local_path}/pars/sample_{index}.npz')['data']
         if self.end_time_index is not None:
             state = state[:, :, :self.end_time_index]
 
