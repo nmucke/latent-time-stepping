@@ -22,6 +22,8 @@ figures/
 *.gif
 *.png
 *.npy
+*.npz
+*.pkl
 
 # Exclude MacOS files
 *.DS_Store
