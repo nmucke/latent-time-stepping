@@ -18,12 +18,17 @@ class AEDataset(torch.utils.data.Dataset):
         num_skip_steps: int = 1,
         end_time_index: float = None,
         sample_ids: int = None,
+        save_to_local: str = None,
+        save_to_oracle: str = None,
         ) -> None:
         super().__init__()
 
         self.sample_ids = sample_ids
         self.num_skip_steps = num_skip_steps
         self.end_time_index = end_time_index
+
+        self.save_to_local = save_to_local
+        self.save_to_oracle = save_to_oracle
 
         self.preprocessor = preprocessor
         self.load_entire_dataset = load_entire_dataset
@@ -125,15 +130,32 @@ class AEDataset(torch.utils.data.Dataset):
             state = self.preprocessor.transform_state(state)
             pars = self.preprocessor.transform_pars(pars)
         
-            state = state.squeeze().numpy()
-            pars = pars.squeeze().numpy()
+        
+        if self.save_to_local is not None:
+            
+            state = state.numpy()
+            pars = pars.numpy()
+
+            np.savez_compressed(
+                f'{self.save_to_local}/state/sample_{index}.npz',
+                data=state
+            )
+            np.savez_compressed(
+                f'{self.save_to_local}/pars/sample_{index}.npz',
+                data=pars
+            )
+
+        if self.save_to_oracle is not None:
+
+            state = state.numpy()
+            pars = pars.numpy()
 
             self.object_storage_client.put_numpy_object(
-                destination_path=f'single_phase/processed_data/train/state/sample_{index}.npz',
+                destination_path=f'{self.save_to_oracle}/state/sample_{index}.npz',
                 data=state
             )
             self.object_storage_client.put_numpy_object(
-                destination_path=f'single_phase/processed_data/train/pars/sample_{index}.npz',
+                destination_path=f'{self.save_to_oracle}/pars/sample_{index}.npz',
                 data=pars
             )
 

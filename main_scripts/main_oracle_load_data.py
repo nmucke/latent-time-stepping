@@ -10,6 +10,7 @@ import torch
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
 from latent_time_stepping.datasets.AE_dataset import AEDataset
+from latent_time_stepping.utils import create_directory
 
 
 PHASE = "single"
@@ -17,9 +18,9 @@ PHASE = "single"
 TRAIN_OR_TEST = 'train'
 
 BUCKET_NAME = "bucket-20230222-1753"
-ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
+#ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 
-ORACLE_SAVE_PATH = f'{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
 
 NUM_SAMPLES = 2000
 
@@ -31,9 +32,11 @@ with open(PREPROCESSOR_PATH, 'rb') as f:
 
 SAVE_FOLDER = f'data/{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
 
-if not os.path.exists(SAVE_FOLDER):
-    os.makedirs(f'{SAVE_FOLDER}/state')
-    os.makedirs(f'{SAVE_FOLDER}/pars')
+if not os.path.exists(f'{SAVE_FOLDER}/state'):
+    create_directory(f'{SAVE_FOLDER}/state')
+
+if not os.path.exists(f'{SAVE_FOLDER}/pars'):
+    create_directory(f'{SAVE_FOLDER}/pars')
     
 def main():
 
@@ -41,8 +44,9 @@ def main():
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=TRAIN_SAMPLE_IDS,
         load_entire_dataset=False,
-        preprocessor=preprocessor,
-        num_skip_steps=4,
+        #preprocessor=preprocessor,
+        num_skip_steps=1,
+        save_to_local=SAVE_FOLDER,
     )
 
     dataloader = torch.utils.data.DataLoader(
