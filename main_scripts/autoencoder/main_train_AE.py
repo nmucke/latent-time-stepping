@@ -29,7 +29,7 @@ torch.set_default_dtype(torch.float32)
 CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'local'
 
-PHASE = "multi"
+PHASE = "single"
 
 MODEL_TYPE = "WAE"
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
@@ -42,10 +42,12 @@ else:
     DEVICE = torch.device('cpu')
 
 BUCKET_NAME = "bucket-20230222-1753"
-ORACLE_LOAD_PATH = f'{PHASE}_phase/processed_data/train'
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/processed_data/train'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
+LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
-NUM_SAMPLES = 4000
+PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
+
+NUM_SAMPLES = 2500
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 
@@ -59,6 +61,16 @@ with open(config_path) as f:
 with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as outfile:
     yaml.dump(config, outfile, default_flow_style=False)
 
+
+object_storage_client = ObjectStorageClientWrapper(
+    bucket_name='trained_models'
+)
+
+preprocessor = object_storage_client.get_preprocessor(
+    source_path=PREPROCESSOR_PATH
+)
+
+
 def main():
 
     if LOCAL_OR_ORACLE == 'oracle':
@@ -67,6 +79,7 @@ def main():
             sample_ids=TRAIN_SAMPLE_IDS,
             load_entire_dataset=False,
             num_random_idx_divisor=4,
+            preprocessor=preprocessor,
             #num_skip_steps=4
         )
     elif LOCAL_OR_ORACLE == 'local':
@@ -75,6 +88,7 @@ def main():
             sample_ids=TRAIN_SAMPLE_IDS,
             load_entire_dataset=False,
             num_random_idx_divisor=4,
+            preprocessor=preprocessor,
             #num_skip_steps=4
         )
 

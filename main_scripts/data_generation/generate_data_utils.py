@@ -175,9 +175,9 @@ def simulate_pipeflow(
         x = np.linspace(PDE_model.DG_vars.x[0, 0], PDE_model.DG_vars.x[-1, -1], 512)
 
     if to_oracle:
-        path = f'{phase}_phase/{train_or_test}'
+        path = f'{phase}_phase/raw_data/{train_or_test}'
     else:
-        path = f'data/{phase}_phase/{train_or_test}'
+        path = f'data/{phase}_phase/raw_data/{train_or_test}'
 
     save_data(
         idx=idx,

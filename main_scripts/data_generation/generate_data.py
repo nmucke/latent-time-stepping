@@ -16,7 +16,7 @@ from multi_phase_PDE import PipeflowEquations as PipeflowEquationsMultiPhase
 
 TEST_CASE = 'single_phase_leak'
 
-DISTRIBUTED = False
+DISTRIBUTED = True
 NUM_CPUS = 5
 
 NUM_SAMPLES = 30
@@ -30,14 +30,14 @@ with open(f'configs/PDEs/{TEST_CASE}.yml', 'r') as f:
     
 if TEST_CASE == 'single_phase_leak':
     model_parameters = {
-        'L': 2000,
+        'L': 1000,
         'd': 0.508,
         'A': np.pi*0.508**2/4,
         'c': 308.,
         'rho_ref': 52.67,
         'p_amb': 101325.,
         'p_ref': 52.67*308**2,
-        'e': 1e-2,
+        'e': 1e-8,
         'mu': 1.2e-5,
         'Cd': 5e-4,
         'leak_location': 500,
@@ -78,11 +78,11 @@ def main():
 
 
     if TEST_CASE == 'single_phase_leak':
-        leak_location_vec = np.random.uniform(10, 1990, NUM_SAMPLES)
-        leak_size_vec = np.random.uniform(0.1, 1.0, NUM_SAMPLES)
+        leak_location_vec = np.random.uniform(10, 990, NUM_SAMPLES)
+        leak_size_vec = np.random.uniform(1.0, 3.0, NUM_SAMPLES)
     elif TEST_CASE == 'multi_phase_leak':
         leak_location_vec = np.random.uniform(10, 4990, NUM_SAMPLES)
-        leak_size_vec = np.random.uniform(0.01, 0.1, NUM_SAMPLES)
+        leak_size_vec = np.random.uniform(1.0, 2.0, NUM_SAMPLES)
 
 
 
@@ -92,7 +92,7 @@ def main():
             remote_list.append(simulate_pipeflow_remote.remote(
                 PDE_model=pipe_equations,
                 PDE_args=config,
-                t_final=250.0,
+                t_final=240.0,
                 model_parameters=model_parameters,
                 parameters_of_interest={
                     'leak_size': leak_size_vec[idx],
@@ -110,7 +110,7 @@ def main():
             _ = simulate_pipeflow(
                 PDE_model=pipe_equations,
                 PDE_args=config,
-                t_final=250.0,
+                t_final=180.0,
                 model_parameters=model_parameters,
                 parameters_of_interest={
                     'leak_size': leak_size_vec[idx],

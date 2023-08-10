@@ -94,6 +94,8 @@ class AEDataset(torch.utils.data.Dataset):
     def _load_entire_dataset(self,):
 
         if self.oracle_path is not None:
+
+
             self.state = self.object_storage_client.get_numpy_object(
                 source_path=f'{self.oracle_path}/states.npz'
             )[self.sample_ids]

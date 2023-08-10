@@ -313,34 +313,43 @@ class UpSample(nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: int = 3,
+        transposed: bool = True,
         ) -> None:
         
         super(UpSample, self).__init__()
 
         self.padding = kernel_size // 2
+        self.transposed = transposed
         
-        #self.conv = nn.Conv1d(
-        #    in_channels=in_channels, 
-        #    out_channels=out_channels, 
-        #    kernel_size=kernel_size, 
-        #    )
+        if self.transposed:
 
-        self.conv = nn.ConvTranspose1d(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            stride=2,
-            padding=self.padding,
-            output_padding=1,
-        )
+            self.conv = nn.ConvTranspose1d(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                stride=2,
+                padding=self.padding,
+                output_padding=1,
+            )
+
+        else:
+
+            self.conv = nn.Conv1d(
+                in_channels=in_channels, 
+                out_channels=out_channels, 
+                kernel_size=kernel_size, 
+                )
+
 
         self.linear_padding = LinearPadding(padding=self.padding)
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
-        #x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
-        #x = self.linear_padding(x)
-        #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
+        if not self.transposed:
+            x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
+            x = self.linear_padding(x)
+            #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
+
         return self.conv(x)
 
 class DownSample(nn.Module):
@@ -597,12 +606,14 @@ class Decoder(nn.Module):
         pars_dim: int = 2,    
         space_dim: int = 256,
         resnet: bool = True,
+        transposed: bool = False,
         ):
         super().__init__()
 
         pars_embed_channels = 8
         init_dim = 4
         self.resnet = resnet
+        self.transposed = transposed
         
         if num_channels is None:
             num_channels = [128, 64, 32, num_states]
@@ -682,6 +693,7 @@ class Decoder(nn.Module):
                             in_channels=self.num_channels[i+1],
                             out_channels=self.num_channels[i+1],
                             kernel_size=self.kernel_size,
+                            transposed=self.transposed,
                         ),
                         self.activation,
                     )
@@ -694,6 +706,7 @@ class Decoder(nn.Module):
                             in_channels=self.num_channels[i],
                             out_channels=self.num_channels[i+1],
                             kernel_size=self.kernel_size,
+                            transposed=self.transposed,
                         ),
                         self.activation,
                         nn.BatchNorm1d(

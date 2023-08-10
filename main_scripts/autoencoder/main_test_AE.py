@@ -7,6 +7,7 @@ import torch
 import matplotlib.pyplot as plt
 import yaml
 from latent_time_stepping.datasets.AE_dataset import AEDataset
+from latent_time_stepping.oracle import ObjectStorageClientWrapper
 from latent_time_stepping.preprocessor import Preprocessor
 from latent_time_stepping.utils import load_trained_AE_model
 
@@ -14,7 +15,7 @@ torch.set_default_dtype(torch.float32)
 
 DEVICE = 'cpu'
 
-PHASE = "multi"
+PHASE = "single"
 MODEL_TYPE = "WAE"
 
 LOCAL_OR_ORACLE = 'oracle'
@@ -31,12 +32,17 @@ model = load_trained_AE_model(
     device=DEVICE,
 )
 
-PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
-with open(PREPROCESSOR_PATH, 'rb') as f:
-    preprocessor = pickle.load(f)
+PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
+
+object_storage_client = ObjectStorageClientWrapper(
+    bucket_name='trained_models'
+)
+preprocessor = object_storage_client.get_preprocessor(
+    source_path=PREPROCESSOR_PATH
+)
 
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
-ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
 NUM_SAMPLES = 2
 SAMPLE_IDS = range(NUM_SAMPLES)
@@ -46,7 +52,7 @@ if LOCAL_OR_ORACLE == 'oracle':
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
-        num_skip_steps=5,
+        num_skip_steps=1,
         end_time_index=1500
     )
 elif LOCAL_OR_ORACLE == 'local':
@@ -54,7 +60,7 @@ elif LOCAL_OR_ORACLE == 'local':
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
-        num_skip_steps=5,
+        num_skip_steps=1,
         end_time_index=1500
     )
 
@@ -84,8 +90,12 @@ def main():
         recon_state = preprocessor.inverse_transform_state(recon_state, ensemble=True)
         state = preprocessor.inverse_transform_state(state, ensemble=True)
         recon_state = recon_state.detach()
+
+        e = 0
+        for j in range(NUM_STATES):
+            e += torch.norm(state[:, j] - recon_state[:, j])/torch.norm(state[:, j])
         
-        L2_error.append(torch.norm(state - recon_state)/torch.norm(state))
+        L2_error.append(e)
 
     print(f"Average L2 Error: {torch.mean(torch.stack(L2_error))}")
 
@@ -97,10 +107,10 @@ def main():
     
     plt.figure(figsize=(20, 10))
     plt.subplot(2, 4, 1)
-    plt.plot(recon_state[2, :, 100], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[2, :, 100], label="High Fidelity", color='tab:blue')
-    plt.plot(recon_state[2, :, -1], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[2, :, -1], label="High Fidelity", color='tab:blue')
+    plt.plot(recon_state[0, :, 100], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[0, :, 100], label="High Fidelity", color='tab:blue')
+    plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
     plt.legend()
     plt.subplot(2, 4, 2)
     plt.plot(recon_state[1, :, 100], label="Reconstructed", color='tab:orange')

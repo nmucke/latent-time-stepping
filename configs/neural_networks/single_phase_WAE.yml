@@ -1,20 +1,23 @@
 dataloader_args:
   batch_size: 4
   shuffle: True
-  num_workers: 2
+  num_workers: 4
   
 model_args:
   encoder:
-    num_channels: [2, 8, 16, 32, 64, 128]
+    num_channels: [2, 4, 8, 16, 32, 64, 128]
     kernel_size: 3
-    latent_dim: 8
+    latent_dim: 16
     space_dim: 256
+    resnet: True
   decoder:
-    num_channels: [128, 64, 32, 16, 8, 2]
+    num_channels: [128, 64, 32, 16, 8, 4, 2]
     kernel_size: 3
-    latent_dim: 8
+    latent_dim: 16
     pars_dim: 2
     space_dim: 256
+    resnet: True
+    transposed: True
 
 optimizer_args:
   learning_rate: 5.0e-4

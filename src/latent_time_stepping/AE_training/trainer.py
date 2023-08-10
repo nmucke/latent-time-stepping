@@ -4,6 +4,7 @@ import torch
 from tqdm import tqdm
 import pdb
 from dataclasses import dataclass
+import matplotlib.pyplot as plt
 
 from latent_time_stepping.AE_training.optimizers import Optimizer
 from latent_time_stepping.AE_training.train_steppers import BaseAETrainStepper

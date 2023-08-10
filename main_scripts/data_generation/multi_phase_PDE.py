@@ -90,7 +90,7 @@ class PipeflowEquations(BaseModel):
             setattr(self, k, v)
         
 
-        self.D_orifice = 0.01
+        self.D_orifice = 0.03
         self.A_orifice = np.pi*(self.D_orifice/2)**2
         self.Cv = self.A/np.sqrt(self.rho_g_norm/2 * ((self.A/(self.A_orifice*self.Cd))**2-1))
 
@@ -110,12 +110,8 @@ class PipeflowEquations(BaseModel):
 
     def update_parameters(self, pars):
 
-        Cd = pars['leak_size']
-        leak_location = pars['leak_location']
-
-        self.Cv = self.A/np.sqrt(self.rho_g_norm/2 * ((self.A/(self.A_orifice*Cd))**2-1))
-        self.leak_location = leak_location
-
+        self.Cd = pars['leak_size']
+        self.leak_location = pars['leak_location']
         
         self.xElementL = np.int32(self.leak_location / self.basic_args['xmax'] * self.DG_vars.K)
 
@@ -402,6 +398,8 @@ class PipeflowEquations(BaseModel):
 
         pressureL = self.evaluate_solution(np.array([self.leak_location]), pressure)[0]
         rhoL = self.evaluate_solution(np.array([self.leak_location]), rho_m)[0]
+
+        self.Cv = self.A/np.sqrt(rhoL/2 * ((self.A/(self.A_orifice*self.Cd))**2-1)) #
 
         discharge_sqrt_coef = (pressureL - self.p_amb) * rhoL
         f_l[:, self.xElementL] = self.Cv * np.sqrt(discharge_sqrt_coef) * self.lagrange

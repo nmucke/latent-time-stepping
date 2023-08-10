@@ -13,16 +13,16 @@ from latent_time_stepping.datasets.AE_dataset import AEDataset
 from latent_time_stepping.utils import create_directory
 
 
-PHASE = "multi"
+PHASE = "single"
 
 TRAIN_OR_TEST = 'train'
 
 BUCKET_NAME = "bucket-20230222-1753"
 #ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 
-ORACLE_LOAD_PATH = f'{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 
-NUM_SAMPLES = 4000
+NUM_SAMPLES = 2500
 
 TRAIN_SAMPLE_IDS = range(NUM_SAMPLES)
 
@@ -30,7 +30,7 @@ PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
 with open(PREPROCESSOR_PATH, 'rb') as f:
     preprocessor = pickle.load(f)
 
-SAVE_FOLDER = f'data/{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
+SAVE_FOLDER = f'data/{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 
 if not os.path.exists(f'{SAVE_FOLDER}/state'):
     create_directory(f'{SAVE_FOLDER}/state')

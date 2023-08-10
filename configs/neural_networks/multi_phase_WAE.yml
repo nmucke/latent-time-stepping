@@ -17,6 +17,7 @@ model_args:
     pars_dim: 2
     space_dim: 512
     resnet: True
+    transposed: False
 
 optimizer_args:
   learning_rate: 5.0e-4

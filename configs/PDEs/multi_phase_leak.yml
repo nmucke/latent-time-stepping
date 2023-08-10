@@ -3,7 +3,7 @@ basic_args:
     xmax: 5000
     num_elements: 1000
     num_states: 3
-    polynomial_order: 2
+    polynomial_order: 3
     polynomial_type: 'legendre'
 
 steady_state:
