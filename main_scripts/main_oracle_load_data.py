@@ -22,7 +22,7 @@ BUCKET_NAME = "bucket-20230222-1753"
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
 
-NUM_SAMPLES = 100
+NUM_SAMPLES = 4000
 
 TRAIN_SAMPLE_IDS = range(NUM_SAMPLES)
 
@@ -53,7 +53,7 @@ def main():
         dataset,
         batch_size=1,
         shuffle=False,
-        num_workers=64,
+        num_workers=30,
     )
     bucket_name = "bucket-20230222-1753"
 

@@ -20,12 +20,14 @@ class AEDataset(torch.utils.data.Dataset):
         sample_ids: int = None,
         save_to_local: str = None,
         save_to_oracle: str = None,
+        num_random_idx_divisor: int = None,
         ) -> None:
         super().__init__()
 
         self.sample_ids = sample_ids
         self.num_skip_steps = num_skip_steps
         self.end_time_index = end_time_index
+        self.num_random_idx_divisor = num_random_idx_divisor
 
         self.save_to_local = save_to_local
         self.save_to_oracle = save_to_oracle
@@ -159,4 +161,9 @@ class AEDataset(torch.utils.data.Dataset):
                 data=pars
             )
 
+        if self.num_random_idx_divisor is not None:
+            idx = np.random.randint(0, state.shape[-1], size=state.shape[-1]//self.num_random_idx_divisor)
+
+            return state[:, :, idx], pars
+        
         return state, pars

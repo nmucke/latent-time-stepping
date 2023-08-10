@@ -14,17 +14,17 @@ from latent_time_stepping.utils import create_directory
 
 torch.set_default_dtype(torch.float32)
 
-NUM_SAMPLES = 2000
+NUM_SAMPLES = 2500
 SAMPLE_IDS = range(NUM_SAMPLES)
 
-NUM_SKIP_STEPS = 5
+NUM_SKIP_STEPS = 1
 END_TIME_INDEX = 25000
 
 LOCAL_OR_ORACLE = 'local'
 PHASE = 'single'
 TRAIN_OR_TEST = 'train'
 
-NUM_WORKERS = 20
+NUM_WORKERS = 64
 BATCH_SIZE = 40
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/{TRAIN_OR_TEST}'
@@ -53,14 +53,14 @@ def main():
             oracle_path=ORACLE_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
             sample_ids=SAMPLE_IDS,
-            end_time_index=END_TIME_INDEX,
+            #end_time_index=END_TIME_INDEX,
         )
     else:
         dataset = AEDataset(
             local_path=LOCAL_LOAD_PATH,
             num_skip_steps=NUM_SKIP_STEPS,
             sample_ids=SAMPLE_IDS,
-            end_time_index=END_TIME_INDEX,
+            #end_time_index=END_TIME_INDEX,
         )
     dataloader = torch.utils.data.DataLoader(
         dataset,
@@ -80,6 +80,18 @@ def main():
     # Save the preprocessor   
     with open(TRAINED_PREPROCESSOR_SAVE_PATH, 'wb') as f:
         pickle.dump(preprocessor, f)
+
+    object_storage_client = ObjectStorageClientWrapper(
+        bucket_name='trained_models'
+    )
+
+    object_storage_client.put_preprocessor(
+        source_path=TRAINED_PREPROCESSOR_SAVE_PATH,
+        destination_path=f'{PHASE}_phase/preprocessor.pkl',
+    )
+
+    '''
+
             
         
     #torch.save(preprocessor, TRAINED_PREPROCESSOR_SAVE_PATH)
@@ -158,7 +170,7 @@ def main():
             f'{LOCAL_SAVE_PATH}/pars.npz',
             data=processed_pars,
     )
-
+    '''
 if __name__ == "__main__":
     
     main()

@@ -27,11 +27,12 @@ def sol_to_state_single_phase(sol, t_vec, PDE_model):
     u = u / rho / PDE_model.A
 
     rho = rho[:, 1:]
+    pres = PDE_model.density_to_pressure(rho)
     u = u[:, 1:]
 
-    rho = np.expand_dims(rho, axis=0)
+    pres = np.expand_dims(pres, axis=0)
     u = np.expand_dims(u, axis=0)
-    state = np.concatenate((rho, u), axis=0)
+    state = np.concatenate((pres, u), axis=0)
 
     return state
 
@@ -39,7 +40,7 @@ def pars_dict_to_array_single_phase(pars_dict):
     pars = np.zeros((2,))
 
     pars[0] = pars_dict['leak_location']
-    pars[1] = pars_dict['leak_size']    
+    pars[1] = pars_dict['leak_size']
 
     return pars
 

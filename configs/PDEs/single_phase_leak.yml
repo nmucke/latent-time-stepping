@@ -1,7 +1,7 @@
 basic_args:
     xmin: 0
-    xmax: 2000
-    num_elements: 200
+    xmax: 1000
+    num_elements: 100
     num_states: 2
     polynomial_order: 3
     polynomial_type: 'legendre'
@@ -12,7 +12,7 @@ steady_state:
         max_newton_iter: 200
         newton_tol: 1.0e-5
         num_jacobian_reuses: 1000
-        
+
 numerical_flux_args:
     type: 'lax_friedrichs'
     alpha: 0.5
@@ -22,8 +22,8 @@ stabilizer_args:
     second_derivative_upper_bound: 1.0e-8
 
 time_integrator_args:
-    type: 'BDF2'
-    step_size: 0.01
+    type: 'implicit_euler'
+    step_size: 0.05
     newton_params:
         solver: 'direct'
         max_newton_iter: 200

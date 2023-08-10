@@ -45,14 +45,17 @@ if LOCAL_OR_ORACLE == 'oracle':
     dataset = AEDataset(
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
-        num_skip_steps=1,
         preprocessor=preprocessor,
+        num_skip_steps=5,
+        end_time_index=1500
     )
 elif LOCAL_OR_ORACLE == 'local':
     dataset = AEDataset(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
+        num_skip_steps=5,
+        end_time_index=1500
     )
 
 dataloader = torch.utils.data.DataLoader(
@@ -63,7 +66,6 @@ dataloader = torch.utils.data.DataLoader(
 )
 
 def main():
-
 
     L2_error = []
 

@@ -45,7 +45,7 @@ BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/processed_data/train'
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/processed_data/train'
 
-NUM_SAMPLES = 100
+NUM_SAMPLES = 4000
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 
@@ -66,12 +66,16 @@ def main():
             oracle_path=ORACLE_LOAD_PATH,
             sample_ids=TRAIN_SAMPLE_IDS,
             load_entire_dataset=False,
+            num_random_idx_divisor=4,
+            #num_skip_steps=4
         )
     elif LOCAL_OR_ORACLE == 'local':
         dataset = AEDataset(
             local_path=LOCAL_LOAD_PATH,
             sample_ids=TRAIN_SAMPLE_IDS,
             load_entire_dataset=False,
+            num_random_idx_divisor=4,
+            #num_skip_steps=4
         )
 
     train_dataset, val_dataset = torch.utils.data.random_split(
