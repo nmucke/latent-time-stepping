@@ -422,7 +422,7 @@ class PipeflowEquations(BaseModel):
         
         s = np.zeros((self.DG_vars.num_states,self.DG_vars.Np*self.DG_vars.K))
 
-        point_source = np.zeros((self.DG_vars.Np*self.DG_vars.K))
+        #point_source = np.zeros((self.DG_vars.Np*self.DG_vars.K))
         if t>0.:
 
             '''

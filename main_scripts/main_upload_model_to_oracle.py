@@ -37,10 +37,10 @@ def main():
     object_storage_client = ObjectStorageClientWrapper(BUCKET_NAME)
 
     ##### Upload preprocessor #####
-    object_storage_client.put_preprocessor(
-        source_path=PREPROCESSOR_PATH,
-        destination_path=ORACLE_PREPROCESSOR_SAVE_PATH,
-    )
+    #object_storage_client.put_preprocessor(
+    #    source_path=PREPROCESSOR_PATH,
+    #    destination_path=ORACLE_PREPROCESSOR_SAVE_PATH,
+    #)
 
     ##### Upload AE model #####
     if AE_model_path is not None:

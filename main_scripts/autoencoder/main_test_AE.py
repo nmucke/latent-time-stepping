@@ -42,9 +42,9 @@ preprocessor = object_storage_client.get_preprocessor(
 )
 
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
-ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-NUM_SAMPLES = 2
+NUM_SAMPLES = 3
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 if LOCAL_OR_ORACLE == 'oracle':

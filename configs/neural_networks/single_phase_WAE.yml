@@ -1,5 +1,5 @@
 dataloader_args:
-  batch_size: 4
+  batch_size: 8
   shuffle: True
   num_workers: 4
   
@@ -16,11 +16,11 @@ model_args:
     latent_dim: 16
     pars_dim: 2
     space_dim: 256
-    resnet: True
-    transposed: True
+    resnet: False
+    transposed: False
 
 optimizer_args:
-  learning_rate: 5.0e-4
+  learning_rate: 1.0e-3
   weight_decay: 1.0e-8
   scheduler_args:
     warmup: 1

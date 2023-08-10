@@ -92,7 +92,7 @@ def main():
             remote_list.append(simulate_pipeflow_remote.remote(
                 PDE_model=pipe_equations,
                 PDE_args=config,
-                t_final=240.0,
+                t_final=180.0,
                 model_parameters=model_parameters,
                 parameters_of_interest={
                     'leak_size': leak_size_vec[idx],
