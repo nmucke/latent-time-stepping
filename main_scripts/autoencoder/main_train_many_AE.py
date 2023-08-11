@@ -39,7 +39,7 @@ def train_remote(
     else:
         DEVICE = torch.device('cpu')
 
-    MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{WAE}"
+    MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
 
     NUM_SAMPLES = 20
     TRAIN_RATIO = 0.8
