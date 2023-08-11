@@ -39,7 +39,6 @@ def train_remote(
     else:
         DEVICE = torch.device('cpu')
 
-    MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
 
     NUM_SAMPLES = 20
     TRAIN_RATIO = 0.8
@@ -92,6 +91,7 @@ def train_remote(
     config['model_args']['decoder']['latent_dim'] = latent_dim
 
     oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}'
+    MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_{latent_dim}"
 
     encoder = Encoder(**config['model_args']['encoder'])
     decoder = Decoder(**config['model_args']['decoder'])
