@@ -39,7 +39,6 @@ def train_remote(
     else:
         DEVICE = torch.device('cpu')
 
-
     NUM_SAMPLES = 20
     TRAIN_RATIO = 0.8
     VAL_RATIO = 0.2
@@ -126,13 +125,16 @@ def train_remote(
     return 0
 
 def main():
+    out = []
     for latent_dim in [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]:
 
         _ = train_remote.remote(
             latent_dim=latent_dim,
-        )       
+        )   
 
-        ray.get(_)
+        out.append(_)    
+
+    ray.get(out)
 
 if __name__ == "__main__":
     
