@@ -126,9 +126,11 @@ def train_remote(
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
         train_stepper=train_stepper,
-        print_progress=True,
+        print_progress=False,
         **config['train_args'],
     )
+
+    print(f'Finished training with latent_dim={latent_dim}')
 
     return 0
 
