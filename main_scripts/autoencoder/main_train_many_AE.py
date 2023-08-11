@@ -30,11 +30,35 @@ torch.set_default_dtype(torch.float32)
 @ray.remote(num_cpus=1)
 def train_remote(
     latent_dim,
-    train_dataloader,
-    val_dataloader,
-    train_stepper,
     config,
 ):
+    
+    TRAIN_RATIO = 0.8
+    VAL_RATIO = 0.2
+
+    dataset = AEDataset(
+        oracle_path=ORACLE_LOAD_PATH,
+        sample_ids=SAMPLE_IDS,
+        load_entire_dataset=False,
+        num_random_idx_divisor=4,
+        preprocessor=preprocessor,
+        #num_skip_steps=4
+    )
+
+    train_dataset, val_dataset = torch.utils.data.random_split(
+        dataset,
+        [int(TRAIN_RATIO*len(dataset)), int(VAL_RATIO*len(dataset))]
+    )
+    
+    train_dataloader = torch.utils.data.DataLoader(
+        train_dataset,
+        **config['dataloader_args'],
+    )
+    val_dataloader = torch.utils.data.DataLoader(
+        val_dataset,
+        **config['dataloader_args'],
+    )
+
     config['model_args']['encoder']['latent_dim'] = latent_dim
     config['model_args']['decoder']['latent_dim'] = latent_dim
 
@@ -118,46 +142,10 @@ preprocessor = object_storage_client.get_preprocessor(
 
 
 def main():
-
-    if LOCAL_OR_ORACLE == 'oracle':
-        dataset = AEDataset(
-            oracle_path=ORACLE_LOAD_PATH,
-            sample_ids=SAMPLE_IDS,
-            load_entire_dataset=False,
-            num_random_idx_divisor=4,
-            preprocessor=preprocessor,
-            #num_skip_steps=4
-        )
-    elif LOCAL_OR_ORACLE == 'local':
-        dataset = AEDataset(
-            local_path=LOCAL_LOAD_PATH,
-            sample_ids=SAMPLE_IDS,
-            load_entire_dataset=False,
-            num_random_idx_divisor=4,
-            preprocessor=preprocessor,
-            #num_skip_steps=4
-        )
-
-    train_dataset, val_dataset = torch.utils.data.random_split(
-        dataset,
-        [int(TRAIN_RATIO*len(dataset)), int(VAL_RATIO*len(dataset))]
-    )
-    
-    train_dataloader = torch.utils.data.DataLoader(
-        train_dataset,
-        **config['dataloader_args'],
-    )
-    val_dataloader = torch.utils.data.DataLoader(
-        val_dataset,
-        **config['dataloader_args'],
-    )
-
     for latent_dim in [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]:
 
         _ = train_remote.remote(
             latent_dim=latent_dim,
-            train_dataloader=train_dataloader,
-            val_dataloader=val_dataloader,
             train_stepper=None,
             config=config,
         )       
