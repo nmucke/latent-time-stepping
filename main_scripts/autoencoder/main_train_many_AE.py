@@ -146,7 +146,6 @@ def main():
 
         _ = train_remote.remote(
             latent_dim=latent_dim,
-            train_stepper=None,
             config=config,
         )       
 
