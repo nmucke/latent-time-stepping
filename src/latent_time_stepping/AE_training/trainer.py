@@ -54,8 +54,9 @@ def train(
 
             loss = train_stepper.train_step(state, pars)
 
-            if i % 10 == 0:
-                pbar.set_postfix(loss)
+            if print_progress:
+                if i % 10 == 0:
+                    pbar.set_postfix(loss)
         
         # Validate
         for i, (state, pars) in enumerate(val_dataloader):
