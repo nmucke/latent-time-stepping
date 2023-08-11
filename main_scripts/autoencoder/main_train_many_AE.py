@@ -30,12 +30,41 @@ torch.set_default_dtype(torch.float32)
 @ray.remote(num_cpus=1)
 def train_remote(
     latent_dim,
-    config,
 ):
+    PHASE = "single"
     
+    CUDA = False
+    if CUDA:
+        DEVICE = torch.device('cuda' if CUDA else 'cpu')
+    else:
+        DEVICE = torch.device('cpu')
+
+    MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{WAE}"
+
+    NUM_SAMPLES = 20
     TRAIN_RATIO = 0.8
     VAL_RATIO = 0.2
 
+    SAMPLE_IDS = range(NUM_SAMPLES)
+
+    config_path = f"configs/neural_networks/{PHASE}_phase_WAE.yml"
+    with open(config_path) as f:
+        config = yaml.load(f, Loader=SafeLoader)
+
+    ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
+
+    PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
+    TRAIN_RATIO = 0.8
+    VAL_RATIO = 0.2
+    
+    object_storage_client = ObjectStorageClientWrapper(
+        bucket_name='trained_models'
+    )
+
+    preprocessor = object_storage_client.get_preprocessor(
+        source_path=PREPROCESSOR_PATH
+    )
+    
     dataset = AEDataset(
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
@@ -96,57 +125,11 @@ def train_remote(
 
     return 0
 
-CONTIUE_TRAINING = False
-LOCAL_OR_ORACLE = 'oracle'
-
-PHASE = "single"
-
-MODEL_TYPE = "WAE"
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
-create_directory(MODEL_SAVE_PATH)
-
-CUDA = False
-if CUDA:
-    DEVICE = torch.device('cuda' if CUDA else 'cpu')
-else:
-    DEVICE = torch.device('cpu')
-
-BUCKET_NAME = "bucket-20230222-1753"
-ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
-
-PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
-
-NUM_SAMPLES = 20
-TRAIN_RATIO = 0.8
-VAL_RATIO = 0.2
-
-SAMPLE_IDS = range(NUM_SAMPLES)
-
-config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
-with open(config_path) as f:
-    config = yaml.load(f, Loader=SafeLoader)
-
-# Save config file
-with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as outfile:
-    yaml.dump(config, outfile, default_flow_style=False)
-
-
-object_storage_client = ObjectStorageClientWrapper(
-    bucket_name='trained_models'
-)
-
-preprocessor = object_storage_client.get_preprocessor(
-    source_path=PREPROCESSOR_PATH
-)
-
-
 def main():
     for latent_dim in [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]:
 
         _ = train_remote.remote(
             latent_dim=latent_dim,
-            config=config,
         )       
 
         ray.get(_)
