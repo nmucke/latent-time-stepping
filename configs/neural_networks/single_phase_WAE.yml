@@ -1,7 +1,7 @@
 dataloader_args:
   batch_size: 2
   shuffle: True
-  num_workers: 1
+  num_workers: 0
   
 model_args:
   encoder:
