@@ -16,7 +16,7 @@ model_args:
     latent_dim: 16
     pars_dim: 2
     space_dim: 256
-    resnet: False
+    resnet: True
     transposed: False
 
 optimizer_args:

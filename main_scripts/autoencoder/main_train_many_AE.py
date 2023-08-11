@@ -39,7 +39,7 @@ def train_remote(
     else:
         DEVICE = torch.device('cpu')
 
-    NUM_SAMPLES = 200
+    NUM_SAMPLES = 2500
     TRAIN_RATIO = 0.8
     VAL_RATIO = 0.2
 
