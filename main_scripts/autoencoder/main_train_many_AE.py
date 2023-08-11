@@ -5,6 +5,7 @@ import numpy as np
 import yaml
 from yaml.loader import SafeLoader
 import torch
+import ray
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
 from latent_time_stepping.utils import create_directory
@@ -25,6 +26,8 @@ from latent_time_stepping.AE_training.train_steppers import (
 from latent_time_stepping.AE_training.trainer import train
 
 torch.set_default_dtype(torch.float32)
+
+train_remote = ray.remote(train, num_cpus=1)
 
 CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'oracle'
@@ -47,7 +50,7 @@ LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
 PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
 
-NUM_SAMPLES = 200
+NUM_SAMPLES = 20
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 
@@ -111,10 +114,7 @@ def main():
         **config['dataloader_args'],
     )
 
-    lol, lal = next(iter(dataloader))
-    pdb.set_trace()
-
-    for latent_dim in [4, 8, 12, 16, 20, 24, 28, 32, 36, 40]:
+    for latent_dim in [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]:
 
         config['model_args']['encoder']['latent_dim'] = latent_dim
         config['model_args']['decoder']['latent_dim'] = latent_dim
@@ -169,7 +169,7 @@ def main():
                 **config['train_stepper_args'],
             )
         
-        train(
+        _ = train_remote.remote(
             train_dataloader=train_dataloader,
             val_dataloader=val_dataloader,
             train_stepper=train_stepper,
@@ -177,6 +177,10 @@ def main():
             **config['train_args'],
         )
 
+        ray.get(_)
+
 if __name__ == "__main__":
     
+    ray.init(num_cpus=10)
     main()
+    ray.shutdown()

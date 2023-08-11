@@ -31,5 +31,5 @@ train_stepper_args:
   consistency_loss_regu: #1.0e-3
 
 train_args:
-  num_epochs: 2000
+  num_epochs: 4
   patience: 50
