@@ -39,7 +39,7 @@ def train_remote(
     else:
         DEVICE = torch.device('cpu')
 
-    NUM_SAMPLES = 20
+    NUM_SAMPLES = 200
     TRAIN_RATIO = 0.8
     VAL_RATIO = 0.2
 
@@ -93,6 +93,10 @@ def train_remote(
     MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_{latent_dim}"
 
     create_directory(MODEL_SAVE_PATH)
+
+    # Save config file
+    with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as outfile:
+        yaml.dump(config, outfile, default_flow_style=False)
 
     encoder = Encoder(**config['model_args']['encoder'])
     decoder = Decoder(**config['model_args']['decoder'])

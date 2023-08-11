@@ -18,7 +18,8 @@ dependencies = [
     "tqdm",
     'PyYAML',
     'oci',
-    'ocifs'
+    'ocifs',
+    'ray[default]'
 ]
 
 [project.urls]
