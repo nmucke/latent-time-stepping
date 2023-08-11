@@ -50,6 +50,7 @@ def train_remote(
         config = yaml.load(f, Loader=SafeLoader)
 
     ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
     PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
     TRAIN_RATIO = 0.8
@@ -64,7 +65,8 @@ def train_remote(
     )
     
     dataset = AEDataset(
-        oracle_path=ORACLE_LOAD_PATH,
+        #oracle_path=ORACLE_LOAD_PATH,
+        local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         load_entire_dataset=False,
         num_random_idx_divisor=4,
@@ -138,7 +140,7 @@ def main():
             latent_dim=latent_dim,
         )   
 
-        out.append(_)    
+        out.append(_)
 
     ray.get(out)
 
