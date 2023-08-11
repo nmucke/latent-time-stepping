@@ -1,4 +1,5 @@
 import torch
+from latent_time_stepping.oracle import ObjectStorageClientWrapper
 from latent_time_stepping.special_loss_functions import MMD
 from latent_time_stepping.AE_training.optimizers import Optimizer
 import pdb
@@ -45,6 +46,8 @@ class BaseAETrainStepper():
         self.val_loss = None
         self.best_loss = float('inf')
 
+        self.object_storage_client = ObjectStorageClientWrapper('trained_models')
+
     def _save_model(self,) -> None:
         
         model_save_dict = {
@@ -70,14 +73,20 @@ class BaseAETrainStepper():
         with open(f'{self.model_save_path}/loss.txt', 'w') as f:
             f.write(str(self.best_loss))
 
+        if self.oracle_path is not None:
+            self.object_storage_client.put_model(
+                source_path=self.model_save_path,
+                destination_path=self.oracle_path,
+            )
+
     def _reset_loss(self) -> None:
         raise NotImplementedError
 
     def start_epoch(self) -> None:
         self.epoch_count += 1
-        self.model.train()                                
+        self.model.train()                               
     
-    def end_epoch(self) -> None:
+    def end_epoch(self, ) -> None:
         
         self.optimizer.step_scheduler(self.val_loss['recon'])
 
@@ -103,6 +112,7 @@ class WAETrainStepper(BaseAETrainStepper):
         model: torch.nn.Module,
         optimizer: Optimizer,
         model_save_path: str,
+        oracle_path: str = None,
         latent_loss_regu: float = 1.0,
         consistency_loss_regu: float = None,
     ) -> None:
@@ -117,6 +127,8 @@ class WAETrainStepper(BaseAETrainStepper):
         self.consistency_loss = 0.0
 
         self.recon_loss = torch.nn.MSELoss()
+
+        self.oracle_path = oracle_path
 
         '''
         self.latent_regressor = LatentRegressor(
