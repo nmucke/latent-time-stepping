@@ -83,5 +83,3 @@ def train(
                 if early_stopper.num_non_improving_epochs >= early_stopper.patience:
                     print('Early stopping')
                     break
-
-    return 0

@@ -27,7 +27,24 @@ from latent_time_stepping.AE_training.trainer import train
 
 torch.set_default_dtype(torch.float32)
 
-train_remote = ray.remote(train, num_cpus=1)
+@ray.remote(num_cpus=1)
+def train_remote(
+    train_dataloader,
+    val_dataloader,
+    train_stepper,
+    print_progress,
+    config,
+):
+
+    train(
+        train_dataloader=train_dataloader,
+        val_dataloader=val_dataloader,
+        train_stepper=train_stepper,
+        print_progress=print_progress,
+        **config,
+    )
+
+    return 0
 
 CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'oracle'
@@ -174,7 +191,7 @@ def main():
             val_dataloader=val_dataloader,
             train_stepper=train_stepper,
             print_progress=True,
-            **config['train_args'],
+            config=config['train_args'],
         )
 
         ray.get(_)
