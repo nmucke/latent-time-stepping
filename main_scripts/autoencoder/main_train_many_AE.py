@@ -92,6 +92,8 @@ def train_remote(
     oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}'
     MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_{latent_dim}"
 
+    create_directory(MODEL_SAVE_PATH)
+
     encoder = Encoder(**config['model_args']['encoder'])
     decoder = Decoder(**config['model_args']['decoder'])
 
