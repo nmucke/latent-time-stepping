@@ -32,11 +32,13 @@ class BaseAETrainStepper():
         model: torch.nn.Module,
         optimizer: Optimizer,
         model_save_path: str,
+        oracle_path: str = None,
     ) -> None:
         
         self.model = model
         self.optimizer = optimizer
         self.model_save_path = model_save_path
+        self.oracle_path = oracle_path
 
         self.device = model.device
 
@@ -117,7 +119,7 @@ class WAETrainStepper(BaseAETrainStepper):
         consistency_loss_regu: float = None,
     ) -> None:
         
-        super().__init__(model, optimizer, model_save_path)
+        super().__init__(model, optimizer, model_save_path, oracle_path)
     
         self.latent_loss_regu = latent_loss_regu
         self.consistency_loss_regu = consistency_loss_regu
@@ -127,8 +129,6 @@ class WAETrainStepper(BaseAETrainStepper):
         self.consistency_loss = 0.0
 
         self.recon_loss = torch.nn.MSELoss()
-
-        self.oracle_path = oracle_path
 
         '''
         self.latent_regressor = LatentRegressor(
