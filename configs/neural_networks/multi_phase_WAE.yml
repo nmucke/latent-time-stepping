@@ -20,7 +20,7 @@ model_args:
     transposed: False
 
 optimizer_args:
-  learning_rate: 5.0e-4
+  learning_rate: 1.0e-3
   weight_decay: 1.0e-8
   scheduler_args:
     warmup: 1
@@ -28,7 +28,7 @@ optimizer_args:
 
 train_stepper_args:
   latent_loss_regu: 1.0e-3
-  consistency_loss_regu: 1.0e-3
+  #consistency_loss_regu: 1.0e-3
 
 train_args:
   num_epochs: 2000

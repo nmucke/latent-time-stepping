@@ -27,11 +27,11 @@ from latent_time_stepping.AE_training.trainer import train
 
 torch.set_default_dtype(torch.float32)
 
-@ray.remote(num_cpus=8, num_gpus=1)
+@ray.remote(num_cpus=4, num_gpus=1)
 def train_remote(
     latent_dim,
 ):
-    PHASE = "single"
+    PHASE = "multi"
     
     CUDA = True
     if CUDA:
@@ -39,7 +39,7 @@ def train_remote(
     else:
         DEVICE = torch.device('cpu')
 
-    NUM_SAMPLES = 2500
+    NUM_SAMPLES = 5000
     TRAIN_RATIO = 0.8
     VAL_RATIO = 0.2
 
@@ -148,6 +148,6 @@ def main():
 
 if __name__ == "__main__":
     
-    ray.init(num_cpus=32, num_gpus=4)
+    ray.init(num_cpus=16, num_gpus=4)
     main()
     ray.shutdown()
