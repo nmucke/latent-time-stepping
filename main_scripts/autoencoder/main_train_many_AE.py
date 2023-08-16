@@ -117,7 +117,7 @@ def train_remote(
     )
 
     if CONTINUE_TRAINING:
-        state_dict = object_storage_client.get_model(
+        state_dict, _ = object_storage_client.get_model(
             source_path=oracle_model_save_path,
             device=DEVICE,
         )
