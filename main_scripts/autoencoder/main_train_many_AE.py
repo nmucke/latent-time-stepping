@@ -31,6 +31,8 @@ torch.set_default_dtype(torch.float32)
 def train_remote(
     latent_dim,
 ):
+    
+    CONTINUE_TRAINING = True
     PHASE = "multi"
     
     CUDA = True
@@ -113,6 +115,14 @@ def train_remote(
         model=model,
         args=config['optimizer_args'],
     )
+
+    if CONTINUE_TRAINING:
+        state_dict = object_storage_client.get_model(
+            source_path=MODEL_SAVE_PATH,
+            device=DEVICE,
+        )
+        model.load_state_dict(state_dict['model_state_dict'])
+        optimizer.load_state_dict(state_dict['optimizer_state_dict'])
 
     train_stepper = WAETrainStepper(
         model=model,
