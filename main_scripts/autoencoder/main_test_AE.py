@@ -21,6 +21,8 @@ LATENT_DIM = 24
 
 LOCAL_OR_ORACLE = 'oracle'
 
+LOAD_MODEL_FROM_ORACLE = False
+
 if PHASE == "single":
     NUM_STATES = 2
 elif PHASE == "multi":
@@ -39,8 +41,8 @@ state_dict, config = object_storage_client.get_model(
 )
 #model.load_state_dict(state_dict['model_state_dict'])
 model = load_trained_AE_model(
-    model_load_path=MODEL_LOAD_PATH,
-    #state_dict=state_dict,
+    model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
+    state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
     config=config,
     model_type=MODEL_TYPE,
     device=DEVICE,

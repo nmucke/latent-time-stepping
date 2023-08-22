@@ -21,7 +21,7 @@ torch.backends.cuda.enable_flash_sdp(enabled=True)
 torch.set_float32_matmul_precision('medium')
 torch.backends.cuda.matmul.allow_tf32 = True
 
-CONTINUE_TRAINING = True
+CONTINUE_TRAINING = False
 
 MODEL_TYPE = "transformer"
 

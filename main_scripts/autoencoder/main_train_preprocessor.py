@@ -14,26 +14,23 @@ from latent_time_stepping.utils import create_directory
 
 torch.set_default_dtype(torch.float32)
 
-NUM_SAMPLES = 2500
+NUM_SAMPLES = 5000
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 NUM_SKIP_STEPS = 1
-END_TIME_INDEX = 25000
+END_TIME_INDEX = 36000
 
-LOCAL_OR_ORACLE = 'local'
-PHASE = 'single'
+LOCAL_OR_ORACLE = 'oracle'
+PHASE = 'multi'
 TRAIN_OR_TEST = 'train'
 
-NUM_WORKERS = 64
-BATCH_SIZE = 40
+NUM_WORKERS = 30
+BATCH_SIZE = 30
 
-ORACLE_LOAD_PATH = f'{PHASE}_phase/{TRAIN_OR_TEST}'
-ORACLE_SAVE_PATH = f'{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 BUCKET_NAME = "bucket-20230222-1753"
 
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
-LOCAL_SAVE_PATH = f'data/{PHASE}_phase/processed_data/{TRAIN_OR_TEST}'
-create_directory(LOCAL_SAVE_PATH)
 
 TRAINED_PREPROCESSOR_SAVE_PATH = 'trained_preprocessors'
 create_directory(TRAINED_PREPROCESSOR_SAVE_PATH)

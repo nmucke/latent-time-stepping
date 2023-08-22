@@ -10,16 +10,16 @@ dataloader_args:
   
 model_args:
   parameter_encoder_args: 
-    embed_dim: 32
+    embed_dim: 8
     num_heads: 2
-    embed_hidden_dim: 32
+    embed_hidden_dim: 16
     num_layers: 2
     pars_dim: 2
   time_stepping_decoder:
-    latent_dim: 24
-    embed_dim: 32
+    latent_dim: 4
+    embed_dim: 8
     num_heads: 2
-    embed_hidden_dim: 32
+    embed_hidden_dim: 16
     num_layers: 3
     input_seq_len: 32
     output_seq_len: 32

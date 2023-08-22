@@ -4,7 +4,7 @@ dataloader_args:
   shuffle: true
 model_args:
   decoder:
-    kernel_size: 3
+    kernel_size: 5
     latent_dim: 32
     num_channels:
     - 256
@@ -13,18 +13,16 @@ model_args:
     - 32
     - 16
     - 8
-    - 4
-    - 3
+    - 2
     pars_dim: 2
     resnet: true
     space_dim: 512
     transposed: false
   encoder:
-    kernel_size: 3
+    kernel_size: 5
     latent_dim: 32
     num_channels:
-    - 3
-    - 4
+    - 2
     - 8
     - 16
     - 32

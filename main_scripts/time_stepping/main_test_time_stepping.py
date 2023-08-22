@@ -19,16 +19,33 @@ DEVICE = 'cpu'
 PHASE = "single"
 AE_MODEL_TYPE = "WAE"
 TIME_STEPPING_MODEL_TYPE = "transformer"
+LOAD_MODEL_FROM_ORACLE = True
+
+LATENT_DIM = 4
 
 if PHASE == "single":
     NUM_STATES = 2
 elif PHASE == "multi":
     NUM_STATES = 3
 
-AE_model_path = f"trained_models/autoencoders/{PHASE}_phase_{AE_MODEL_TYPE}"
+
+MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
+ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'
+
+object_storage_client = ObjectStorageClientWrapper(
+    bucket_name='trained_models'
+)
+
+state_dict, config = object_storage_client.get_model(
+    source_path=ORACLE_MODEL_LOAD_PATH,
+    device=DEVICE,
+)
+#model.load_state_dict(state_dict['model_state_dict'])
 AE = load_trained_AE_model(
-    model_load_path=AE_model_path,
-    model_type=AE_MODEL_TYPE,
+    model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
+    state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
+    config=config,
+    model_type='WAE',
     device=DEVICE,
 )
 
@@ -58,9 +75,9 @@ LOCAL_OR_ORACLE = 'oracle'
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 
 BUCKET_NAME = "bucket-20230222-1753"
-ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-SAMPLE_IDS = range(2, 3)
+SAMPLE_IDS = range(1, 2)
 
 if LOCAL_OR_ORACLE == 'oracle':
     dataset = AEDataset(
@@ -116,7 +133,7 @@ def main():
     state = state.detach().numpy()
     pred_recon_state = pred_recon_state.detach().numpy()
 
-    num_latent_to_plot = 2
+    num_latent_to_plot = 4
     plt.figure()
     plt.plot(latent_state[0, 0, :num_steps], label='latent state', color='tab:blue')
     for i in range(1, num_latent_to_plot):
@@ -124,7 +141,7 @@ def main():
 
     plt.plot(pred_latent_state[0, 0, :num_steps], label='pred latent state', color='tab:orange')
     for i in range(1, num_latent_to_plot):
-        plt.plot(pred_latent_state[0, i, :num_steps], color='tab:orange')                        
+        plt.plot(pred_latent_state[0, i, :num_steps], color='tab:orange')                     
     plt.legend()
     plt.show()
 

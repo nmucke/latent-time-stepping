@@ -17,9 +17,9 @@ from multi_phase_PDE import PipeflowEquations as PipeflowEquationsMultiPhase
 TEST_CASE = 'single_phase_leak'
 
 DISTRIBUTED = True
-NUM_CPUS = 5
+NUM_CPUS = 10
 
-NUM_SAMPLES = 30
+NUM_SAMPLES = 10
 TRAIN_OR_TEST = 'test'
 
 TO_ORACLE = True

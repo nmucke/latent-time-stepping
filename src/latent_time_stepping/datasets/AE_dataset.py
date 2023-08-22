@@ -169,7 +169,7 @@ class AEDataset(torch.utils.data.Dataset):
             state = state[self.states_to_include, :, :]
 
         if self.num_random_idx_divisor is not None:
-            idx = np.random.randint(0, state.shape[-1], size=state.shape[-1]//self.num_random_idx_divisor)
+            idx = np.random.choice(state.shape[-1], size=state.shape[-1]//self.num_random_idx_divisor, replace=False)
 
             return state[:, :, idx], pars
         

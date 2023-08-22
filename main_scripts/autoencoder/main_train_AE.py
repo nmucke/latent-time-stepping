@@ -29,7 +29,7 @@ torch.set_default_dtype(torch.float32)
 CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'oracle'
 
-PHASE = "multi"
+PHASE = "single"
 
 MODEL_TYPE = "WAE"
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
@@ -47,7 +47,7 @@ LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
 PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
 
-NUM_SAMPLES = 5000
+NUM_SAMPLES = 2500
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 
@@ -73,19 +73,17 @@ preprocessor = object_storage_client.get_preprocessor(
 
 def main():
 
+
     dataset = AEDataset(
         oracle_path=ORACLE_LOAD_PATH if LOCAL_OR_ORACLE == 'oracle' else None,
         local_path = LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
         sample_ids=TRAIN_SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=4,
+        num_random_idx_divisor=2,
         preprocessor=preprocessor,
-        num_skip_steps=2,
-        states_to_include=(1, 2)
+        num_skip_steps=4,
+        states_to_include=(1, 2) if PHASE == 'multi' else None,
     )
-
-    state, pars = dataset.__getitem__(0)
-    pdb.set_trace()
 
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset,

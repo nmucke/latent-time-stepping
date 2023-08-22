@@ -71,10 +71,10 @@ def train_remote(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         load_entire_dataset=False,
-        #num_random_idx_divisor=8,
+        num_random_idx_divisor=4,
         preprocessor=preprocessor,
         num_skip_steps=4,
-        states_to_include=None
+        states_to_include=(1,2) if PHASE == "multi" else None,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(
