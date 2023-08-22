@@ -17,6 +17,7 @@ DEVICE = 'cpu'
 
 PHASE = "single"
 MODEL_TYPE = "WAE"
+LATENT_DIM = 8
 
 LOCAL_OR_ORACLE = 'oracle'
 
@@ -26,7 +27,7 @@ elif PHASE == "multi":
     NUM_STATES = 3
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
-ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_32'
+ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'

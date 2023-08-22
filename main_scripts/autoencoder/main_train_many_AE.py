@@ -33,7 +33,7 @@ def train_remote(
 ):
     
     CONTINUE_TRAINING = True
-    PHASE = "multi"
+    PHASE = "single"
     
     CUDA = True
     if CUDA:
@@ -41,7 +41,7 @@ def train_remote(
     else:
         DEVICE = torch.device('cpu')
 
-    NUM_SAMPLES = 5000
+    NUM_SAMPLES = 2500
     TRAIN_RATIO = 0.8
     VAL_RATIO = 0.2
 

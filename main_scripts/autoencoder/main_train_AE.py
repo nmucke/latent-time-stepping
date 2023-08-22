@@ -27,7 +27,7 @@ from latent_time_stepping.AE_training.trainer import train
 torch.set_default_dtype(torch.float32)
 
 CONTIUE_TRAINING = False
-LOCAL_OR_ORACLE = 'oracle'
+LOCAL_OR_ORACLE = 'local'
 
 PHASE = "single"
 
@@ -35,7 +35,7 @@ MODEL_TYPE = "WAE"
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 create_directory(MODEL_SAVE_PATH)
 
-CUDA = False
+CUDA = True
 if CUDA:
     DEVICE = torch.device('cuda' if CUDA else 'cpu')
 else:
@@ -80,7 +80,7 @@ def main():
             load_entire_dataset=False,
             num_random_idx_divisor=4,
             preprocessor=preprocessor,
-            #num_skip_steps=4
+            num_skip_steps=2
         )
     elif LOCAL_OR_ORACLE == 'local':
         dataset = AEDataset(
@@ -89,7 +89,7 @@ def main():
             load_entire_dataset=False,
             num_random_idx_divisor=4,
             preprocessor=preprocessor,
-            #num_skip_steps=4
+            num_skip_steps=2
         )
 
     train_dataset, val_dataset = torch.utils.data.random_split(

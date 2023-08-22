@@ -1,19 +1,19 @@
 dataloader_args:
   batch_size: 4
   shuffle: True
-  num_workers: 8
+  num_workers: 4
   
 model_args:
   encoder:
-    num_channels: [2, 4, 8, 16, 32, 64, 128]
-    kernel_size: 3
-    latent_dim: 16
+    num_channels: [2, 8, 16, 32, 64, 128]
+    kernel_size: 5
+    latent_dim: 24
     space_dim: 256
     resnet: True
   decoder:
-    num_channels: [128, 64, 32, 16, 8, 4, 2]
-    kernel_size: 3
-    latent_dim: 16
+    num_channels: [128, 64, 32, 16, 8, 2]
+    kernel_size: 5
+    latent_dim: 24
     pars_dim: 2
     space_dim: 256
     resnet: True
@@ -31,5 +31,5 @@ train_stepper_args:
   consistency_loss_regu: #1.0e-3
 
 train_args:
-  num_epochs: 10
+  num_epochs: 2000
   patience: 50

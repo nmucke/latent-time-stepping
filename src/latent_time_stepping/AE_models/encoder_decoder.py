@@ -338,6 +338,8 @@ class UpSample(nn.Module):
                 in_channels=in_channels, 
                 out_channels=out_channels, 
                 kernel_size=kernel_size, 
+                stride=1,
+                padding=self.padding,
                 )
 
 
@@ -347,9 +349,8 @@ class UpSample(nn.Module):
 
         if not self.transposed:
             x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
-            x = self.linear_padding(x)
+            #x = self.linear_padding(x)
             #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
-
         return self.conv(x)
 
 class DownSample(nn.Module):
@@ -773,7 +774,6 @@ class Decoder(nn.Module):
         
         #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
         x = self.final_conv(x)
-
         x = x.reshape(batch_size, num_time_steps, self.num_channels[-1], x.shape[-1])
         x = x.permute(0, 2, 3, 1)
         
