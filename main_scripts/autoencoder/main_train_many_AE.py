@@ -32,7 +32,7 @@ def train_remote(
     latent_dim,
 ):
     
-    CONTINUE_TRAINING = True
+    CONTINUE_TRAINING = False
     PHASE = "single"
     
     CUDA = True
