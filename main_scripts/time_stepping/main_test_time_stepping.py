@@ -6,12 +6,13 @@ import torch
 import matplotlib.pyplot as plt
 import yaml
 from latent_time_stepping.datasets.AE_dataset import AEDataset
+from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
 from latent_time_stepping.utils import load_trained_AE_model, load_trained_time_stepping_model
 torch.set_default_dtype(torch.float32)
 
 
-NUM_SKIP_STEPS = 5
+NUM_SKIP_STEPS = 4
 
 DEVICE = 'cpu'
 
@@ -38,29 +39,42 @@ time_stepper = load_trained_time_stepping_model(
 )
 input_seq_len = time_stepper.input_seq_len
 
+"""
 PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
 with open(PREPROCESSOR_PATH, 'rb') as f:
     preprocessor = pickle.load(f)
+"""
+
+object_storage_client = ObjectStorageClientWrapper(
+    bucket_name='trained_models'
+)
+PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
+preprocessor = object_storage_client.get_preprocessor(
+    source_path=PREPROCESSOR_PATH
+)
+
 
 LOCAL_OR_ORACLE = 'oracle'
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 
 BUCKET_NAME = "bucket-20230222-1753"
-ORACLE_LOAD_PATH = f'{PHASE}_phase/test'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
-SAMPLE_IDS = range(1, 2)
+SAMPLE_IDS = range(2, 3)
 
 if LOCAL_OR_ORACLE == 'oracle':
     dataset = AEDataset(
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
+        num_skip_steps=NUM_SKIP_STEPS,
     )
 elif LOCAL_OR_ORACLE == 'local':
     dataset = AEDataset(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
+        num_skip_steps=NUM_SKIP_STEPS,
     )
 
 dataloader = torch.utils.data.DataLoader(
@@ -72,7 +86,7 @@ dataloader = torch.utils.data.DataLoader(
 
 def main():
 
-    num_steps = 2000
+    num_steps = 500
 
     for i, (state, pars) in enumerate(dataloader):
         state = state.to(DEVICE)

@@ -1,7 +1,7 @@
 dataset_args:
   input_seq_len: 32
   output_seq_len: 32
-  num_time_steps: 2000
+  num_time_steps: 600
 
 dataloader_args:
   batch_size: 1024
@@ -10,16 +10,16 @@ dataloader_args:
   
 model_args:
   parameter_encoder_args: 
-    embed_dim: 16
+    embed_dim: 32
     num_heads: 2
-    embed_hidden_dim: 16
+    embed_hidden_dim: 32
     num_layers: 2
     pars_dim: 2
   time_stepping_decoder:
-    latent_dim: 8
-    embed_dim: 16
+    latent_dim: 24
+    embed_dim: 32
     num_heads: 2
-    embed_hidden_dim: 16
+    embed_hidden_dim: 32
     num_layers: 3
     input_seq_len: 32
     output_seq_len: 32
@@ -32,7 +32,7 @@ optimizer_args:
     max_iters: 1000
 
 train_stepper_args:
-  teacher_forcing_ratio: 1.0
+  teacher_forcing_ratio: 0.0
   teacher_forcing_ratio_reduction: 0.9
   teacher_forcing_ratio_reduction_freq: 50
   mixed_precision: True

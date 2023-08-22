@@ -25,7 +25,7 @@ model = load_trained_AE_model(
     model_type=MODEL_TYPE,
     device=DEVICE,
 )
-NUM_SAMPLES = 2000
+NUM_SAMPLES = 2500
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 NUM_PARS = 2
@@ -33,17 +33,30 @@ NUM_PARS = 2
 LOCAL_OR_ORACLE = 'local'
 
 BUCKET_NAME = "bucket-20230222-1753"
-ORACLE_LOAD_PATH = f'{PHASE}_phase/latent_data/train'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 ORACLE_SAVE_PATH = f'{PHASE}_phase/latent_data/train'
 
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/processed_data/train'
+LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 LOCAL_SAVE_PATH = f'data/{PHASE}_phase/latent_data/train'
+
+
+
+object_storage_client = ObjectStorageClientWrapper(
+    bucket_name='trained_models'
+)
+PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
+preprocessor = object_storage_client.get_preprocessor(
+    source_path=PREPROCESSOR_PATH
+)
+
 
 if LOCAL_OR_ORACLE == 'oracle':
     dataset = AEDataset(
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
-        load_entire_dataset=True,
+        load_entire_dataset=False,
+        num_skip_steps=4,
+        preprocessor=preprocessor,
     )
 elif LOCAL_OR_ORACLE == 'local':
 
@@ -52,7 +65,9 @@ elif LOCAL_OR_ORACLE == 'local':
     dataset = AEDataset(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
-        load_entire_dataset=True,
+        load_entire_dataset=False,
+        num_skip_steps=4,
+        preprocessor=preprocessor,
     )
 dataloader = torch.utils.data.DataLoader(
     dataset=dataset,
@@ -82,7 +97,8 @@ def main():
         state = state.to(DEVICE)
         
         latent_state[i] = model.encode(state).detach().cpu()[0]
-        pars[i] = _pars.detach().cpu()[0]        
+        pars[i] = _pars.detach().cpu()[0]  
+
 
     latent_state = latent_state.numpy()
     pars = pars.numpy()

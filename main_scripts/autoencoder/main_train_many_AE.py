@@ -32,7 +32,7 @@ def train_remote(
     latent_dim,
 ):
     
-    CONTINUE_TRAINING = False
+    CONTINUE_TRAINING = True
     PHASE = "single"
     
     CUDA = True
@@ -71,9 +71,10 @@ def train_remote(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=8,
+        #num_random_idx_divisor=8,
         preprocessor=preprocessor,
-        #num_skip_steps=4
+        num_skip_steps=4,
+        states_to_include=None
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(

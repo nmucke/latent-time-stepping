@@ -4,20 +4,20 @@ dataloader_args:
   shuffle: true
 dataset_args:
   input_seq_len: 32
-  num_time_steps: 2000
+  num_time_steps: 600
   output_seq_len: 32
 model_args:
   parameter_encoder_args:
-    embed_dim: 16
-    embed_hidden_dim: 16
+    embed_dim: 32
+    embed_hidden_dim: 32
     num_heads: 2
     num_layers: 2
     pars_dim: 2
   time_stepping_decoder:
-    embed_dim: 16
-    embed_hidden_dim: 16
+    embed_dim: 32
+    embed_hidden_dim: 32
     input_seq_len: 32
-    latent_dim: 8
+    latent_dim: 24
     num_heads: 2
     num_layers: 3
     output_seq_len: 32
@@ -32,6 +32,6 @@ train_args:
   patience: 100
 train_stepper_args:
   mixed_precision: true
-  teacher_forcing_ratio: 1.0
+  teacher_forcing_ratio: 0.0
   teacher_forcing_ratio_reduction: 0.9
   teacher_forcing_ratio_reduction_freq: 50

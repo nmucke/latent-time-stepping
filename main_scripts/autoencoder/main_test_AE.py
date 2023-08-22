@@ -17,7 +17,7 @@ DEVICE = 'cpu'
 
 PHASE = "single"
 MODEL_TYPE = "WAE"
-LATENT_DIM = 8
+LATENT_DIM = 24
 
 LOCAL_OR_ORACLE = 'oracle'
 
@@ -39,8 +39,8 @@ state_dict, config = object_storage_client.get_model(
 )
 #model.load_state_dict(state_dict['model_state_dict'])
 model = load_trained_AE_model(
-    #model_load_path=MODEL_LOAD_PATH,
-    state_dict=state_dict,
+    model_load_path=MODEL_LOAD_PATH,
+    #state_dict=state_dict,
     config=config,
     model_type=MODEL_TYPE,
     device=DEVICE,

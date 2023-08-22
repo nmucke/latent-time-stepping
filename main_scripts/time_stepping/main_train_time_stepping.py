@@ -21,7 +21,7 @@ torch.backends.cuda.enable_flash_sdp(enabled=True)
 torch.set_float32_matmul_precision('medium')
 torch.backends.cuda.matmul.allow_tf32 = True
 
-CONTINUE_TRAINING = False
+CONTINUE_TRAINING = True
 
 MODEL_TYPE = "transformer"
 
@@ -45,7 +45,7 @@ with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
 
 DEVICE = 'cuda'
 
-NUM_SAMPLES = 2000
+NUM_SAMPLES = 2500
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 def main():
