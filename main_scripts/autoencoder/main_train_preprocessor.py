@@ -30,7 +30,7 @@ BATCH_SIZE = 30
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 BUCKET_NAME = "bucket-20230222-1753"
 
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
+LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
 TRAINED_PREPROCESSOR_SAVE_PATH = 'trained_preprocessors'
 create_directory(TRAINED_PREPROCESSOR_SAVE_PATH)

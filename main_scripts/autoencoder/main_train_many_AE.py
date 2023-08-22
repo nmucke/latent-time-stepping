@@ -32,8 +32,8 @@ def train_remote(
     latent_dim,
 ):
     
-    CONTINUE_TRAINING = True
-    PHASE = "single"
+    CONTINUE_TRAINING = False
+    PHASE = "multi"
     
     CUDA = True
     if CUDA:
@@ -41,7 +41,7 @@ def train_remote(
     else:
         DEVICE = torch.device('cpu')
 
-    NUM_SAMPLES = 2500
+    NUM_SAMPLES = 5000
     TRAIN_RATIO = 0.8
     VAL_RATIO = 0.2
 
