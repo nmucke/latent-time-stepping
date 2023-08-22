@@ -71,7 +71,7 @@ def train_remote(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=4,
+        num_random_idx_divisor=8,
         preprocessor=preprocessor,
         #num_skip_steps=4
     )
@@ -136,7 +136,7 @@ def train_remote(
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
         train_stepper=train_stepper,
-        print_progress=False,
+        print_progress=True,
         **config['train_args'],
     )
 

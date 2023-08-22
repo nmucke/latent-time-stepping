@@ -26,8 +26,21 @@ elif PHASE == "multi":
     NUM_STATES = 3
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
+ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_32'
+
+object_storage_client = ObjectStorageClientWrapper(
+    bucket_name='trained_models'
+)
+
+state_dict, config = object_storage_client.get_model(
+    source_path=ORACLE_MODEL_LOAD_PATH,
+    device=DEVICE,
+)
+#model.load_state_dict(state_dict['model_state_dict'])
 model = load_trained_AE_model(
-    model_load_path=MODEL_LOAD_PATH,
+    #model_load_path=MODEL_LOAD_PATH,
+    state_dict=state_dict,
+    config=config,
     model_type=MODEL_TYPE,
     device=DEVICE,
 )
