@@ -23,8 +23,8 @@ optimizer_args:
   learning_rate: 1.0e-4
   weight_decay: 1.0e-8
   scheduler_args:
-    warmup: 1
-    max_iters: 2000
+    factor: 0.9
+    patience: 10
 
 train_stepper_args:
   latent_loss_regu: 1.0e-3
