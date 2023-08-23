@@ -4,8 +4,8 @@ dataloader_args:
   shuffle: true
 model_args:
   decoder:
-    kernel_size: 5
-    latent_dim: 24
+    kernel_size: 7
+    latent_dim: 4
     num_channels:
     - 128
     - 64
@@ -18,8 +18,8 @@ model_args:
     space_dim: 256
     transposed: false
   encoder:
-    kernel_size: 5
-    latent_dim: 24
+    kernel_size: 7
+    latent_dim: 4
     num_channels:
     - 2
     - 8
@@ -39,5 +39,5 @@ train_args:
   num_epochs: 2000
   patience: 50
 train_stepper_args:
-  consistency_loss_regu: null
+  consistency_loss_regu: 0.001
   latent_loss_regu: 0.001

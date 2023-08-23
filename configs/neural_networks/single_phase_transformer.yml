@@ -12,14 +12,14 @@ model_args:
   parameter_encoder_args: 
     embed_dim: 8
     num_heads: 2
-    embed_hidden_dim: 8
+    embed_hidden_dim: 16
     num_layers: 1
     pars_dim: 2
   time_stepping_decoder:
     latent_dim: 4
     embed_dim: 8
     num_heads: 2
-    embed_hidden_dim: 16
+    embed_hidden_dim: 32
     num_layers: 2
     input_seq_len: 32
     output_seq_len: 32

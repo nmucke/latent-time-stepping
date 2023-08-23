@@ -5,6 +5,8 @@ from torch import nn
 import pdb
 import torch.nn.functional as F
 
+import matplotlib.pyplot as plt
+
 
 class LinearPadding(nn.Module):
     def __init__(self, padding: int) -> None:
@@ -19,9 +21,11 @@ class LinearPadding(nn.Module):
         slope = (x[:, :, -1] - x[:, :, -2]) / dx 
         bias = x[:, :, -2]
 
-        pad = torch.zeros(x.shape[0], x.shape[1], self.padding)
-        pad = pad.to(x.device)
-        pad[:, :, 0] = 2*dx
+        pad = torch.arange(2, self.padding+2, device=x.device)*dx
+        pad = pad.unsqueeze(0).unsqueeze(0).repeat(x.shape[0], x.shape[1], 1)
+
+        #pad = torch.zeros(x.shape[0], x.shape[1], self.padding, device=x.device)
+        #pad[:, :, 0] = 2*dx
 
         padding_values = slope[:, :, None] * pad + bias[:, :, None]
 
@@ -34,7 +38,10 @@ class LinearPadding(nn.Module):
         slope = (x[:, :, 0] - x[:, :, 1]) / dx 
         bias = x[:, :, 1]
 
-        padding_values = slope[:, :, None] * self.padding + bias[:, :, None]
+        pad = torch.arange(self.padding+2, 2, -1, device=x.device)*dx
+        pad = pad.unsqueeze(0).unsqueeze(0).repeat(x.shape[0], x.shape[1], 1)
+
+        padding_values = slope[:, :, None] * pad + bias[:, :, None]
 
         return padding_values
 
@@ -348,8 +355,8 @@ class UpSample(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
         if not self.transposed:
-            x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
-            #x = self.linear_padding(x)
+            #x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
+            x = self.linear_padding(x)
             #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
         return self.conv(x)
 
@@ -360,9 +367,12 @@ class DownSample(nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: int = 3,
+        padding_type: str = 'linear',
         ) -> None:
         
         super(DownSample, self).__init__()
+
+        self.padding_type = padding_type
         
         self.padding = kernel_size // 2
         
@@ -371,10 +381,8 @@ class DownSample(nn.Module):
         self.linear_padding = LinearPadding(padding=self.padding)
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-
-        #x = self.linear_padding(x)
-
-        x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
+        
+        x = self.linear_padding(x)
 
         return self.conv(x)
 

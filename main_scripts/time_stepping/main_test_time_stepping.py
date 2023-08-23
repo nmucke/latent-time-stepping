@@ -77,7 +77,7 @@ LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-SAMPLE_IDS = range(5, 6)
+SAMPLE_IDS = range(1, 2)
 
 if LOCAL_OR_ORACLE == 'oracle':
     dataset = AEDataset(

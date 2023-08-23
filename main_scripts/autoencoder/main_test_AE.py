@@ -17,11 +17,11 @@ DEVICE = 'cpu'
 
 PHASE = "single"
 MODEL_TYPE = "WAE"
-LATENT_DIM = 16
+LATENT_DIM = 4
 
 LOCAL_OR_ORACLE = 'oracle'
 
-LOAD_MODEL_FROM_ORACLE = True
+LOAD_MODEL_FROM_ORACLE = False
 
 if PHASE == "single":
     NUM_STATES = 2
@@ -29,7 +29,7 @@ elif PHASE == "multi":
     NUM_STATES = 2
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
-ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'
+ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_consistency'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
@@ -58,9 +58,9 @@ preprocessor = object_storage_client.get_preprocessor(
 )
 
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
-ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-NUM_SAMPLES = 2
+NUM_SAMPLES = 8
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 if LOCAL_OR_ORACLE == 'oracle':
