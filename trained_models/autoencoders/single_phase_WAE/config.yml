@@ -1,6 +1,6 @@
 dataloader_args:
   batch_size: 4
-  num_workers: 4
+  num_workers: 8
   shuffle: true
 model_args:
   decoder:
@@ -33,7 +33,7 @@ optimizer_args:
   learning_rate: 0.0005
   scheduler_args:
     factor: 0.9
-    patience: 10
+    patience: 20
   weight_decay: 1.0e-08
 train_args:
   num_epochs: 2000
