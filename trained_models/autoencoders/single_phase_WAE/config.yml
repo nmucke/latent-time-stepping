@@ -4,7 +4,7 @@ dataloader_args:
   shuffle: true
 model_args:
   decoder:
-    kernel_size: 7
+    kernel_size: 5
     latent_dim: 4
     num_channels:
     - 128
@@ -18,7 +18,7 @@ model_args:
     space_dim: 256
     transposed: false
   encoder:
-    kernel_size: 7
+    kernel_size: 5
     latent_dim: 4
     num_channels:
     - 2
@@ -30,7 +30,7 @@ model_args:
     resnet: true
     space_dim: 256
 optimizer_args:
-  learning_rate: 0.001
+  learning_rate: 0.0005
   scheduler_args:
     factor: 0.9
     patience: 10

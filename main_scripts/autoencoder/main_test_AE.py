@@ -21,7 +21,7 @@ LATENT_DIM = 4
 
 LOCAL_OR_ORACLE = 'oracle'
 
-LOAD_MODEL_FROM_ORACLE = True
+LOAD_MODEL_FROM_ORACLE = False
 
 if PHASE == "single":
     NUM_STATES = 2
@@ -60,7 +60,7 @@ preprocessor = object_storage_client.get_preprocessor(
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-NUM_SAMPLES = 8
+NUM_SAMPLES = 5
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 if LOCAL_OR_ORACLE == 'oracle':

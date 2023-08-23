@@ -356,8 +356,8 @@ class UpSample(nn.Module):
         
         if not self.transposed:
             x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
-            x = self.linear_padding(x)
-            #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
+            #x = self.linear_padding(x)
+            x = nn.functional.pad(x, (self.padding, self.padding), mode="constant", value=0)
         return self.conv(x)
 
 class DownSample(nn.Module):
@@ -382,7 +382,8 @@ class DownSample(nn.Module):
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         
-        x = self.linear_padding(x)
+        #x = self.linear_padding(x)
+        x = nn.functional.pad(x, (self.padding, self.padding), mode="constant", value=0)
 
         return self.conv(x)
 

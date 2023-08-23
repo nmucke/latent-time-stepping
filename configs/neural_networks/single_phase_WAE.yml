@@ -6,13 +6,13 @@ dataloader_args:
 model_args:
   encoder:
     num_channels: [2, 8, 16, 32, 64, 128]
-    kernel_size: 7
+    kernel_size: 5
     latent_dim: 4
     space_dim: 256
     resnet: True
   decoder:
     num_channels: [128, 64, 32, 16, 8, 2]
-    kernel_size: 7
+    kernel_size: 5
     latent_dim: 4
     pars_dim: 2
     space_dim: 256
@@ -20,11 +20,11 @@ model_args:
     transposed: False
 
 optimizer_args:
-  learning_rate: 1.0e-3
+  learning_rate: 5.0e-4
   weight_decay: 1.0e-8
   scheduler_args:
     factor: 0.9
-    patience: 10
+    patience: 20
 
 train_stepper_args:
   latent_loss_regu: 1.0e-3
