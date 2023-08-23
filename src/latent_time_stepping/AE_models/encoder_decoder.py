@@ -346,16 +346,16 @@ class UpSample(nn.Module):
                 out_channels=out_channels, 
                 kernel_size=kernel_size, 
                 stride=1,
-                padding=self.padding,
+                #padding=self.padding,
                 )
 
 
         self.linear_padding = LinearPadding(padding=self.padding)
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-
+        
         if not self.transposed:
-            #x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
+            x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
             x = self.linear_padding(x)
             #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
         return self.conv(x)

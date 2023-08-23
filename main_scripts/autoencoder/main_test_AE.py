@@ -21,7 +21,7 @@ LATENT_DIM = 4
 
 LOCAL_OR_ORACLE = 'oracle'
 
-LOAD_MODEL_FROM_ORACLE = False
+LOAD_MODEL_FROM_ORACLE = True
 
 if PHASE == "single":
     NUM_STATES = 2
