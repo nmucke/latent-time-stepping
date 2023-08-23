@@ -17,16 +17,16 @@ DEVICE = 'cpu'
 
 PHASE = "single"
 MODEL_TYPE = "WAE"
-LATENT_DIM = 24
+LATENT_DIM = 16
 
 LOCAL_OR_ORACLE = 'oracle'
 
-LOAD_MODEL_FROM_ORACLE = False
+LOAD_MODEL_FROM_ORACLE = True
 
 if PHASE == "single":
     NUM_STATES = 2
 elif PHASE == "multi":
-    NUM_STATES = 3
+    NUM_STATES = 2
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'
@@ -58,9 +58,9 @@ preprocessor = object_storage_client.get_preprocessor(
 )
 
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
-ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
-NUM_SAMPLES = 3
+NUM_SAMPLES = 2
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 if LOCAL_OR_ORACLE == 'oracle':
@@ -69,7 +69,8 @@ if LOCAL_OR_ORACLE == 'oracle':
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
         num_skip_steps=1,
-        end_time_index=1500
+        end_time_index=1500,
+        states_to_include=(1,2) if PHASE == "multi" else None,
     )
 elif LOCAL_OR_ORACLE == 'local':
     dataset = AEDataset(
@@ -77,7 +78,8 @@ elif LOCAL_OR_ORACLE == 'local':
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
         num_skip_steps=1,
-        end_time_index=1500
+        end_time_index=1500,
+        states_to_include=(1,2) if PHASE == "multi" else None,
     )
 
 dataloader = torch.utils.data.DataLoader(
@@ -141,8 +143,8 @@ def main():
     plt.grid()
     plt.subplot(2, 4, 4)
     plt.plot(latent_state[0, 3, :])
-    plt.plot(latent_state[0, 4, :])
-    plt.plot(latent_state[0, 5, :])
+    #plt.plot(latent_state[0, 4, :])
+    #lt.plot(latent_state[0, 5, :])
     plt.grid()
     plt.subplot(2, 4, 5)
     plt.hist(latent_state[:, 0, :].flatten(), bins=50, density=True)

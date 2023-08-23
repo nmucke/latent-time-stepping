@@ -30,7 +30,7 @@ elif PHASE == "multi":
 
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
-ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'
+ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_consistency'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
@@ -77,7 +77,7 @@ LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-SAMPLE_IDS = range(1, 2)
+SAMPLE_IDS = range(5, 6)
 
 if LOCAL_OR_ORACLE == 'oracle':
     dataset = AEDataset(

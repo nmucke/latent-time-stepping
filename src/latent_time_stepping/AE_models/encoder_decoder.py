@@ -372,9 +372,9 @@ class DownSample(nn.Module):
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
-        x = self.linear_padding(x)
+        #x = self.linear_padding(x)
 
-        #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
+        x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
 
         return self.conv(x)
 

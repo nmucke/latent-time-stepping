@@ -25,7 +25,7 @@ elif PHASE == "multi":
 LOAD_MODEL_FROM_ORACLE = True
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
-ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'
+ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_consistency'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'

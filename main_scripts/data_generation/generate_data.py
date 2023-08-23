@@ -14,7 +14,7 @@ from generate_data_utils import simulate_pipeflow
 from single_phase_PDE import PipeflowEquations as PipeflowEquationsSinglePhase
 from multi_phase_PDE import PipeflowEquations as PipeflowEquationsMultiPhase
 
-TEST_CASE = 'single_phase_leak'
+TEST_CASE = 'multi_phase_leak'
 
 DISTRIBUTED = True
 NUM_CPUS = 10
