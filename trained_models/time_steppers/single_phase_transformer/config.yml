@@ -1,26 +1,26 @@
 dataloader_args:
-  batch_size: 1024
+  batch_size: 512
   num_workers: 4
   shuffle: true
 dataset_args:
   input_seq_len: 32
   num_time_steps: 600
-  output_seq_len: 32
+  output_seq_len: 64
 model_args:
   parameter_encoder_args:
     embed_dim: 8
-    embed_hidden_dim: 8
+    embed_hidden_dim: 16
     num_heads: 2
     num_layers: 1
     pars_dim: 2
   time_stepping_decoder:
     embed_dim: 8
-    embed_hidden_dim: 16
+    embed_hidden_dim: 32
     input_seq_len: 32
     latent_dim: 4
     num_heads: 2
     num_layers: 2
-    output_seq_len: 32
+    output_seq_len: 64
 optimizer_args:
   learning_rate: 0.0005
   scheduler_args:

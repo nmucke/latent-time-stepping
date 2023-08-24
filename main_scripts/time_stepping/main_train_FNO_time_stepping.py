@@ -3,14 +3,11 @@ import yaml
 from yaml.loader import SafeLoader
 import torch
 import matplotlib.pyplot as plt
+from latent_time_stepping.datasets.FNO_time_stepping_dataset import FNOTimeSteppingDataset
+from latent_time_stepping.oracle import ObjectStorageClientWrapper
+from latent_time_stepping.time_stepping_models.FNO_time_stepping_model import FNOTimeSteppingModel
 from latent_time_stepping.time_stepping_training.optimizers import Optimizer
-from latent_time_stepping.time_stepping_models.parameter_encoder import ParameterEncoder
-
-from latent_time_stepping.time_stepping_models.time_stepping_model import TimeSteppingModel
-
-from latent_time_stepping.datasets.time_stepping_dataset import TimeSteppingDataset
 from latent_time_stepping.time_stepping_training.train_steppers import TimeSteppingTrainStepper
-
 from latent_time_stepping.time_stepping_training.trainer import train
 from latent_time_stepping.utils import create_directory
 
@@ -22,7 +19,7 @@ torch.backends.cuda.matmul.allow_tf32 = True
 
 CONTINUE_TRAINING = False
 
-MODEL_TYPE = "transformer"
+MODEL_TYPE = "FNO"
 
 PHASE = "single"
 
@@ -33,9 +30,9 @@ with open(config_path) as f:
 LOCAL_OR_ORACLE = 'local'
 
 BUCKET_NAME = "bucket-20230222-1753"
-ORACLE_LOAD_PATH = f'{PHASE}_phase/latent_data/train'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/latent_data/train'
+LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
 MODEL_SAVE_PATH = f"trained_models/time_steppers/{PHASE}_phase_{MODEL_TYPE}"
 create_directory(MODEL_SAVE_PATH)
@@ -44,17 +41,30 @@ with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
 
 DEVICE = 'cuda'
 
-NUM_SAMPLES = 2000
+NUM_SAMPLES = 2500
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 
+PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
+
+object_storage_client = ObjectStorageClientWrapper(
+    bucket_name='trained_models'
+)
+
+preprocessor = object_storage_client.get_preprocessor(
+    source_path=PREPROCESSOR_PATH
+)
+
 def main():
 
-    dataset = TimeSteppingDataset(
+    dataset = FNOTimeSteppingDataset(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
+        preprocessor=preprocessor,
+        num_skip_steps=4,
         **config['dataset_args'],
     )
+
 
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset,
@@ -71,10 +81,8 @@ def main():
         **config['dataloader_args'],
     )
 
-    pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
-    model = TimeSteppingModel(
-        pars_encoder=pars_encoder,
-        **config['model_args']['time_stepping_decoder'],
+    model = FNOTimeSteppingModel(
+        **config['model_args'],
     )
     model = model.to(DEVICE)
 
@@ -88,12 +96,11 @@ def main():
         model.load_state_dict(state_dict['model_state_dict'])
         optimizer.load_state_dict(state_dict['optimizer_state_dict'])
 
-    #model = torch.compile(model)
-
     train_stepper = TimeSteppingTrainStepper(
         model=model,
         optimizer=optimizer,
         model_save_path=MODEL_SAVE_PATH,
+        FNO_training=True,
         **config['train_stepper_args'],
     )
 

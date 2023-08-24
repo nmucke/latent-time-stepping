@@ -5,7 +5,50 @@ import pdb
 
 import matplotlib.pyplot as plt
 
+class LpLoss(object):
+    def __init__(self, d=2, p=2, size_average=True, reduction=True):
+        super(LpLoss, self).__init__()
 
+        #Dimension and Lp-norm type are postive
+        assert d > 0 and p > 0
+
+        self.d = d
+        self.p = p
+        self.reduction = reduction
+        self.size_average = size_average
+
+    def abs(self, x, y):
+        num_examples = x.size()[0]
+
+        #Assume uniform mesh
+        h = 1.0 / (x.size()[1] - 1.0)
+
+        all_norms = (h**(self.d/self.p))*torch.norm(x.view(num_examples,-1) - y.view(num_examples,-1), self.p, 1)
+
+        if self.reduction:
+            if self.size_average:
+                return torch.mean(all_norms)
+            else:
+                return torch.sum(all_norms)
+
+        return all_norms
+
+    def rel(self, x, y):
+        num_examples = x.size()[0]
+
+        diff_norms = torch.norm(x.reshape(num_examples,-1) - y.reshape(num_examples,-1), self.p, 1)
+        y_norms = torch.norm(y.reshape(num_examples,-1), self.p, 1)
+
+        if self.reduction:
+            if self.size_average:
+                return torch.mean(diff_norms/y_norms)
+            else:
+                return torch.sum(diff_norms/y_norms)
+
+        return diff_norms/y_norms
+
+    def __call__(self, x, y):
+        return self.rel(x, y)
 
 class BaseTimeSteppingTrainStepper():
 
@@ -79,9 +122,6 @@ class BaseTimeSteppingTrainStepper():
     def val_step(self) -> None:
         pass
 
-
-
-
 class TimeSteppingTrainStepper(BaseTimeSteppingTrainStepper):
 
     def __init__(
@@ -93,6 +133,7 @@ class TimeSteppingTrainStepper(BaseTimeSteppingTrainStepper):
         teacher_forcing_ratio_reduction: float = 0.9,
         teacher_forcing_ratio_reduction_freq: int= 5,
         mixed_precision: bool = False,
+        FNO_training: bool = False,
     ) -> None:
         
         super().__init__(
@@ -100,6 +141,10 @@ class TimeSteppingTrainStepper(BaseTimeSteppingTrainStepper):
             optimizer=optimizer,
             model_save_path=model_save_path,
         )
+
+        self.FNO_training = FNO_training
+        if self.FNO_training:
+            self.FNO_loss_function = LpLoss(size_average=False)
     
         self.model = model
         self.optimizer = optimizer
@@ -119,6 +164,31 @@ class TimeSteppingTrainStepper(BaseTimeSteppingTrainStepper):
         if self.mixed_precision:
             self.scaler = torch.cuda.amp.GradScaler()
     
+    def prepare_FNO_input(
+        self, 
+        input_state: torch.Tensor,
+        output_state: torch.Tensor,
+        pars: torch.Tensor,
+    ):
+
+        batchsize = input_state.shape[0]
+        num_states = input_state.shape[1]
+        num_space = input_state.shape[2]
+        num_timesteps = input_state.shape[3] 
+        num_pars = pars.shape[1]
+
+        pars = pars.unsqueeze(1)
+        pars = pars.repeat(1, num_timesteps, 1)
+        pars = pars.reshape(-1, num_pars)
+
+        input_state = input_state.permute(0, 3, 1, 2)
+        output_state = output_state.permute(0, 3, 1, 2)
+
+        input_state = input_state.reshape(-1, 2, num_space)
+        output_state = output_state.reshape(-1, 2, num_space)
+
+        return input_state, output_state, pars
+
     def _reset_loss(self):
         self.loss = 0.0
         self.counter = 0
@@ -136,7 +206,7 @@ class TimeSteppingTrainStepper(BaseTimeSteppingTrainStepper):
         ) -> torch.Tensor:
 
         return torch.nn.MSELoss()(state_pred, state)
-    
+
     def train_step(
         self,
         input_state: torch.Tensor,
@@ -152,8 +222,40 @@ class TimeSteppingTrainStepper(BaseTimeSteppingTrainStepper):
 
         self.optimizer.zero_grad()
 
-        if self.mixed_precision:
-            with torch.cuda.amp.autocast():
+        if self.FNO_training:
+
+            input_state, output_state, pars = self.prepare_FNO_input(
+                input_state=input_state,
+                output_state=output_state,
+                pars=pars,
+            )
+
+            state_pred = self.model(
+                input=input_state, 
+                pars=pars
+            )
+            
+            loss = self.FNO_loss_function(output_state, state_pred)
+            #loss = torch.nn.MSELoss()(output_state, state_pred)
+
+        else:
+            if self.mixed_precision:
+                with torch.cuda.amp.autocast():
+                    if torch.rand(1) < self.teacher_forcing_ratio:
+                        state_pred = self.model.masked_prediction(
+                            input=input_state,
+                            output=output_state,
+                            pars=pars,
+                        )
+                    else:
+                        state_pred = self.model.multistep_prediction(
+                            input=input_state,
+                            pars=pars,
+                            output_seq_len=output_state.shape[-1],
+                        )
+
+                    loss = self._loss_function(output_state, state_pred)
+            else:
                 if torch.rand(1) < self.teacher_forcing_ratio:
                     state_pred = self.model.masked_prediction(
                         input=input_state,
@@ -168,21 +270,6 @@ class TimeSteppingTrainStepper(BaseTimeSteppingTrainStepper):
                     )
 
                 loss = self._loss_function(output_state, state_pred)
-        else:
-            if torch.rand(1) < self.teacher_forcing_ratio:
-                state_pred = self.model.masked_prediction(
-                    input=input_state,
-                    output=output_state,
-                    pars=pars,
-                )
-            else:
-                state_pred = self.model.multistep_prediction(
-                    input=input_state,
-                    pars=pars,
-                    output_seq_len=output_state.shape[-1],
-                )
-
-            loss = self._loss_function(output_state, state_pred)
 
         if self.mixed_precision:
             self.scaler.scale(loss).backward()
@@ -215,12 +302,28 @@ class TimeSteppingTrainStepper(BaseTimeSteppingTrainStepper):
         self.model.eval()
 
         with torch.no_grad():
-            state_pred = self.model.multistep_prediction(
-                input=input_state,
-                pars=pars,
-                output_seq_len=output_state.shape[-1],
-            )
-            loss = self._loss_function(output_state, state_pred)
+            if self.FNO_training:
+
+                input_state, output_state, pars = self.prepare_FNO_input(
+                    input_state=input_state,
+                    output_state=output_state,
+                    pars=pars,
+                )
+
+                state_pred = self.model(
+                    input=input_state, 
+                    pars=pars
+                )
+
+                loss = self.FNO_loss_function(output_state, state_pred)
+
+            else:
+                state_pred = self.model.multistep_prediction(
+                    input=input_state,
+                    pars=pars,
+                    output_seq_len=output_state.shape[-1],
+                )
+                loss = self._loss_function(output_state, state_pred)
 
         self.loss += loss.item()
         self.counter += 1

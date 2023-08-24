@@ -6,6 +6,7 @@ import pdb
 import torch.nn.functional as F
 
 import matplotlib.pyplot as plt
+import torchvision
 
 
 class LinearPadding(nn.Module):
@@ -351,13 +352,17 @@ class UpSample(nn.Module):
 
 
         self.linear_padding = LinearPadding(padding=self.padding)
+
+        self.edge_padding = torchvision.transforms.Pad(padding=[self.padding, 0], padding_mode="edge")
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         
         if not self.transposed:
             x = nn.functional.interpolate(x, scale_factor=2, mode='nearest')
             #x = self.linear_padding(x)
-            x = nn.functional.pad(x, (self.padding, self.padding), mode="constant", value=0)
+            #x = nn.functional.pad(x, (self.padding, self.padding), mode="constant", value=0)
+            x = self.edge_padding(x)
+
         return self.conv(x)
 
 class DownSample(nn.Module):
@@ -379,11 +384,13 @@ class DownSample(nn.Module):
         self.conv = nn.Conv1d(in_channels, out_channels, kernel_size, stride=2, padding=0)
 
         self.linear_padding = LinearPadding(padding=self.padding)
+        self.edge_padding = torchvision.transforms.Pad(padding=[self.padding, 0], padding_mode="edge")
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         
         #x = self.linear_padding(x)
-        x = nn.functional.pad(x, (self.padding, self.padding), mode="constant", value=0)
+        #x = nn.functional.pad(x, (self.padding, self.padding), mode="constant", value=0)
+        x = self.edge_padding(x)
 
         return self.conv(x)
 
@@ -409,12 +416,7 @@ class Encoder(nn.Module):
         self.kernel_size = kernel_size
 
 
-        if self.kernel_size == 5:
-            self.padding = 2
-        elif self.kernel_size == 3:
-            self.padding = 1
-        elif self.kernel_size == 7:
-            self.padding = 2
+        self.padding = self.kernel_size // 2
 
         final_dim = space_dim//2**(len(self.num_channels)-1)
 

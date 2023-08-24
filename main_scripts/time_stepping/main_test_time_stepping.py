@@ -134,7 +134,8 @@ def main():
     pred_recon_state = pred_recon_state.detach().numpy()
 
     num_latent_to_plot = 4
-    plt.figure()
+    plt.figure(figsize=(15,5))
+    plt.subplot(1, 3, 1)
     plt.plot(latent_state[0, 0, :num_steps], label='latent state', color='tab:blue')
     for i in range(1, num_latent_to_plot):
         plt.plot(latent_state[0, i, :num_steps], color='tab:blue')
@@ -143,6 +144,20 @@ def main():
     for i in range(1, num_latent_to_plot):
         plt.plot(pred_latent_state[0, i, :num_steps], color='tab:orange')                     
     plt.legend()
+
+    time_step_to_plot_1 = 100
+    time_step_to_plot_2 = 500   
+    plt.subplot(1, 3, 2)
+    plt.plot(state[0, 0, :, time_step_to_plot_1], label='state', color='tab:blue')
+    plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_1], label='pred state', color='tab:orange')
+    plt.plot(state[0, 0, :, time_step_to_plot_2], color='tab:blue')
+    plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_2], color='tab:orange')
+
+    plt.subplot(1, 3, 3)
+    plt.plot(state[0, 1, :, time_step_to_plot_1], label='state', color='tab:blue')
+    plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_1], label='pred state', color='tab:orange')
+    plt.plot(state[0, 1, :, time_step_to_plot_2], color='tab:blue')
+    plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_2], color='tab:orange')
     plt.show()
 
 

@@ -59,7 +59,7 @@ def main():
         sample_ids=SAMPLE_IDS,
         **config['dataset_args'],
     )
-
+    
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset,
         [int(0.8*len(dataset)), int(0.2*len(dataset))]

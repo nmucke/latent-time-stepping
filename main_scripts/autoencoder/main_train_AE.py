@@ -79,7 +79,7 @@ def main():
         local_path = LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
         sample_ids=TRAIN_SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=None,
+        num_random_idx_divisor=2,
         preprocessor=preprocessor,
         num_skip_steps=4,
         states_to_include=(1, 2) if PHASE == 'multi' else None,

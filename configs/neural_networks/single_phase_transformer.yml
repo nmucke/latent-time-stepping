@@ -1,10 +1,10 @@
 dataset_args:
   input_seq_len: 32
-  output_seq_len: 32
+  output_seq_len: 64
   num_time_steps: 600
 
 dataloader_args:
-  batch_size: 1024
+  batch_size: 512
   shuffle: True
   num_workers: 4
   
@@ -22,7 +22,7 @@ model_args:
     embed_hidden_dim: 32
     num_layers: 2
     input_seq_len: 32
-    output_seq_len: 32
+    output_seq_len: 64
 
 optimizer_args:
   learning_rate: 5.0e-4

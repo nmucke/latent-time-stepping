@@ -1,3 +1,4 @@
+import pdb
 import numpy as np
 import torch
 import torch.optim as optim
@@ -14,11 +15,18 @@ class Optimizer():
         self.model = model
         self.args = args
 
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(),
-            lr=self.args['learning_rate'],
-            weight_decay=self.args['weight_decay'],
-        )
+
+        if self.args['weight_decay'] is None:
+            self.optimizer = torch.optim.Adam(
+                self.model.parameters(),
+                lr=self.args['learning_rate'],
+            )
+        else:
+            self.optimizer = torch.optim.Adam(
+                self.model.parameters(),
+                lr=self.args['learning_rate'],
+                weight_decay=self.args['weight_decay'],
+            )
 
         self.scheduler = CosineWarmupScheduler(
             self.optimizer,
