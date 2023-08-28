@@ -29,7 +29,7 @@ torch.set_default_dtype(torch.float32)
 CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'local'
 
-PHASE = "multi"
+PHASE = "single"
 
 MODEL_TYPE = "WAE"
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
@@ -103,7 +103,6 @@ def main():
         **config['dataloader_args'],
     )
 
-    state,pars = dataset.__getitem__(0)
 
     if MODEL_TYPE == "VAE":
         encoder = VAEEncoder(**config['model_args']['encoder'])

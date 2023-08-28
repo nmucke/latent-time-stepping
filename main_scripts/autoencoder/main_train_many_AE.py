@@ -100,23 +100,22 @@ def train_remote(
         val_dataset,
         **config['dataloader_args'],
     )
-
     config['model_args']['encoder']['latent_dim'] = latent_dim
     config['model_args']['decoder']['latent_dim'] = latent_dim
 
-    config['model_args']['decoder']['latent_dim'] = transposed
+    config['model_args']['decoder']['transposed'] = transposed
 
     config['model_args']['encoder']['resnet'] = resnet
     config['model_args']['decoder']['resnet'] = resnet
 
     if PHASE == "single":
-        config['model_args']['decoder']['resnet'] = [num_channels//(2**i) for i in range(0, num_layers)]
+        config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
         config['model_args']['decoder']['num_channels'].append(2)
-        config['model_args']['encoder']['num_channels'] = config['model_args']['encoder']['num_channels'][::-1]
+        config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
     elif PHASE == "multi":
-        config['model_args']['decoder']['resnet'] = [num_channels//(2**i) for i in range(0, num_layers)]
+        config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
         config['model_args']['decoder']['num_channels'].append(3)
-        config['model_args']['encoder']['num_channels'] = config['model_args']['encoder']['num_channels'][::-1]
+        config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
 
 
     oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}'

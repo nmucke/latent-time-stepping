@@ -5,20 +5,20 @@ dataloader_args:
   
 model_args:
   encoder:
-    num_channels: [2, 8, 16, 32, 64, 128]
+    num_channels: [2, 4, 8, 16, 32, 64, 128]
     kernel_size: 5
     latent_dim: 4
     space_dim: 256
     resnet: False
     activation: gelu
   decoder:
-    num_channels: [128, 64, 32, 16, 8, 2]
+    num_channels: [128, 64, 32, 16, 8, 4, 2]
     kernel_size: 5
     latent_dim: 4
     pars_dim: 2
     space_dim: 256
     resnet: False
-    transposed: True
+    transposed: False
     activation: gelu
 
 optimizer_args:
