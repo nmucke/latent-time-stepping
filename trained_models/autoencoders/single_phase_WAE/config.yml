@@ -12,6 +12,7 @@ model_args:
     - 32
     - 16
     - 8
+    - 4
     - 2
     pars_dim: 2
     resnet: true
@@ -22,6 +23,7 @@ model_args:
     latent_dim: 4
     num_channels:
     - 2
+    - 4
     - 8
     - 16
     - 32

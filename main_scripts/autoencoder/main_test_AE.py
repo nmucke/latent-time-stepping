@@ -13,15 +13,17 @@ from latent_time_stepping.utils import load_trained_AE_model
 
 torch.set_default_dtype(torch.float32)
 
+from scipy.signal import savgol_filter
+
 DEVICE = 'cpu'
 
-PHASE = "single"
+PHASE = "multi"
 MODEL_TYPE = "WAE"
-LATENT_DIM = 4
+LATENT_DIM = 8
 
 LOCAL_OR_ORACLE = 'oracle'
 
-LOAD_MODEL_FROM_ORACLE = False
+LOAD_MODEL_FROM_ORACLE = True
 
 if PHASE == "single":
     NUM_STATES = 2
@@ -29,6 +31,7 @@ elif PHASE == "multi":
     NUM_STATES = 2
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
+#ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_256_channels'
 ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'
 
 object_storage_client = ObjectStorageClientWrapper(
@@ -60,7 +63,7 @@ preprocessor = object_storage_client.get_preprocessor(
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-NUM_SAMPLES = 10
+NUM_SAMPLES = 5
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 if LOCAL_OR_ORACLE == 'oracle':
@@ -68,8 +71,8 @@ if LOCAL_OR_ORACLE == 'oracle':
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
-        num_skip_steps=1,
-        end_time_index=1500,
+        num_skip_steps=10,
+        end_time_index=3500,
         states_to_include=(1,2) if PHASE == "multi" else None,
     )
 elif LOCAL_OR_ORACLE == 'local':
@@ -77,8 +80,8 @@ elif LOCAL_OR_ORACLE == 'local':
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
-        num_skip_steps=1,
-        end_time_index=1500,
+        num_skip_steps=5,
+        end_time_index=3500,
         states_to_include=(1,2) if PHASE == "multi" else None,
     )
 
@@ -91,6 +94,13 @@ dataloader = torch.utils.data.DataLoader(
 
 def main():
 
+    num_channels = 256
+    lol = [num_channels//(2**i) for i in range(0, 7)]
+    lol.append(2)
+    lal = lol[::-1]
+    pdb.set_trace()
+
+
     L2_error = []
 
     pbar = tqdm(
@@ -98,7 +108,11 @@ def main():
             bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'
         )
     for i, (state, pars) in pbar:
-        
+
+        state = state.numpy()
+        state = savgol_filter(state, 15, 1, axis=-2)
+        state = torch.tensor(state)
+
         state = state.to(DEVICE)
         pars = pars.to(DEVICE)
 
@@ -114,7 +128,7 @@ def main():
             e += torch.norm(state[:, j] - recon_state[:, j])/torch.norm(state[:, j])
         
         L2_error.append(e)
-
+        
     print(f"Average L2 Error: {torch.mean(torch.stack(L2_error))}")
 
     recon_state = recon_state[0].detach().numpy()
@@ -143,8 +157,8 @@ def main():
     plt.grid()
     plt.subplot(2, 4, 4)
     plt.plot(latent_state[0, 3, :])
-    #plt.plot(latent_state[0, 4, :])
-    #lt.plot(latent_state[0, 5, :])
+    plt.plot(latent_state[0, 4, :])
+    plt.plot(latent_state[0, 5, :])
     plt.grid()
     plt.subplot(2, 4, 5)
     plt.hist(latent_state[:, 0, :].flatten(), bins=50, density=True)

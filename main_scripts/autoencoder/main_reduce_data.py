@@ -22,7 +22,7 @@ elif PHASE == "multi":
     NUM_STATES = 3
 
 
-LOAD_MODEL_FROM_ORACLE = True
+LOAD_MODEL_FROM_ORACLE = False
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'

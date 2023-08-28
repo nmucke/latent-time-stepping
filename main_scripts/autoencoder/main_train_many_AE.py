@@ -29,19 +29,29 @@ torch.set_default_dtype(torch.float32)
 
 @ray.remote(num_cpus=8, num_gpus=1)
 def train_remote(
-    latent_dim,
+    transposed,
+    resnet,
+    num_channels,
+    num_layers,
+    phase
 ):
     
-    CONTINUE_TRAINING = False
-    PHASE = "multi"
     
+    CONTINUE_TRAINING = False
+    PHASE = phase
+
+    latent_dim = 4 if PHASE == "single" else 8
+
     CUDA = True
     if CUDA:
         DEVICE = torch.device('cuda' if CUDA else 'cpu')
     else:
         DEVICE = torch.device('cpu')
 
-    NUM_SAMPLES = 5000
+    if PHASE == "single":
+        NUM_SAMPLES = 2500
+    else:
+        NUM_SAMPLES = 5000
     TRAIN_RATIO = 0.8
     VAL_RATIO = 0.2
 
@@ -71,10 +81,10 @@ def train_remote(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=2,
+        num_random_idx_divisor=1 if PHASE == "single" else 2,
         preprocessor=preprocessor,
-        num_skip_steps=4,
-        states_to_include=(1,2) if PHASE == "multi" else None,
+        num_skip_steps=4 if PHASE == "single" else 5,
+        #states_to_include=(1,2) if PHASE == "multi" else None,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(
@@ -94,8 +104,30 @@ def train_remote(
     config['model_args']['encoder']['latent_dim'] = latent_dim
     config['model_args']['decoder']['latent_dim'] = latent_dim
 
-    oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}'
-    MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_{latent_dim}"
+    config['model_args']['decoder']['latent_dim'] = transposed
+
+    config['model_args']['encoder']['resnet'] = resnet
+    config['model_args']['decoder']['resnet'] = resnet
+
+    if PHASE == "single":
+        config['model_args']['decoder']['resnet'] = [num_channels//(2**i) for i in range(0, num_layers)]
+        config['model_args']['encoder']['num_channels'].append(2)
+        config['model_args']['encoder']['num_channels'] = config['model_args']['encoder']['num_channels'][::-1]
+    elif PHASE == "multi":
+        config['model_args']['decoder']['resnet'] = [num_channels//(2**i) for i in range(0, num_layers)]
+        config['model_args']['encoder']['num_channels'].append(2)
+        config['model_args']['encoder']['num_channels'] = config['model_args']['encoder']['num_channels'][::-1]
+
+
+    oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}'
+    MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}"
+
+    if transposed:
+        oracle_model_save_path += "_transposed"
+        MODEL_SAVE_PATH += "_transposed"
+    if resnet:
+        oracle_model_save_path += "_resnet"
+        MODEL_SAVE_PATH += "_resnet"
 
     create_directory(MODEL_SAVE_PATH)
 
@@ -147,13 +179,31 @@ def train_remote(
 
 def main():
     out = []
-    for latent_dim in [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48]:
 
-        _ = train_remote.remote(
-            latent_dim=latent_dim,
-        )   
+    transposed_list = [False, True]
+    resnet_list = [False, True]
+    num_channels_list = [128, 256]
 
-        out.append(_)
+    PHASE = "single"
+
+    if PHASE == "single":
+        num_layers_list = [5, 6]
+    elif PHASE == "multi":
+        num_layers_list = [6, 7]
+
+    for transposed in transposed_list:
+        for resnet in resnet_list:
+            for num_channels in num_channels_list:
+                for num_layers in num_layers_list:
+                    _ = train_remote.remote(
+                        transposed=transposed,
+                        resnet=resnet,
+                        num_channels=num_channels,
+                        num_layers=num_layers,
+                        phase=PHASE,
+                    )   
+
+                    out.append(_)
 
     ray.get(out)
 

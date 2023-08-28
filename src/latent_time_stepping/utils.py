@@ -9,6 +9,7 @@ import yaml
 from latent_time_stepping.AE_models.VAE_encoder import VAEEncoder
 from latent_time_stepping.AE_models.autoencoder import Autoencoder
 from latent_time_stepping.AE_models.encoder_decoder import Decoder, Encoder
+from latent_time_stepping.time_stepping_models.FNO_time_stepping_model import FNOTimeSteppingModel
 from latent_time_stepping.time_stepping_models.parameter_encoder import ParameterEncoder
 from latent_time_stepping.time_stepping_models.time_stepping_model import TimeSteppingModel
 
@@ -63,18 +64,22 @@ def load_trained_time_stepping_model(
     config = None,
     device = 'cpu',
 ):
-    
     if model_load_path is not None:
         state_dict = torch.load(f'{model_load_path}/model.pt', map_location=device)
 
         with open(f'{model_load_path}/config.yml') as f:
             config = yaml.load(f, Loader=yaml.SafeLoader)
 
-    pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
-    model = TimeSteppingModel(
-        pars_encoder=pars_encoder,
-        **config['model_args']['time_stepping_decoder'],
-    )
+    if model_load_path[-3:] == 'FNO':
+        model = FNOTimeSteppingModel(
+            **config['model_args'],
+        )
+    else:
+        pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
+        model = TimeSteppingModel(
+            pars_encoder=pars_encoder,
+            **config['model_args']['time_stepping_decoder'],
+        )
     
     model = model.to(device)
     model.load_state_dict(state_dict['model_state_dict'])

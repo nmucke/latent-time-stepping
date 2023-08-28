@@ -415,7 +415,6 @@ class Encoder(nn.Module):
             kernel_size = 3
         self.kernel_size = kernel_size
 
-
         self.padding = self.kernel_size // 2
 
         final_dim = space_dim//2**(len(self.num_channels)-1)

@@ -19,7 +19,7 @@ DEVICE = 'cpu'
 PHASE = "single"
 AE_MODEL_TYPE = "WAE"
 TIME_STEPPING_MODEL_TYPE = "transformer"
-LOAD_MODEL_FROM_ORACLE = True
+LOAD_MODEL_FROM_ORACLE = False
 
 LATENT_DIM = 4
 
@@ -54,8 +54,10 @@ time_stepper = load_trained_time_stepping_model(
     model_load_path=time_stepping_model_path,
     device=DEVICE,
 )
-input_seq_len = time_stepper.input_seq_len
-
+if TIME_STEPPING_MODEL_TYPE == 'FNO':
+    input_seq_len = 32
+else:
+    input_seq_len = time_stepper.input_seq_len
 """
 PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
 with open(PREPROCESSOR_PATH, 'rb') as f:
@@ -109,44 +111,56 @@ def main():
         state = state.to(DEVICE)
         pars = pars.to(DEVICE)
 
-        latent_state = AE.encode(state)
-
-        pred_latent_state = time_stepper.multistep_prediction(
-            latent_state[:, :, 0:input_seq_len],
-            pars,
-            output_seq_len=num_steps,
-            )
-        pred_latent_state = torch.cat(
-            [latent_state[:, :, 0:input_seq_len], pred_latent_state],
-            dim=2
-            )
+        if TIME_STEPPING_MODEL_TYPE == "FNO":
+            pred_recon_state = time_stepper.multistep_prediction(
+                input=state[0:1, :, :, 0:input_seq_len],
+                pars=pars,
+                output_seq_len=num_steps,
+                )
             
-        pred_recon_state = AE.decode(pred_latent_state, pars)
+        else:
+
+            latent_state = AE.encode(state)
+
+            pred_latent_state = time_stepper.multistep_prediction(
+                latent_state[:, :, 0:input_seq_len],
+                pars,
+                output_seq_len=num_steps,
+                )
+            pred_latent_state = torch.cat(
+                [latent_state[:, :, 0:input_seq_len], pred_latent_state],
+                dim=2
+                )
+                
+            pred_recon_state = AE.decode(pred_latent_state, pars)
 
         pred_recon_state = preprocessor.inverse_transform_state(pred_recon_state, ensemble=True)
 
         state = preprocessor.inverse_transform_state(state, ensemble=True)
         pred_recon_state = pred_recon_state.detach()
     
-    latent_state = latent_state.detach().numpy()
-    pred_latent_state = pred_latent_state.detach().numpy()
+    if TIME_STEPPING_MODEL_TYPE != 'FNO':
+        latent_state = latent_state.detach().numpy()
+        pred_latent_state = pred_latent_state.detach().numpy()
     state = state.detach().numpy()
     pred_recon_state = pred_recon_state.detach().numpy()
 
     num_latent_to_plot = 4
     plt.figure(figsize=(15,5))
-    plt.subplot(1, 3, 1)
-    plt.plot(latent_state[0, 0, :num_steps], label='latent state', color='tab:blue')
-    for i in range(1, num_latent_to_plot):
-        plt.plot(latent_state[0, i, :num_steps], color='tab:blue')
 
-    plt.plot(pred_latent_state[0, 0, :num_steps], label='pred latent state', color='tab:orange')
-    for i in range(1, num_latent_to_plot):
-        plt.plot(pred_latent_state[0, i, :num_steps], color='tab:orange')                     
-    plt.legend()
+    if TIME_STEPPING_MODEL_TYPE != 'FNO':
+        plt.subplot(1, 3, 1)
+        plt.plot(latent_state[0, 0, :num_steps], label='latent state', color='tab:blue')
+        for i in range(1, num_latent_to_plot):
+            plt.plot(latent_state[0, i, :num_steps], color='tab:blue')
 
-    time_step_to_plot_1 = 100
-    time_step_to_plot_2 = 500   
+        plt.plot(pred_latent_state[0, 0, :num_steps], label='pred latent state', color='tab:orange')
+        for i in range(1, num_latent_to_plot):
+            plt.plot(pred_latent_state[0, i, :num_steps], color='tab:orange') 
+        plt.legend()
+
+    time_step_to_plot_1 = 250
+    time_step_to_plot_2 = 450
     plt.subplot(1, 3, 2)
     plt.plot(state[0, 0, :, time_step_to_plot_1], label='state', color='tab:blue')
     plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_1], label='pred state', color='tab:orange')

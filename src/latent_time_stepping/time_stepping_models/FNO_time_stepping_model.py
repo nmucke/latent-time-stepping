@@ -187,9 +187,9 @@ class FNOTimeSteppingModel(nn.Module):
         return state
     
     def multistep_prediction(self, input, pars, output_seq_len):
-        output_states = [input]
-        for i in range(output_seq_len):
-            state = self.forward(output_states[-1], pars)
-            output_states.append(state)
         
-        return torch.stack(output_states, dim=-1)
+        for i in range(output_seq_len):
+            state = self.forward(input[:, :, :, -1], pars)
+            input = torch.cat((input, state.unsqueeze(-1)), dim=-1)
+        
+        return input

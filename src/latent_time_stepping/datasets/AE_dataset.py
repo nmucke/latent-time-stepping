@@ -119,7 +119,9 @@ class AEDataset(torch.utils.data.Dataset):
         self.state = torch.tensor(self.state, dtype=torch.get_default_dtype())
         self.pars = torch.tensor(self.pars, dtype=torch.get_default_dtype())   
 
-    def __getitem__(self, index: int) -> torch.Tensor:        
+    def __getitem__(self, index: int) -> torch.Tensor:    
+
+        index = self.sample_ids[index]
             
         if self.load_entire_dataset:
             state = self.state[index]
