@@ -1,20 +1,19 @@
 dataloader_args:
   batch_size: 2
-  num_workers: 2
+  num_workers: 4
   shuffle: true
 model_args:
   decoder:
     kernel_size: 5
     latent_dim: 32
     num_channels:
-    - 256
     - 128
     - 64
     - 32
     - 16
     - 8
     - 4
-    - 2
+    - 3
     pars_dim: 2
     resnet: true
     space_dim: 512
@@ -23,14 +22,13 @@ model_args:
     kernel_size: 5
     latent_dim: 32
     num_channels:
-    - 2
+    - 3
     - 4
     - 8
     - 16
     - 32
     - 64
     - 128
-    - 256
     resnet: true
     space_dim: 512
 optimizer_args:

@@ -4,6 +4,7 @@ dataloader_args:
   shuffle: true
 model_args:
   decoder:
+    activation: gelu
     kernel_size: 5
     latent_dim: 4
     num_channels:
@@ -12,24 +13,23 @@ model_args:
     - 32
     - 16
     - 8
-    - 4
     - 2
     pars_dim: 2
-    resnet: true
+    resnet: false
     space_dim: 256
-    transposed: false
+    transposed: true
   encoder:
+    activation: gelu
     kernel_size: 5
     latent_dim: 4
     num_channels:
     - 2
-    - 4
     - 8
     - 16
     - 32
     - 64
     - 128
-    resnet: true
+    resnet: false
     space_dim: 256
 optimizer_args:
   learning_rate: 0.0005

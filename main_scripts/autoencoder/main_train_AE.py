@@ -85,7 +85,8 @@ def main():
         num_random_idx_divisor=None,
         preprocessor=preprocessor,
         num_skip_steps=5,
-        states_to_include=(1, 2) if PHASE == 'multi' else None,
+        #states_to_include=(1, 2) if PHASE == 'multi' else None,
+        filter=True,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(
@@ -101,6 +102,8 @@ def main():
         val_dataset,
         **config['dataloader_args'],
     )
+
+    state,pars = dataset.__getitem__(0)
 
     if MODEL_TYPE == "VAE":
         encoder = VAEEncoder(**config['model_args']['encoder'])

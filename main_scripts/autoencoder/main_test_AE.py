@@ -19,11 +19,11 @@ DEVICE = 'cpu'
 
 PHASE = "multi"
 MODEL_TYPE = "WAE"
-LATENT_DIM = 8
+LATENT_DIM = 4
 
 LOCAL_OR_ORACLE = 'oracle'
 
-LOAD_MODEL_FROM_ORACLE = True
+LOAD_MODEL_FROM_ORACLE = False
 
 if PHASE == "single":
     NUM_STATES = 2
@@ -87,18 +87,12 @@ elif LOCAL_OR_ORACLE == 'local':
 
 dataloader = torch.utils.data.DataLoader(
     dataset=dataset,
-    batch_size=1,
+    batch_size=2,
     shuffle=False,
     num_workers=NUM_SAMPLES,
 )
 
 def main():
-
-    num_channels = 256
-    lol = [num_channels//(2**i) for i in range(0, 7)]
-    lol.append(2)
-    lal = lol[::-1]
-    pdb.set_trace()
 
 
     L2_error = []

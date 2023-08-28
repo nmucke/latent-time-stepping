@@ -8,6 +8,22 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import torchvision
 
+def get_activation_function(activation_function: str) -> nn.Module:
+
+    if activation_function == "relu":
+        return nn.ReLU()
+    elif activation_function == "leaky_relu":
+        return nn.LeakyReLU()
+    elif activation_function == "tanh":
+        return nn.Tanh()
+    elif activation_function == "sigmoid":
+        return nn.Sigmoid()
+    elif activation_function == "gelu":
+        return nn.GELU()
+    elif activation_function == "none":
+        return nn.Identity()
+    else:
+        raise ValueError(f"Activation function {activation_function} not supported.")
 
 class LinearPadding(nn.Module):
     def __init__(self, padding: int) -> None:
@@ -402,6 +418,7 @@ class Encoder(nn.Module):
         latent_dim: int = 16,
         space_dim: int = 256,
         resnet: bool = True,
+        activation: str = 'leaky_relu',
         ):
         super().__init__()
 
@@ -421,7 +438,7 @@ class Encoder(nn.Module):
 
         self.latent_dim = latent_dim
 
-        self.activation = nn.LeakyReLU()
+        self.activation = get_activation_function(activation)
 
         self.conv_blocks = nn.ModuleList()
         if self.resnet:
@@ -618,6 +635,7 @@ class Decoder(nn.Module):
         space_dim: int = 256,
         resnet: bool = True,
         transposed: bool = False,
+        activation: str = 'leaky_relu',
         ):
         super().__init__()
 
@@ -643,7 +661,7 @@ class Decoder(nn.Module):
 
 
         self.latent_dim = latent_dim
-        self.activation = nn.LeakyReLU()
+        self.activation = get_activation_function(activation)
 
         init_dim = space_dim//2**(len(self.num_channels)-1)
 
@@ -749,21 +767,20 @@ class Decoder(nn.Module):
         return x
 
     def forward(self, x, pars):
-        
+
         batch_size = x.shape[0]
         latent_dim = x.shape[1]
         num_time_steps = x.shape[2]
 
         x = self._reshape_input(x, batch_size, latent_dim, num_time_steps)
-
-
+        
         pars = self.pars_embed_1(pars)
         pars = self.activation(pars)
         pars = self.pars_embed_2(pars)
         pars = self.activation(pars)
         pars = self.pars_unflatten(pars)
         
-        pars = pars.tile((num_time_steps, 1, 1))
+        pars = torch.repeat_interleave(pars, repeats=num_time_steps, dim=0)
 
         x = self.init_dense_layer(x)
         x = self.activation(x)

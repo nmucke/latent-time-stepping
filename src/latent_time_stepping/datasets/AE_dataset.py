@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
 from latent_time_stepping.preprocessor import Preprocessor
+from scipy.signal import savgol_filter
 
 class AEDataset(torch.utils.data.Dataset):
     """Dataset"""
@@ -22,6 +23,7 @@ class AEDataset(torch.utils.data.Dataset):
         save_to_oracle: str = None,
         num_random_idx_divisor: int = None,
         states_to_include: tuple = None,
+        filter: bool = False,
         ) -> None:
         super().__init__()
 
@@ -30,6 +32,8 @@ class AEDataset(torch.utils.data.Dataset):
         self.end_time_index = end_time_index
         self.num_random_idx_divisor = num_random_idx_divisor
         self.states_to_include = states_to_include
+
+        self.filter = filter
 
         self.save_to_local = save_to_local
         self.save_to_oracle = save_to_oracle
@@ -173,6 +177,11 @@ class AEDataset(torch.utils.data.Dataset):
         if self.num_random_idx_divisor is not None:
             idx = np.random.choice(state.shape[-1], size=state.shape[-1]//self.num_random_idx_divisor, replace=False)
 
-            return state[:, :, idx], pars
+            state = state[:, :, idx]
+
+        if self.filter:
+            state = state.numpy()
+            state = savgol_filter(state, 15, 1, axis=-1)
+            state = torch.tensor(state)
         
         return state, pars

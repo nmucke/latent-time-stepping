@@ -50,15 +50,10 @@ def train(
 
         # Train
         for i, (state, pars) in pbar:
-
             
             # pick N random integers from 0 to len(train_dataloader)
             #idx = np.random.randint(0, state.shape[-1], size=state.shape[-1]//8)
             #state = state[:, :, :, idx]
-
-            state = state.numpy()
-            state = savgol_filter(state, 15, 1, axis=-2)
-            state = torch.tensor(state)
 
             '''
             lal = savgol_filter(state, 15, 1, axis=-2)

@@ -111,11 +111,11 @@ def train_remote(
 
     if PHASE == "single":
         config['model_args']['decoder']['resnet'] = [num_channels//(2**i) for i in range(0, num_layers)]
-        config['model_args']['encoder']['num_channels'].append(2)
+        config['model_args']['decoder']['num_channels'].append(2)
         config['model_args']['encoder']['num_channels'] = config['model_args']['encoder']['num_channels'][::-1]
     elif PHASE == "multi":
         config['model_args']['decoder']['resnet'] = [num_channels//(2**i) for i in range(0, num_layers)]
-        config['model_args']['encoder']['num_channels'].append(2)
+        config['model_args']['decoder']['num_channels'].append(3)
         config['model_args']['encoder']['num_channels'] = config['model_args']['encoder']['num_channels'][::-1]
 
 
@@ -182,7 +182,7 @@ def main():
 
     transposed_list = [False, True]
     resnet_list = [False, True]
-    num_channels_list = [128, 256]
+    num_channels_list = [128]
 
     PHASE = "single"
 
@@ -195,6 +195,7 @@ def main():
         for resnet in resnet_list:
             for num_channels in num_channels_list:
                 for num_layers in num_layers_list:
+                    
                     _ = train_remote.remote(
                         transposed=transposed,
                         resnet=resnet,
