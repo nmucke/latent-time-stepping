@@ -86,7 +86,7 @@ def main():
         preprocessor=preprocessor,
         num_skip_steps=5,
         #states_to_include=(1, 2) if PHASE == 'multi' else None,
-        filter=True,
+        filter=True if PHASE == 'multi' else False,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(
@@ -155,7 +155,7 @@ def main():
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
         train_stepper=train_stepper,
-        print_progress=True,
+        print_level=2,
         **config['train_args'],
     )
 

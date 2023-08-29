@@ -5,6 +5,7 @@ from tqdm import tqdm
 import pdb
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
+import time
 
 from latent_time_stepping.AE_training.optimizers import Optimizer
 from latent_time_stepping.AE_training.train_steppers import BaseAETrainStepper
@@ -23,8 +24,8 @@ def train(
     val_dataloader: torch.utils.data.DataLoader,
     num_epochs: int,
     train_stepper: BaseAETrainStepper,
-    print_progress: bool = True,
     patience: int = None,
+    print_level: int = 1,
 ) -> None:
     
 
@@ -34,7 +35,7 @@ def train(
     for epoch in range(num_epochs):
 
         # Setup progress bar
-        if print_progress:
+        if print_level==2:
             pbar = tqdm(
                     enumerate(train_dataloader),
                     total=int(len(train_dataloader.dataset)/train_dataloader.batch_size),
@@ -47,8 +48,9 @@ def train(
         #################### Start epoch ####################
 
         train_stepper.start_epoch()
-
+        
         # Train
+        t1 = time.time()
         for i, (state, pars) in pbar:
             
             # pick N random integers from 0 to len(train_dataloader)
@@ -94,10 +96,9 @@ def train(
 
             loss = train_stepper.train_step(state, pars)
 
-            if print_progress:
+            if print_level == 2:
                 if i % 10 == 0:
                     pbar.set_postfix(loss)
-        
         # Validate
         for i, (state, pars) in enumerate(val_dataloader):
 
@@ -105,14 +106,15 @@ def train(
 
         val_loss = train_stepper.end_epoch()
         
+        t2 = time.time()
         #################### End epoch ####################
         
         # Print val loss
-        if print_progress:
+        if print_level==1 or print_level==2:
             for keys, values in val_loss.items():
                 print(f'{keys}: {values:.6f}', end=', ')
                 
-            print(f'Epoch: {epoch+1}/{num_epochs}')
+            print(f'Epoch: {epoch+1}/{num_epochs}, time: {t2-t1:.2f} s')
         
         # Early stopping
         if patience is not None:

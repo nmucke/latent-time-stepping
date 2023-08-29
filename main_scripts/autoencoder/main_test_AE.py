@@ -19,20 +19,29 @@ DEVICE = 'cpu'
 
 PHASE = "multi"
 MODEL_TYPE = "WAE"
-LATENT_DIM = 4
+LATENT_DIM = 8 if PHASE == 'multi' else 4
+TRANSPOSED = True
+RESNET = True
+NUM_CHANNELS = 256 if PHASE == 'multi' else 128
+NUM_LAYERS = 6
 
 LOCAL_OR_ORACLE = 'oracle'
 
-LOAD_MODEL_FROM_ORACLE = False
+LOAD_MODEL_FROM_ORACLE = True
 
 if PHASE == "single":
     NUM_STATES = 2
 elif PHASE == "multi":
-    NUM_STATES = 2
+    NUM_STATES = 3
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_256_channels'
-ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'
+ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
+if TRANSPOSED:
+    ORACLE_MODEL_LOAD_PATH += "_transposed"
+if RESNET:
+    ORACLE_MODEL_LOAD_PATH += "_resnet"
+
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
@@ -63,7 +72,7 @@ preprocessor = object_storage_client.get_preprocessor(
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-NUM_SAMPLES = 5
+NUM_SAMPLES = 2
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 if LOCAL_OR_ORACLE == 'oracle':
@@ -71,18 +80,20 @@ if LOCAL_OR_ORACLE == 'oracle':
         oracle_path=ORACLE_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
-        num_skip_steps=10,
-        end_time_index=3500,
-        states_to_include=(1,2) if PHASE == "multi" else None,
+        num_skip_steps=4,
+        end_time_index=1500,
+        filter=True if PHASE == 'multi' else False,
+        #states_to_include=(1,2) if PHASE == "multi" else None,
     )
 elif LOCAL_OR_ORACLE == 'local':
     dataset = AEDataset(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
-        num_skip_steps=5,
-        end_time_index=3500,
-        states_to_include=(1,2) if PHASE == "multi" else None,
+        num_skip_steps=4,
+        end_time_index=1500,
+        filter=True if PHASE == 'multi' else False,
+        #states_to_include=(1,2) if PHASE == "multi" else None,
     )
 
 dataloader = torch.utils.data.DataLoader(
@@ -102,10 +113,6 @@ def main():
             bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'
         )
     for i, (state, pars) in pbar:
-
-        state = state.numpy()
-        state = savgol_filter(state, 15, 1, axis=-2)
-        state = torch.tensor(state)
 
         state = state.to(DEVICE)
         pars = pars.to(DEVICE)
@@ -139,10 +146,10 @@ def main():
     plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
     plt.legend()
     plt.subplot(2, 4, 2)
-    plt.plot(recon_state[1, :, 100], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[1, :, 100], label="High Fidelity", color='tab:blue')
-    plt.plot(recon_state[1, :, -1], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[1, :, -1], label="High Fidelity", color='tab:blue')
+    plt.plot(recon_state[-1, :, 100], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[-1, :, 100], label="High Fidelity", color='tab:blue')
+    plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
     plt.legend()
     plt.subplot(2, 4, 3)
     plt.plot(latent_state[0, 0, :])
@@ -151,8 +158,8 @@ def main():
     plt.grid()
     plt.subplot(2, 4, 4)
     plt.plot(latent_state[0, 3, :])
-    plt.plot(latent_state[0, 4, :])
-    plt.plot(latent_state[0, 5, :])
+    #plt.plot(latent_state[0, 4, :])
+    #plt.plot(latent_state[0, 5, :])
     plt.grid()
     plt.subplot(2, 4, 5)
     plt.hist(latent_state[:, 0, :].flatten(), bins=50, density=True)

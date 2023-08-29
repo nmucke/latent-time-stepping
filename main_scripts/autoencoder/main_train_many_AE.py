@@ -84,6 +84,7 @@ def train_remote(
         num_random_idx_divisor=1 if PHASE == "single" else 2,
         preprocessor=preprocessor,
         num_skip_steps=4 if PHASE == "single" else 5,
+        filter=True if PHASE == "multi" else False,
         #states_to_include=(1,2) if PHASE == "multi" else None,
     )
 
@@ -168,7 +169,7 @@ def train_remote(
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
         train_stepper=train_stepper,
-        print_progress=True,
+        print_level=1,
         **config['train_args'],
     )
 
