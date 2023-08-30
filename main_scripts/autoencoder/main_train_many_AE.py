@@ -27,7 +27,7 @@ from latent_time_stepping.AE_training.trainer import train
 
 torch.set_default_dtype(torch.float32)
 
-@ray.remote(num_cpus=8, num_gpus=1)
+@ray.remote(num_cpus=16, num_gpus=1)
 def train_remote(
     transposed,
     resnet,
@@ -81,11 +81,11 @@ def train_remote(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=1 if PHASE == "single" else 2,
+        num_random_idx_divisor=1 if PHASE == "single" else 4,
         preprocessor=preprocessor,
         num_skip_steps=4 if PHASE == "single" else 5,
         filter=True if PHASE == "multi" else False,
-        #states_to_include=(1,2) if PHASE == "multi" else None,
+        states_to_include=(1,2) if PHASE == "multi" else None,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(
@@ -180,11 +180,11 @@ def train_remote(
 def main():
     out = []
 
-    transposed_list = [False, True]
+    transposed_list = [False]
     resnet_list = [False, True]
-    num_channels_list = [128]
+    num_channels_list = [256]
 
-    PHASE = "single"
+    PHASE = "multi"
 
     if PHASE == "single":
         num_layers_list = [5, 6]
@@ -210,6 +210,6 @@ def main():
 
 if __name__ == "__main__":
     
-    ray.init(num_cpus=32, num_gpus=4)
+    ray.init(num_cpus=64, num_gpus=4)
     main()
     ray.shutdown()

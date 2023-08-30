@@ -76,10 +76,10 @@ def train(
 
             def update(frame):
                 xdata.append(x)
-                ydata.append(state[0, 1, :, frame])
-                ydata_1.append(lal[0, 1, :, frame])
-                ln.set_data(x, state[0, 1, :, frame])
-                ln_1.set_data(x, lal[0, 1, :, frame])
+                ydata.append(state[0, 0, :, frame])
+                ydata_1.append(lal[0, 0, :, frame])
+                ln.set_data(x, state[0, 0, :, frame])
+                ln_1.set_data(x, lal[0, 0, :, frame])
                 return ln, ln_1,
 
             ani = FuncAnimation(
@@ -92,6 +92,8 @@ def train(
                 )
             ani.save('pipeflow_holdup.gif', fps=30)
             plt.show()
+
+            pdb.set_trace()
             '''
 
             loss = train_stepper.train_step(state, pars)

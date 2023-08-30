@@ -21,7 +21,7 @@ PHASE = "multi"
 MODEL_TYPE = "WAE"
 LATENT_DIM = 8 if PHASE == 'multi' else 4
 TRANSPOSED = True
-RESNET = True
+RESNET = False
 NUM_CHANNELS = 256 if PHASE == 'multi' else 128
 NUM_LAYERS = 6
 
@@ -41,24 +41,6 @@ if TRANSPOSED:
     ORACLE_MODEL_LOAD_PATH += "_transposed"
 if RESNET:
     ORACLE_MODEL_LOAD_PATH += "_resnet"
-
-
-object_storage_client = ObjectStorageClientWrapper(
-    bucket_name='trained_models'
-)
-
-state_dict, config = object_storage_client.get_model(
-    source_path=ORACLE_MODEL_LOAD_PATH,
-    device=DEVICE,
-)
-#model.load_state_dict(state_dict['model_state_dict'])
-model = load_trained_AE_model(
-    model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
-    state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
-    config=config,
-    model_type=MODEL_TYPE,
-    device=DEVICE,
-)
 
 PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
 
@@ -104,6 +86,24 @@ dataloader = torch.utils.data.DataLoader(
 )
 
 def main():
+
+
+    object_storage_client = ObjectStorageClientWrapper(
+        bucket_name='trained_models'
+    )
+
+    state_dict, config = object_storage_client.get_model(
+        source_path=ORACLE_MODEL_LOAD_PATH,
+        device=DEVICE,
+    )
+    #model.load_state_dict(state_dict['model_state_dict'])
+    model = load_trained_AE_model(
+        model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
+        state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
+        config=config,
+        model_type=MODEL_TYPE,
+        device=DEVICE,
+    )
 
 
     L2_error = []

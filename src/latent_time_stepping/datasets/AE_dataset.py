@@ -181,7 +181,7 @@ class AEDataset(torch.utils.data.Dataset):
 
         if self.filter:
             state = state.numpy()
-            state = savgol_filter(state, 15, 1, axis=-1)
+            state = savgol_filter(state, 15, 1, axis=-2)
             state = torch.tensor(state)
         
         return state, pars

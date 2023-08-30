@@ -159,8 +159,8 @@ def main():
             plt.plot(pred_latent_state[0, i, :num_steps], color='tab:orange') 
         plt.legend()
 
-    time_step_to_plot_1 = 250
-    time_step_to_plot_2 = 450
+    time_step_to_plot_1 = 100
+    time_step_to_plot_2 = 200
     plt.subplot(1, 3, 2)
     plt.plot(state[0, 0, :, time_step_to_plot_1], label='state', color='tab:blue')
     plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_1], label='pred state', color='tab:orange')

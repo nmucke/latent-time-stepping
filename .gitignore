@@ -24,6 +24,7 @@ figures/
 *.npy
 *.npz
 *.pkl
+*.pt
 
 # Exclude MacOS files
 *.DS_Store

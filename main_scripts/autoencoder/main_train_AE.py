@@ -29,7 +29,7 @@ torch.set_default_dtype(torch.float32)
 CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'local'
 
-PHASE = "single"
+PHASE = "multi"
 
 MODEL_TYPE = "WAE"
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
@@ -85,7 +85,7 @@ def main():
         num_random_idx_divisor=None,
         preprocessor=preprocessor,
         num_skip_steps=5,
-        #states_to_include=(1, 2) if PHASE == 'multi' else None,
+        states_to_include=(1, 2) if PHASE == 'multi' else None,
         filter=True if PHASE == 'multi' else False,
     )
 
