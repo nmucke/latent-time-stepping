@@ -87,7 +87,7 @@ def train_remote(
         load_entire_dataset=False,
         num_random_idx_divisor=None,#1 if PHASE == "single" else 4,
         preprocessor=preprocessor,
-        num_skip_steps=4 if PHASE == "single" else 1,
+        num_skip_steps=4 if PHASE == "single" else 10,
         filter=True if PHASE == "multi" else False,
         #states_to_include=(1,2) if PHASE == "multi" else None,
     )
