@@ -15,16 +15,16 @@ from latent_time_stepping.utils import create_directory
 
 PHASE = "multi"
 
-TRAIN_OR_TEST = 'train'
+TRAIN_OR_TEST = 'test'
 
 BUCKET_NAME = "bucket-20230222-1753"
 #ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 
-NUM_SAMPLES = 5000
+NUM_SAMPLES = 10
 
-TRAIN_SAMPLE_IDS = range(2800, NUM_SAMPLES)
+TRAIN_SAMPLE_IDS = range(0, NUM_SAMPLES)
 
 PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
 with open(PREPROCESSOR_PATH, 'rb') as f:
@@ -46,7 +46,7 @@ def main():
         sample_ids=TRAIN_SAMPLE_IDS,
         load_entire_dataset=False,
         #preprocessor=preprocessor,
-        num_skip_steps=1,
+        #num_skip_steps=1,
         save_to_local=SAVE_FOLDER,
     )
 
@@ -54,7 +54,7 @@ def main():
         dataset,
         batch_size=1,
         shuffle=False,
-        num_workers=30,
+        num_workers=10,
     )
     bucket_name = "bucket-20230222-1753"
 

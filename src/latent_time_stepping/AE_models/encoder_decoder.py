@@ -8,6 +8,8 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import torchvision
 
+from latent_time_stepping.AE_models.ViT import ViTEncoderLayer
+
 def get_activation_function(activation_function: str) -> nn.Module:
 
     if activation_function == "relu":
@@ -418,15 +420,22 @@ class Encoder(nn.Module):
         latent_dim: int = 16,
         space_dim: int = 256,
         resnet: bool = True,
+        vit: bool = False,
         activation: str = 'leaky_relu',
+        embedding_dim: int = None,
         ):
         super().__init__()
 
         self.resnet = resnet
+        self.vit = vit
+
+        self.embedding_dim = embedding_dim
         
         if num_channels is None:
             num_channels = [2, 32, 64, 128]
         self.num_channels = num_channels
+
+        self.num_layers = len(self.num_channels)
 
         if kernel_size is None:
             kernel_size = 3
@@ -435,6 +444,8 @@ class Encoder(nn.Module):
         self.padding = self.kernel_size // 2
 
         final_dim = space_dim//2**(len(self.num_channels)-1)
+        space_dims = [final_dim*2**i for i in range(len(self.num_channels))]
+        space_dims.reverse()
 
         self.latent_dim = latent_dim
 
@@ -462,6 +473,31 @@ class Encoder(nn.Module):
                         self.activation,
                     )
                 )
+        elif self.vit:
+
+            in_patch_sizes = [2**(self.num_layers - i - 1) for i in range(len(self.num_channels)-1)]
+            out_patch_sizes = [2**(self.num_layers - i - 2) for i in range(len(self.num_channels)-1)]
+
+            in_patch_sizes = [1 if patch_size < 1 else patch_size for patch_size in in_patch_sizes]
+            out_patch_sizes = [1 if patch_size < 1 else patch_size for patch_size in out_patch_sizes]
+            for i in range(len(self.num_channels)-1):
+                self.conv_blocks.append(
+                    nn.Sequential(
+                        ViTEncoderLayer(
+                            space_dim=space_dims[i], 
+                            in_patch_size=in_patch_sizes[i],
+                            out_patch_size=out_patch_sizes[i], 
+                            embedding_dim=self.embedding_dim[i], 
+                            num_transformer_layers=2, 
+                            num_heads=8, 
+                            mlp_dim=2*self.embedding_dim[i], 
+                            in_channels=self.num_channels[i],
+                            out_channels=self.num_channels[i+1],
+                        ),
+                        self.activation,
+                    )
+                )
+
         else:
             for i in range(len(self.num_channels)-1):
                 self.conv_blocks.append(
@@ -601,6 +637,7 @@ class Encoder(nn.Module):
         num_x = x.shape[2]
         num_time_steps = x.shape[3]
 
+
         x = self._reshape_input(x, batch_size, num_states, num_x, num_time_steps)
 
         #for (resnet_block, down_sample) in zip(self.resnet_blocks, self.down_sample):
@@ -636,6 +673,8 @@ class Decoder(nn.Module):
         resnet: bool = True,
         transposed: bool = False,
         activation: str = 'leaky_relu',
+        vit: bool = False,
+        embedding_dim: int = None
         ):
         super().__init__()
 
@@ -643,10 +682,15 @@ class Decoder(nn.Module):
         init_dim = 4
         self.resnet = resnet
         self.transposed = transposed
+        self.vit = vit
+
+        self.embedding_dim = embedding_dim
         
         if num_channels is None:
             num_channels = [128, 64, 32, num_states]
         self.num_channels = num_channels
+
+        self.num_layers = len(self.num_channels)
 
         if kernel_size is None:
             kernel_size = 3
@@ -664,6 +708,7 @@ class Decoder(nn.Module):
         self.activation = get_activation_function(activation)
 
         init_dim = space_dim//2**(len(self.num_channels)-1)
+        space_dims = [init_dim*2**i for i in range(len(self.num_channels))]
 
         self.latent_dim = latent_dim
 
@@ -723,6 +768,31 @@ class Decoder(nn.Module):
                             out_channels=self.num_channels[i+1],
                             kernel_size=self.kernel_size,
                             transposed=self.transposed,
+                        ),
+                        self.activation,
+                    )
+                )
+        elif self.vit:
+
+            in_patch_sizes = [2**(i) for i in range(len(self.num_channels)-1)]
+            out_patch_sizes = [2**(i+1) for i in range(len(self.num_channels)-1)]
+
+            in_patch_sizes = [1 if patch_size < 1 else patch_size for patch_size in in_patch_sizes]
+            out_patch_sizes = [1 if patch_size < 1 else patch_size for patch_size in out_patch_sizes]
+
+            for i in range(len(self.num_channels)-1):
+                self.conv_blocks.append(
+                    nn.Sequential(
+                        ViTEncoderLayer(
+                            space_dim=space_dims[i], 
+                            in_patch_size=in_patch_sizes[i],
+                            out_patch_size=out_patch_sizes[i], 
+                            embedding_dim=self.embedding_dim[i], 
+                            num_transformer_layers=2, 
+                            num_heads=8, 
+                            mlp_dim=2*self.embedding_dim[i], 
+                            in_channels=self.num_channels[i],
+                            out_channels=self.num_channels[i+1],
                         ),
                         self.activation,
                     )
@@ -800,6 +870,7 @@ class Decoder(nn.Module):
             x = conv_block(x)
         
         #x = nn.functional.pad(x, (self.padding, self.padding), mode="replicate")
+        #if not self.vit:
         x = self.final_conv(x)
         x = x.reshape(batch_size, num_time_steps, self.num_channels[-1], x.shape[-1])
         x = x.permute(0, 2, 3, 1)

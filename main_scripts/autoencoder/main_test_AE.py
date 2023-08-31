@@ -25,16 +25,16 @@ RESNET = False
 NUM_CHANNELS = 256 if PHASE == 'multi' else 128
 NUM_LAYERS = 6
 
-LOCAL_OR_ORACLE = 'oracle'
+LOCAL_OR_ORACLE = 'local'
 
-LOAD_MODEL_FROM_ORACLE = True
+LOAD_MODEL_FROM_ORACLE = False
 
 if PHASE == "single":
     NUM_STATES = 2
 elif PHASE == "multi":
     NUM_STATES = 3
 
-MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
+MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_new"
 #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_256_channels'
 ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
 if TRANSPOSED:
@@ -51,130 +51,144 @@ preprocessor = object_storage_client.get_preprocessor(
     source_path=PREPROCESSOR_PATH
 )
 
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
+LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/test'#f'data/{PHASE}_phase/raw_data/training_data'
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-NUM_SAMPLES = 2
+NUM_SAMPLES = 5
 SAMPLE_IDS = range(NUM_SAMPLES)
 
-if LOCAL_OR_ORACLE == 'oracle':
-    dataset = AEDataset(
-        oracle_path=ORACLE_LOAD_PATH,
-        sample_ids=SAMPLE_IDS,
-        preprocessor=preprocessor,
-        num_skip_steps=4,
-        end_time_index=1500,
-        filter=True if PHASE == 'multi' else False,
-        #states_to_include=(1,2) if PHASE == "multi" else None,
-    )
-elif LOCAL_OR_ORACLE == 'local':
-    dataset = AEDataset(
-        local_path=LOCAL_LOAD_PATH,
-        sample_ids=SAMPLE_IDS,
-        preprocessor=preprocessor,
-        num_skip_steps=4,
-        end_time_index=1500,
-        filter=True if PHASE == 'multi' else False,
-        #states_to_include=(1,2) if PHASE == "multi" else None,
-    )
+dataset = AEDataset(
+    oracle_path=ORACLE_LOAD_PATH if LOCAL_OR_ORACLE == 'oracle' else None,                                                          
+    local_path=LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
+    sample_ids=SAMPLE_IDS,
+    preprocessor=preprocessor,
+    num_skip_steps=1 if PHASE == 'multi' else 1,
+    end_time_index=2500,
+    filter=True if PHASE == 'multi' else False,
+    #states_to_include=(1,2) if PHASE == "multi" else None,
+)
 
 dataloader = torch.utils.data.DataLoader(
     dataset=dataset,
-    batch_size=2,
+    batch_size=1,
     shuffle=False,
     num_workers=NUM_SAMPLES,
 )
 
 def main():
 
+    transposed_list = [True, False]
+    resnet_list = [False, True]
+    NUM_CHANNELS = 256
+    num_layers_list = [6, 7]
 
-    object_storage_client = ObjectStorageClientWrapper(
-        bucket_name='trained_models'
-    )
+    for TRANSPOSED in transposed_list:
+        for RESNET in resnet_list:
+            for NUM_LAYERS in num_layers_list:
 
-    state_dict, config = object_storage_client.get_model(
-        source_path=ORACLE_MODEL_LOAD_PATH,
-        device=DEVICE,
-    )
-    #model.load_state_dict(state_dict['model_state_dict'])
-    model = load_trained_AE_model(
-        model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
-        state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
-        config=config,
-        model_type=MODEL_TYPE,
-        device=DEVICE,
-    )
+                if LOAD_MODEL_FROM_ORACLE:
+                    ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
+                    if TRANSPOSED:
+                        ORACLE_MODEL_LOAD_PATH += "_transposed"
+                    if RESNET:
+                        ORACLE_MODEL_LOAD_PATH += "_resnet"
+
+                    object_storage_client = ObjectStorageClientWrapper(
+                        bucket_name='trained_models'
+                    )
+
+                    state_dict, config = object_storage_client.get_model(
+                        source_path=ORACLE_MODEL_LOAD_PATH,
+                        device=DEVICE,
+                    )
+                #model.load_state_dict(state_dict['model_state_dict'])
+                model = load_trained_AE_model(
+                    model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
+                    state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
+                    config=config if LOAD_MODEL_FROM_ORACLE else None,
+                    model_type=MODEL_TYPE,
+                    device=DEVICE,
+                )
 
 
-    L2_error = []
+                L2_error = []
 
-    pbar = tqdm(
-            enumerate(dataloader),
-            bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'
-        )
-    for i, (state, pars) in pbar:
+                pbar = tqdm(
+                        enumerate(dataloader),
+                        bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'
+                    )
+                for i, (state, pars) in pbar:
 
-        state = state.to(DEVICE)
-        pars = pars.to(DEVICE)
+                    state = state.to(DEVICE)
+                    pars = pars.to(DEVICE)
 
-        latent_state = model.encode(state)
+                    latent_state = model.encode(state)
 
-        recon_state = model.decode(latent_state, pars)
-        recon_state = preprocessor.inverse_transform_state(recon_state, ensemble=True)
-        state = preprocessor.inverse_transform_state(state, ensemble=True)
-        recon_state = recon_state.detach()
+                    recon_state = model.decode(latent_state, pars)
 
-        e = 0
-        for j in range(NUM_STATES):
-            e += torch.norm(state[:, j] - recon_state[:, j])/torch.norm(state[:, j])
-        
-        L2_error.append(e)
-        
-    print(f"Average L2 Error: {torch.mean(torch.stack(L2_error))}")
+                    #if PHASE == "multi":
+                    #    recon_state = torch.cat([torch.ones_like(recon_state[:, 0:1]), recon_state], dim=1)
+                    #    state = torch.cat([torch.ones_like(state[:, 0:1]), state], dim=1)
+                    
+                    #recon_state = savgol_filter(recon_state.detach().numpy(), 15, 1, axis=-2)
+                    #recon_state = torch.tensor(recon_state, dtype=torch.float32)
 
-    recon_state = recon_state[0].detach().numpy()
-    hf_trajectory = state[0].detach().numpy()
-    latent_state = latent_state.detach().numpy()
-    
-    normal_distribution = 1 / np.sqrt(2 * np.pi) * np.exp(-0.5 * np.linspace(-5, 5, 1000) ** 2)
-    
-    plt.figure(figsize=(20, 10))
-    plt.subplot(2, 4, 1)
-    plt.plot(recon_state[0, :, 100], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[0, :, 100], label="High Fidelity", color='tab:blue')
-    plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
-    plt.legend()
-    plt.subplot(2, 4, 2)
-    plt.plot(recon_state[-1, :, 100], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[-1, :, 100], label="High Fidelity", color='tab:blue')
-    plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
-    plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
-    plt.legend()
-    plt.subplot(2, 4, 3)
-    plt.plot(latent_state[0, 0, :])
-    plt.plot(latent_state[0, 1, :])
-    plt.plot(latent_state[0, 2, :])
-    plt.grid()
-    plt.subplot(2, 4, 4)
-    plt.plot(latent_state[0, 3, :])
-    #plt.plot(latent_state[0, 4, :])
-    #plt.plot(latent_state[0, 5, :])
-    plt.grid()
-    plt.subplot(2, 4, 5)
-    plt.hist(latent_state[:, 0, :].flatten(), bins=50, density=True)
-    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
-    plt.subplot(2, 4, 6)
-    plt.hist(latent_state[:, 1, :].flatten(), bins=50, density=True)
-    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
-    plt.subplot(2, 4, 7)
-    plt.hist(latent_state[:, 2, :].flatten(), bins=50, density=True)
-    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
-    plt.subplot(2, 4, 8)
-    plt.hist(latent_state[:, 3, :].flatten(), bins=50, density=True)
-    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+                    recon_state = preprocessor.inverse_transform_state(recon_state, ensemble=True)
+                    state = preprocessor.inverse_transform_state(state, ensemble=True)
+                    recon_state = recon_state.detach()
 
-    plt.show()
+                    e = 0
+                    for j in range(NUM_STATES):
+                        e += torch.norm(state[:, j] - recon_state[:, j])/torch.norm(state[:, j])
+                    
+                    L2_error.append(e)
+                    
+                print(f"Average L2 Error: {torch.mean(torch.stack(L2_error))}")
+
+                recon_state = recon_state[0].detach().numpy()
+                hf_trajectory = state[0].detach().numpy()
+                latent_state = latent_state.detach().numpy()
+                
+                normal_distribution = 1 / np.sqrt(2 * np.pi) * np.exp(-0.5 * np.linspace(-5, 5, 1000) ** 2)
+                
+                plt.figure(figsize=(20, 10))
+                plt.subplot(2, 4, 1)
+                plt.plot(recon_state[0, :, 50], label="Reconstructed", color='tab:orange')
+                plt.plot(hf_trajectory[0, :, 50], label="High Fidelity", color='tab:blue')
+                plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
+                plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
+                plt.legend()
+                plt.subplot(2, 4, 2)
+                plt.plot(recon_state[-1, :, 50], label="Reconstructed", color='tab:orange')
+                plt.plot(hf_trajectory[-1, :, 50], label="High Fidelity", color='tab:blue')
+                plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
+                plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
+                plt.legend()
+                plt.subplot(2, 4, 3)
+                plt.plot(latent_state[0, 0, :])
+                plt.plot(latent_state[0, 1, :])
+                plt.plot(latent_state[0, 2, :])
+                plt.grid()
+                plt.subplot(2, 4, 4)
+                plt.plot(latent_state[0, 3, :])
+                plt.plot(latent_state[0, 4, :])
+                plt.plot(latent_state[0, 5, :])
+                plt.grid()
+                plt.subplot(2, 4, 5)
+                plt.hist(latent_state[:, 0, :].flatten(), bins=50, density=True)
+                plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+                plt.subplot(2, 4, 6)
+                plt.hist(latent_state[:, 1, :].flatten(), bins=50, density=True)
+                plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+                plt.subplot(2, 4, 7)
+                plt.hist(latent_state[:, 2, :].flatten(), bins=50, density=True)
+                plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+                plt.subplot(2, 4, 8)
+                plt.hist(latent_state[:, 3, :].flatten(), bins=50, density=True)
+                plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+                plt.show()
+
+                print(ORACLE_MODEL_LOAD_PATH)
 
 
 if __name__ == "__main__":

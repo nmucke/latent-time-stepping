@@ -14,6 +14,11 @@ DEVICE = 'cuda'
 PHASE = "single"
 MODEL_TYPE = "WAE"
 
+TRANSPOSED = True
+RESNET = False
+NUM_CHANNELS = 256 if PHASE == 'multi' else 128
+NUM_LAYERS = 6
+
 LATENT_DIM = 4
 
 if PHASE == "single":
@@ -21,11 +26,10 @@ if PHASE == "single":
 elif PHASE == "multi":
     NUM_STATES = 3
 
-
 LOAD_MODEL_FROM_ORACLE = False
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
-ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'
+ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'

@@ -29,18 +29,22 @@ torch.set_default_dtype(torch.float32)
 
 @ray.remote(num_cpus=16, num_gpus=1)
 def train_remote(
+    latent_dim,
     transposed,
     resnet,
     num_channels,
     num_layers,
-    phase
+    phase,
+    embedding_dim,
+    consistency_loss_regu,
+    latent_loss_regu
 ):
     
     
     CONTINUE_TRAINING = False
     PHASE = phase
 
-    latent_dim = 4 if PHASE == "single" else 8
+    #latent_dim = 4 if PHASE == "single" else 8
 
     CUDA = True
     if CUDA:
@@ -81,11 +85,11 @@ def train_remote(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=1 if PHASE == "single" else 4,
+        num_random_idx_divisor=None,#1 if PHASE == "single" else 4,
         preprocessor=preprocessor,
-        num_skip_steps=4 if PHASE == "single" else 5,
+        num_skip_steps=4 if PHASE == "single" else 1,
         filter=True if PHASE == "multi" else False,
-        states_to_include=(1,2) if PHASE == "multi" else None,
+        #states_to_include=(1,2) if PHASE == "multi" else None,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(
@@ -104,23 +108,32 @@ def train_remote(
     config['model_args']['encoder']['latent_dim'] = latent_dim
     config['model_args']['decoder']['latent_dim'] = latent_dim
 
-    config['model_args']['decoder']['transposed'] = transposed
+    #config['model_args']['decoder']['transposed'] = transposed
 
-    config['model_args']['encoder']['resnet'] = resnet
-    config['model_args']['decoder']['resnet'] = resnet
+    #config['model_args']['encoder']['resnet'] = resnet
+    #config['model_args']['decoder']['resnet'] = resnet
 
     if PHASE == "single":
-        config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
-        config['model_args']['decoder']['num_channels'].append(2)
-        config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
+        #config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
+        #config['model_args']['decoder']['num_channels'].append(2)
+        #config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
+        config['model_args']['encoder']['embedding_dim'] = [embedding_dim for _ in range(5)]
+        config['model_args']['decoder']['embedding_dim'] = [embedding_dim for _ in range(5)]
     elif PHASE == "multi":
-        config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
-        config['model_args']['decoder']['num_channels'].append(3)
-        config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
+        #config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
+        #config['model_args']['decoder']['num_channels'].append(3)
+        #config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
+        config['model_args']['encoder']['embedding_dim'] = [embedding_dim for _ in range(6)]
+        config['model_args']['decoder']['embedding_dim'] = [embedding_dim for _ in range(6)]
 
 
-    oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}'
-    MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}"
+    config['train_stepper_args']['latent_loss_regu'] = latent_loss_regu
+    config['train_stepper_args']['consistency_loss_regu'] = consistency_loss_regu
+
+    #oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}'
+    #MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}"
+    oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_embedding_{embedding_dim[0]}_latent_{latent_loss_regu}_consistency_{consistency_loss_regu}'
+    MODEL_SAVE_PATH = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_embedding_{embedding_dim[0]}_latent_{latent_loss_regu}_consistency_{consistency_loss_regu}'
 
     if transposed:
         oracle_model_save_path += "_transposed"
@@ -181,8 +194,14 @@ def main():
     out = []
 
     transposed_list = [False]
-    resnet_list = [False, True]
+    resnet_list = [False]
     num_channels_list = [256]
+
+    embedding_dim = [32, 64, 128, 256]
+    latent_loss_regu = [1e-3]
+    consistency_loss_regu = [1e-3]
+
+    latent_dim_list = [8]
 
     PHASE = "multi"
 
@@ -195,16 +214,22 @@ def main():
         for resnet in resnet_list:
             for num_channels in num_channels_list:
                 for num_layers in num_layers_list:
-                    
-                    _ = train_remote.remote(
-                        transposed=transposed,
-                        resnet=resnet,
-                        num_channels=num_channels,
-                        num_layers=num_layers,
-                        phase=PHASE,
-                    )   
+                    for embedding_dim in embedding_dim:
+                        for latent_loss_regu in latent_loss_regu:
+                            for consistency_loss_regu in consistency_loss_regu:
 
-                    out.append(_)
+                                _ = train_remote.remote(
+                                    transposed=transposed,
+                                    resnet=resnet,
+                                    num_channels=num_channels,
+                                    num_layers=num_layers,
+                                    phase=PHASE,
+                                    embedding_dim=embedding_dim,
+                                    latent_loss_regu=latent_loss_regu,
+                                    consistency_loss_regu=consistency_loss_regu,
+                                )   
+
+                                out.append(_)
 
     ray.get(out)
 

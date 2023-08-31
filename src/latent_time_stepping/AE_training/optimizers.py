@@ -28,15 +28,16 @@ class Optimizer():
             weight_decay=self.args['weight_decay'],
         )
 
-        '''
         self.encoder_scheduler = CosineWarmupScheduler(
             self.encoder,
-            **self.args['scheduler_args']
+            warmup=20, 
+            max_iters=2000,
         )
 
         self.decoder_scheduler = CosineWarmupScheduler(
             self.decoder,
-            **self.args['scheduler_args']
+            warmup=20, 
+            max_iters=2000,
         )
         '''
         self.encoder_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -53,6 +54,7 @@ class Optimizer():
             patience=10,
             verbose=True,
         )
+        '''
 
     def load_state_dict(self, state_dict: dict) -> None:
         self.encoder.load_state_dict(state_dict['encoder'])
@@ -70,8 +72,10 @@ class Optimizer():
         self.decoder.step()
 
     def step_scheduler(self, loss: float) -> None:
-        self.encoder_scheduler.step(loss)
-        self.decoder_scheduler.step(loss)
+        self.encoder_scheduler.step()
+        self.decoder_scheduler.step()
+        #self.encoder_scheduler.step(loss)
+        #self.decoder_scheduler.step(loss)
 
 class CosineWarmupScheduler(optim.lr_scheduler._LRScheduler):
 

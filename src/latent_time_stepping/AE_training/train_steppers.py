@@ -117,12 +117,18 @@ class WAETrainStepper(BaseAETrainStepper):
         oracle_path: str = None,
         latent_loss_regu: float = 1.0,
         consistency_loss_regu: float = None,
+        mixed_precision: bool = False,
     ) -> None:
         
         super().__init__(model, optimizer, model_save_path, oracle_path)
     
         self.latent_loss_regu = latent_loss_regu
         self.consistency_loss_regu = consistency_loss_regu
+
+        self.mix_precision = mixed_precision
+
+        if self.mix_precision:
+            self.scaler = torch.cuda.amp.GradScaler()
 
         self.reconstruction_loss = 0.0
         self.latent_distribution_loss = 0.0
@@ -256,39 +262,81 @@ class WAETrainStepper(BaseAETrainStepper):
 
         loss = 0.0
 
-        state_pred = self.model.decoder(latent_state, pars)
+        if self.mix_precision:
+            with torch.cuda.amp.autocast():
+                state_pred = self.model.decoder(latent_state, pars)
 
-        reconstruction_loss = \
-            self._reconstruction_loss_function(state, state_pred)
-        
-        loss += reconstruction_loss
+                reconstruction_loss = \
+                    self._reconstruction_loss_function(state, state_pred)
+                
+                loss += reconstruction_loss
 
-        if self.latent_loss_regu is not None:
-            latent_distribution_loss = \
-                self._latent_distribution_loss_function(latent_state)
+                if self.latent_loss_regu is not None:
+                    latent_distribution_loss = \
+                        self._latent_distribution_loss_function(latent_state)
 
-            loss += self.latent_loss_regu * latent_distribution_loss 
-            
-            self.latent_distribution_loss += latent_distribution_loss.item()
-            print_latent_distribution_loss = self.latent_distribution_loss/self.counter
+                    loss += self.latent_loss_regu * latent_distribution_loss 
+                    
+                    self.latent_distribution_loss += latent_distribution_loss.item()
+                    print_latent_distribution_loss = self.latent_distribution_loss/self.counter
+
+                else:
+                    print_latent_distribution_loss = None
+
+                if self.consistency_loss_regu is not None:
+                    latent_pred = self.model.encoder(state_pred)
+                    consistency_loss = \
+                        self._latent_consistency_loss_function(latent_state, latent_pred)
+                    loss += self.consistency_loss_regu * consistency_loss
+                    
+                    self.consistency_loss += consistency_loss.item()
+                    print_consistency_loss = self.consistency_loss/self.counter
+
+                else:
+                    print_consistency_loss = None
 
         else:
-            print_latent_distribution_loss = None
 
-        if self.consistency_loss_regu is not None:
-            latent_pred = self.model.encoder(state_pred)
-            consistency_loss = \
-                self._latent_consistency_loss_function(latent_state, latent_pred)
-            loss += self.consistency_loss_regu * consistency_loss
+            state_pred = self.model.decoder(latent_state, pars)
+
+            reconstruction_loss = \
+                self._reconstruction_loss_function(state, state_pred)
             
-            self.consistency_loss += consistency_loss.item()
-            print_consistency_loss = self.consistency_loss/self.counter
-        
-        else:
-            print_consistency_loss = None
+            loss += reconstruction_loss
 
-        loss.backward()
-        self.optimizer.step()
+            if self.latent_loss_regu is not None:
+                latent_distribution_loss = \
+                    self._latent_distribution_loss_function(latent_state)
+
+                loss += self.latent_loss_regu * latent_distribution_loss 
+                
+                self.latent_distribution_loss += latent_distribution_loss.item()
+                print_latent_distribution_loss = self.latent_distribution_loss/self.counter
+
+            else:
+                print_latent_distribution_loss = None
+
+            if self.consistency_loss_regu is not None:
+                latent_pred = self.model.encoder(state_pred)
+                consistency_loss = \
+                    self._latent_consistency_loss_function(latent_state, latent_pred)
+                loss += self.consistency_loss_regu * consistency_loss
+                
+                self.consistency_loss += consistency_loss.item()
+                print_consistency_loss = self.consistency_loss/self.counter
+            
+            else:
+                print_consistency_loss = None
+
+
+        if self.mix_precision:
+            self.scaler.scale(loss).backward()
+            self.scaler.step(self.optimizer.encoder)
+            self.scaler.step(self.optimizer.decoder)
+            self.scaler.update()
+        else:
+            loss.backward()
+            self.optimizer.step()
 
         # chheck if loss is NaN
 

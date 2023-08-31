@@ -5,6 +5,7 @@ import numpy as np
 import yaml
 from yaml.loader import SafeLoader
 import torch
+from latent_time_stepping.AE_models.ViT import SimpleViT, ViTEncoderLayer
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
 from latent_time_stepping.utils import create_directory
@@ -24,6 +25,11 @@ from latent_time_stepping.AE_training.train_steppers import (
 )
 from latent_time_stepping.AE_training.trainer import train
 
+
+torch.backends.cuda.enable_flash_sdp(enabled=True)
+torch.set_float32_matmul_precision('medium')
+torch.backends.cuda.matmul.allow_tf32 = True
+
 torch.set_default_dtype(torch.float32)
 
 CONTIUE_TRAINING = False
@@ -32,7 +38,7 @@ LOCAL_OR_ORACLE = 'local'
 PHASE = "multi"
 
 MODEL_TYPE = "WAE"
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
+MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_new"
 create_directory(MODEL_SAVE_PATH)
 
 CUDA = True
@@ -50,7 +56,7 @@ else:
 
 PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
 
-NUM_SAMPLES = 2000
+NUM_SAMPLES = 5000 if PHASE == 'multi' else 2500
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 
@@ -82,11 +88,12 @@ def main():
         local_path = LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
         sample_ids=TRAIN_SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=None,
+        num_random_idx_divisor=None,#2 if PHASE == 'multi' else None,
         preprocessor=preprocessor,
-        num_skip_steps=5,
-        states_to_include=(1, 2) if PHASE == 'multi' else None,
+        num_skip_steps=4 if PHASE == 'single' else 10,
+        #states_to_include=(1, 2) if PHASE == 'multi' else None,
         filter=True if PHASE == 'multi' else False,
+        end_time_index=2500,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(
@@ -102,7 +109,6 @@ def main():
         val_dataset,
         **config['dataloader_args'],
     )
-
 
     if MODEL_TYPE == "VAE":
         encoder = VAEEncoder(**config['model_args']['encoder'])
