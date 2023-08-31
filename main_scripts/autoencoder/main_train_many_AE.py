@@ -25,6 +25,10 @@ from latent_time_stepping.AE_training.train_steppers import (
 )
 from latent_time_stepping.AE_training.trainer import train
 
+torch.backends.cuda.enable_flash_sdp(enabled=True)
+torch.set_float32_matmul_precision('medium')
+torch.backends.cuda.matmul.allow_tf32 = True
+
 torch.set_default_dtype(torch.float32)
 
 @ray.remote(num_cpus=16, num_gpus=1)
