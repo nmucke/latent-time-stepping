@@ -197,9 +197,9 @@ def main():
     resnet_list = [False]
     num_channels_list = [256]
 
-    embedding_dim = [32, 64, 128, 256]
-    latent_loss_regu = [1e-3]
-    consistency_loss_regu = [1e-3]
+    embedding_dim_list = [32, 64, 128, 256]
+    latent_loss_regu_list = [1e-3]
+    consistency_loss_regu_list = [1e-3]
 
     latent_dim_list = [8]
 
@@ -214,9 +214,9 @@ def main():
         for resnet in resnet_list:
             for num_channels in num_channels_list:
                 for num_layers in num_layers_list:
-                    for embedding_dim in embedding_dim:
-                        for latent_loss_regu in latent_loss_regu:
-                            for consistency_loss_regu in consistency_loss_regu:
+                    for embedding_dim in embedding_dim_list:
+                        for latent_loss_regu in latent_loss_regu_list:
+                            for consistency_loss_regu in consistency_loss_regu_list:
                                 for latent_dim in latent_dim_list:
 
                                     _ = train_remote.remote(
