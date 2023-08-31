@@ -19,7 +19,8 @@ dependencies = [
     'PyYAML',
     'oci',
     'ocifs',
-    'ray[default]'
+    'ray[default]',
+    'einops'
 ]
 
 [project.urls]

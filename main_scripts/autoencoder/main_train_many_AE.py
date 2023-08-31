@@ -217,19 +217,21 @@ def main():
                     for embedding_dim in embedding_dim:
                         for latent_loss_regu in latent_loss_regu:
                             for consistency_loss_regu in consistency_loss_regu:
+                                for latent_dim in latent_dim_list:
 
-                                _ = train_remote.remote(
-                                    transposed=transposed,
-                                    resnet=resnet,
-                                    num_channels=num_channels,
-                                    num_layers=num_layers,
-                                    phase=PHASE,
-                                    embedding_dim=embedding_dim,
-                                    latent_loss_regu=latent_loss_regu,
-                                    consistency_loss_regu=consistency_loss_regu,
-                                )   
+                                    _ = train_remote.remote(
+                                        latent_dim=latent_dim,
+                                        transposed=transposed,
+                                        resnet=resnet,
+                                        num_channels=num_channels,
+                                        num_layers=num_layers,
+                                        phase=PHASE,
+                                        embedding_dim=embedding_dim,
+                                        latent_loss_regu=latent_loss_regu,
+                                        consistency_loss_regu=consistency_loss_regu,
+                                    )   
 
-                                out.append(_)
+                                    out.append(_)
 
     ray.get(out)
 
