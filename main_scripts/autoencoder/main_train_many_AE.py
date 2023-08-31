@@ -85,7 +85,7 @@ def train_remote(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=None,#1 if PHASE == "single" else 4,
+        num_random_idx_divisor=3,#1 if PHASE == "single" else 4,
         preprocessor=preprocessor,
         num_skip_steps=4 if PHASE == "single" else 10,
         filter=True if PHASE == "multi" else False,

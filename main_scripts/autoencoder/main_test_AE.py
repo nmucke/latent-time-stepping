@@ -63,7 +63,7 @@ dataset = AEDataset(
     sample_ids=SAMPLE_IDS,
     preprocessor=preprocessor,
     num_skip_steps=1 if PHASE == 'multi' else 1,
-    end_time_index=2500,
+    end_time_index=None,
     filter=True if PHASE == 'multi' else False,
     #states_to_include=(1,2) if PHASE == "multi" else None,
 )
