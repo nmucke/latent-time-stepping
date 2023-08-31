@@ -132,8 +132,8 @@ def train_remote(
 
     #oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}'
     #MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}"
-    oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_embedding_{embedding_dim[0]}_latent_{latent_loss_regu}_consistency_{consistency_loss_regu}'
-    MODEL_SAVE_PATH = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_embedding_{embedding_dim[0]}_latent_{latent_loss_regu}_consistency_{consistency_loss_regu}'
+    oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_embedding_{embedding_dim}_latent_{latent_loss_regu}_consistency_{consistency_loss_regu}'
+    MODEL_SAVE_PATH = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_embedding_{embedding_dim}_latent_{latent_loss_regu}_consistency_{consistency_loss_regu}'
 
     if transposed:
         oracle_model_save_path += "_transposed"
