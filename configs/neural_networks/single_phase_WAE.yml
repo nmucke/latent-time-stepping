@@ -10,7 +10,7 @@ model_args:
     latent_dim: 4
     space_dim: 256
     resnet: False
-    activation: leaky_relu
+    activation: gelu
     vit: True
     embedding_dim: [32, 32, 32, 32, 32, 32]
   decoder:
@@ -20,13 +20,13 @@ model_args:
     pars_dim: 2
     space_dim: 256
     resnet: False
-    transposed: True
+    transposed: False
     vit: True
-    activation: leaky_relu
+    activation: gelu
     embedding_dim: [32, 32, 32, 32, 32, 32]
     
 optimizer_args:
-  learning_rate: 1.0e-3
+  learning_rate: 5.0e-4
   weight_decay: 1.0e-8
   scheduler_args:
     factor: 0.9

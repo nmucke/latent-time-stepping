@@ -147,14 +147,12 @@ class ViTEncoderLayer(nn.Module):
 
         out_patch_dim = out_channels * out_patch_size
 
-        '''
         print(f'num_patches: {num_patches}')
         print(f'in_patch_dim: {in_patch_dim}, in_patch_size: {in_patch_size}')
         print(f'out_patch_dim: {out_patch_dim}, out_patch_size: {out_patch_size}')
         print(f'embedding_dim: {embedding_dim}')
         print('------------------------------------------')
-        '''
-                      
+
 
         self.to_patch_embedding = nn.Sequential(
             Rearrange('b c (n p) -> b n (p c)', p = in_patch_size),
@@ -181,11 +179,13 @@ class ViTEncoderLayer(nn.Module):
             Rearrange('b n (p c) -> b c (n p)', p = out_patch_size)
         )
 
+        #self.activation = nn.LeakyReLU()
+
         
         #self.conv = nn.Conv1d(out_channels, out_channels, kernel_size = 5, padding = 2)
 
     def forward(self, series):
-        *_, n, dtype = *series.shape, series.dtype
+        #*_, n, dtype = *series.shape, series.dtype
 
         x = self.to_patch_embedding(series)
         pe = posemb_sincos_1d(x)
@@ -194,5 +194,6 @@ class ViTEncoderLayer(nn.Module):
 
         x = self.transformer(x)
         x = self.project_from_patch(x)
+        #x = self.activation(x)
         #x = self.conv(x)
         return x

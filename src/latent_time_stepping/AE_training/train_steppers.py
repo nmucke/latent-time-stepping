@@ -264,6 +264,7 @@ class WAETrainStepper(BaseAETrainStepper):
 
         if self.mix_precision:
             with torch.cuda.amp.autocast():
+                
                 state_pred = self.model.decoder(latent_state, pars)
 
                 reconstruction_loss = \

@@ -13,7 +13,7 @@ from latent_time_stepping.datasets.AE_dataset import AEDataset
 from latent_time_stepping.utils import create_directory
 
 
-PHASE = "multi"
+PHASE = "single"
 
 TRAIN_OR_TEST = 'test'
 
@@ -31,7 +31,10 @@ with open(PREPROCESSOR_PATH, 'rb') as f:
     preprocessor = pickle.load(f)
 
 #SAVE_FOLDER = f'data/{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
-SAVE_FOLDER = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
+if PHASE == 'multi':
+    SAVE_FOLDER = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
+else:
+    SAVE_FOLDER = f'data/{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 
 if not os.path.exists(f'{SAVE_FOLDER}/state'):
     create_directory(f'{SAVE_FOLDER}/state')

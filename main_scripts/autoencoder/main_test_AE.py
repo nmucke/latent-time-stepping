@@ -24,6 +24,9 @@ TRANSPOSED = True
 RESNET = False
 NUM_CHANNELS = 256 if PHASE == 'multi' else 128
 NUM_LAYERS = 6
+EMBEDDING_DIM = 64
+LATENT_LOSS_REGU = 1e-3
+CONSISTENCY_LOSS_REGU = 1e-3
 
 LOCAL_OR_ORACLE = 'local'
 
@@ -34,9 +37,12 @@ if PHASE == "single":
 elif PHASE == "multi":
     NUM_STATES = 3
 
-MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_new"
+MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv"
+#MODEL_LOAD_PATH = f"trained_models/autoencoders/multi_phase_WAE_16_embedding_32_latent_0.001_consistency_0.001"
+
 #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_256_channels'
 ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
+#ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_embedding_{EMBEDDING_DIM}_latent_{LATENT_LOSS_REGU}_consistency_{CONSISTENCY_LOSS_REGU}'
 if TRANSPOSED:
     ORACLE_MODEL_LOAD_PATH += "_transposed"
 if RESNET:
@@ -47,11 +53,17 @@ PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
 )
+
 preprocessor = object_storage_client.get_preprocessor(
     source_path=PREPROCESSOR_PATH
 )
 
-LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/test'#f'data/{PHASE}_phase/raw_data/training_data'
+
+if PHASE == 'single':
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/test'
+else:
+    LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/test'
+
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
 NUM_SAMPLES = 5
@@ -62,7 +74,7 @@ dataset = AEDataset(
     local_path=LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
     sample_ids=SAMPLE_IDS,
     preprocessor=preprocessor,
-    num_skip_steps=1 if PHASE == 'multi' else 1,
+    num_skip_steps=4 if PHASE == 'single' else 10,
     end_time_index=None,
     filter=True if PHASE == 'multi' else False,
     #states_to_include=(1,2) if PHASE == "multi" else None,
@@ -82,20 +94,30 @@ def main():
     NUM_CHANNELS = 256
     num_layers_list = [6, 7]
 
-    for TRANSPOSED in transposed_list:
-        for RESNET in resnet_list:
-            for NUM_LAYERS in num_layers_list:
+    embedding_dim_list = [32, 64, 128, 256]
+    latent_loss_regu_list = [1e-3]
+    consistency_loss_regu_list = [1e-3]
+
+    #for TRANSPOSED in transposed_list:
+        #for RESNET in resnet_list:
+            #for NUM_LAYERS in num_layers_list:
+    for EMBEDDING_DIM in embedding_dim_list:
+        for LATENT_LOSS_REGU in latent_loss_regu_list:
+            for CONSISTENCY_LOSS_REGU in consistency_loss_regu_list:
+
 
                 if LOAD_MODEL_FROM_ORACLE:
                     ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
-                    if TRANSPOSED:
-                        ORACLE_MODEL_LOAD_PATH += "_transposed"
-                    if RESNET:
-                        ORACLE_MODEL_LOAD_PATH += "_resnet"
+                    ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_embedding_{EMBEDDING_DIM}_latent_{LATENT_LOSS_REGU}_consistency_{CONSISTENCY_LOSS_REGU}'
+
+                    #if TRANSPOSED:
+                    #    ORACLE_MODEL_LOAD_PATH += "_transposed"
+                    #if RESNET:
+                    #    ORACLE_MODEL_LOAD_PATH += "_resnet"
 
                     object_storage_client = ObjectStorageClientWrapper(
                         bucket_name='trained_models'
-                    )
+                    )                    
 
                     state_dict, config = object_storage_client.get_model(
                         source_path=ORACLE_MODEL_LOAD_PATH,
@@ -109,7 +131,7 @@ def main():
                     model_type=MODEL_TYPE,
                     device=DEVICE,
                 )
-
+                model.eval()
 
                 L2_error = []
 
@@ -117,12 +139,17 @@ def main():
                         enumerate(dataloader),
                         bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'
                     )
+                
+                latent_state_list = []
                 for i, (state, pars) in pbar:
 
                     state = state.to(DEVICE)
                     pars = pars.to(DEVICE)
 
                     latent_state = model.encode(state)
+
+                    #latent_state = savgol_filter(latent_state.detach().numpy(), 30, 1, axis=-1)
+                    #latent_state = torch.tensor(latent_state, dtype=torch.float32)
 
                     recon_state = model.decode(latent_state, pars)
 
@@ -142,25 +169,28 @@ def main():
                         e += torch.norm(state[:, j] - recon_state[:, j])/torch.norm(state[:, j])
                     
                     L2_error.append(e)
+
+                    latent_state_list.append(latent_state.detach().numpy())
                     
                 print(f"Average L2 Error: {torch.mean(torch.stack(L2_error))}")
 
                 recon_state = recon_state[0].detach().numpy()
                 hf_trajectory = state[0].detach().numpy()
                 latent_state = latent_state.detach().numpy()
+                latent_state_list = np.concatenate(latent_state_list, axis=0)
                 
                 normal_distribution = 1 / np.sqrt(2 * np.pi) * np.exp(-0.5 * np.linspace(-5, 5, 1000) ** 2)
                 
                 plt.figure(figsize=(20, 10))
                 plt.subplot(2, 4, 1)
-                plt.plot(recon_state[0, :, 50], label="Reconstructed", color='tab:orange')
-                plt.plot(hf_trajectory[0, :, 50], label="High Fidelity", color='tab:blue')
+                plt.plot(recon_state[0, :, 150], label="Reconstructed", color='tab:orange')
+                plt.plot(hf_trajectory[0, :, 150], label="H1igh Fidelity", color='tab:blue')
                 plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
                 plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
                 plt.legend()
                 plt.subplot(2, 4, 2)
-                plt.plot(recon_state[-1, :, 50], label="Reconstructed", color='tab:orange')
-                plt.plot(hf_trajectory[-1, :, 50], label="High Fidelity", color='tab:blue')
+                plt.plot(recon_state[-1, :, 150], label="Reconstructed", color='tab:orange')
+                plt.plot(hf_trajectory[-1, :, 150], label="High Fidelity", color='tab:blue')
                 plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
                 plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
                 plt.legend()
@@ -171,20 +201,20 @@ def main():
                 plt.grid()
                 plt.subplot(2, 4, 4)
                 plt.plot(latent_state[0, 3, :])
-                plt.plot(latent_state[0, 4, :])
-                plt.plot(latent_state[0, 5, :])
+                #plt.plot(latent_state[0, 4, :])
+                #plt.plot(latent_state[0, 5, :])
                 plt.grid()
                 plt.subplot(2, 4, 5)
-                plt.hist(latent_state[:, 0, :].flatten(), bins=50, density=True)
+                plt.hist(latent_state_list[:, 0, :].flatten(), bins=50, density=True)
                 plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
                 plt.subplot(2, 4, 6)
-                plt.hist(latent_state[:, 1, :].flatten(), bins=50, density=True)
+                plt.hist(latent_state_list[:, 1, :].flatten(), bins=50, density=True)
                 plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
                 plt.subplot(2, 4, 7)
-                plt.hist(latent_state[:, 2, :].flatten(), bins=50, density=True)
+                plt.hist(latent_state_list[:, 2, :].flatten(), bins=50, density=True)
                 plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
                 plt.subplot(2, 4, 8)
-                plt.hist(latent_state[:, 3, :].flatten(), bins=50, density=True)
+                plt.hist(latent_state_list[:, 3, :].flatten(), bins=50, density=True)
                 plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
                 plt.show()
 

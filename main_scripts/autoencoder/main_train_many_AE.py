@@ -41,7 +41,9 @@ def train_remote(
     phase,
     embedding_dim,
     consistency_loss_regu,
-    latent_loss_regu
+    latent_loss_regu,
+    num_transformer_layers,
+    vit,
 ):
     
     
@@ -89,7 +91,7 @@ def train_remote(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         load_entire_dataset=False,
-        num_random_idx_divisor=3 if PHASE == "multi" else None,
+        num_random_idx_divisor=None if PHASE == "multi" else None,
         preprocessor=preprocessor,
         num_skip_steps=4 if PHASE == "single" else 10,
         filter=True if PHASE == "multi" else False,
@@ -118,15 +120,15 @@ def train_remote(
     #config['model_args']['decoder']['resnet'] = resnet
 
     if PHASE == "single":
-        #config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
-        #config['model_args']['decoder']['num_channels'].append(2)
-        #config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
+        config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
+        config['model_args']['decoder']['num_channels'].append(2)
+        config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
         config['model_args']['encoder']['embedding_dim'] = [embedding_dim for _ in range(5)]
         config['model_args']['decoder']['embedding_dim'] = [embedding_dim for _ in range(5)]
     elif PHASE == "multi":
-        #config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
-        #config['model_args']['decoder']['num_channels'].append(3)
-        #config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
+        config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
+        config['model_args']['decoder']['num_channels'].append(3)
+        config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
         config['model_args']['encoder']['embedding_dim'] = [embedding_dim for _ in range(6)]
         config['model_args']['decoder']['embedding_dim'] = [embedding_dim for _ in range(6)]
 
@@ -134,10 +136,20 @@ def train_remote(
     config['train_stepper_args']['latent_loss_regu'] = latent_loss_regu
     config['train_stepper_args']['consistency_loss_regu'] = consistency_loss_regu
 
+
+    config['model_args']['encoder']['num_transformer_layers'] = num_transformer_layers
+    config['model_args']['decoder']['num_transformer_layers'] = num_transformer_layers
+
     #oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}'
     #MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_{latent_dim}_layers_{num_layers}_channels_{num_channels}"
-    oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_embedding_{embedding_dim}_latent_{latent_loss_regu}_consistency_{consistency_loss_regu}'
-    MODEL_SAVE_PATH = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}_embedding_{embedding_dim}_latent_{latent_loss_regu}_consistency_{consistency_loss_regu}'
+    oracle_model_save_path = f'{PHASE}_phase/autoencoders/WAE_{latent_dim}'
+    oracle_model_save_path += f"_latent_{latent_loss_regu}"
+    oracle_model_save_path += f"_consistency_{consistency_loss_regu}"
+    oracle_model_save_path += f"_channels_{num_channels}"
+    oracle_model_save_path += f"_layers_{num_layers}"
+    if vit:
+        oracle_model_save_path += f"_trans_layers_{num_transformer_layers}"
+        oracle_model_save_path += f"_embedding_{embedding_dim}"
 
     if transposed:
         oracle_model_save_path += "_transposed"
@@ -145,6 +157,12 @@ def train_remote(
     if resnet:
         oracle_model_save_path += "_resnet"
         MODEL_SAVE_PATH += "_resnet"
+    if vit:
+        MODEL_SAVE_PATH += "_vit"
+        oracle_model_save_path += "_vit"
+
+    MODEL_SAVE_PATH = oracle_model_save_path
+
 
     create_directory(MODEL_SAVE_PATH)
 
@@ -199,13 +217,17 @@ def main():
 
     transposed_list = [False]
     resnet_list = [False]
-    num_channels_list = [256]
+    vit = [True]
 
-    embedding_dim_list = [32, 64, 128, 256]
-    latent_loss_regu_list = [1e-3]
-    consistency_loss_regu_list = [1e-3]
+    num_channels_list = [128]
+
+    embedding_dim_list = [64]
+    latent_loss_regu_list = [1e-2, 1e-3]
+    consistency_loss_regu_list = [1e-2, 1e-3]
 
     latent_dim_list = [8]
+
+    num_transformer_layers_list = [2]
 
     PHASE = "multi"
 
@@ -222,20 +244,24 @@ def main():
                         for latent_loss_regu in latent_loss_regu_list:
                             for consistency_loss_regu in consistency_loss_regu_list:
                                 for latent_dim in latent_dim_list:
+                                    for num_transformer_layers in num_transformer_layers_list:
+                                        for vit in vit:
 
-                                    _ = train_remote.remote(
-                                        latent_dim=latent_dim,
-                                        transposed=transposed,
-                                        resnet=resnet,
-                                        num_channels=num_channels,
-                                        num_layers=num_layers,
-                                        phase=PHASE,
-                                        embedding_dim=embedding_dim,
-                                        latent_loss_regu=latent_loss_regu,
-                                        consistency_loss_regu=consistency_loss_regu,
-                                    )   
+                                            _ = train_remote.remote(
+                                                latent_dim=latent_dim,
+                                                transposed=transposed,
+                                                resnet=resnet,
+                                                num_channels=num_channels,
+                                                num_layers=num_layers,
+                                                phase=PHASE,
+                                                embedding_dim=embedding_dim,
+                                                latent_loss_regu=latent_loss_regu,
+                                                consistency_loss_regu=consistency_loss_regu,
+                                                num_transformer_layers=num_transformer_layers,
+                                                vit=vit,
+                                            )   
 
-                                    out.append(_)
+                                            out.append(_)
 
     ray.get(out)
 

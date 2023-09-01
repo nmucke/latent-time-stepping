@@ -28,17 +28,17 @@ from latent_time_stepping.AE_training.trainer import train
 
 torch.backends.cuda.enable_flash_sdp(enabled=True)
 torch.set_float32_matmul_precision('medium')
-torch.backends.cuda.matmul.allow_tf32 = True
+#torch.backends.cuda.matmul.allow_tf32 = True
 
 torch.set_default_dtype(torch.float32)
 
-CONTIUE_TRAINING = True
+CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'local'
 
 PHASE = "single"
 
 MODEL_TYPE = "WAE"
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_new"
+MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv"
 create_directory(MODEL_SAVE_PATH)
 
 CUDA = True
@@ -93,7 +93,7 @@ def main():
         num_skip_steps=4 if PHASE == 'single' else 10,
         #states_to_include=(1, 2) if PHASE == 'multi' else None,
         filter=True if PHASE == 'multi' else False,
-        end_time_index=2500,
+        end_time_index=5000,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(
