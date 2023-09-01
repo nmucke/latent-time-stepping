@@ -153,12 +153,9 @@ def train_remote(
 
     if transposed:
         oracle_model_save_path += "_transposed"
-        MODEL_SAVE_PATH += "_transposed"
     if resnet:
         oracle_model_save_path += "_resnet"
-        MODEL_SAVE_PATH += "_resnet"
     if vit:
-        MODEL_SAVE_PATH += "_vit"
         oracle_model_save_path += "_vit"
 
     MODEL_SAVE_PATH = oracle_model_save_path
@@ -217,7 +214,7 @@ def main():
 
     transposed_list = [False]
     resnet_list = [False]
-    vit = [True]
+    vit_list = [True]
 
     num_channels_list = [128]
 
@@ -245,7 +242,7 @@ def main():
                             for consistency_loss_regu in consistency_loss_regu_list:
                                 for latent_dim in latent_dim_list:
                                     for num_transformer_layers in num_transformer_layers_list:
-                                        for vit in vit:
+                                        for vit in vit_list:
 
                                             _ = train_remote.remote(
                                                 latent_dim=latent_dim,
