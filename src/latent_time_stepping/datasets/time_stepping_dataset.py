@@ -4,6 +4,7 @@ import pdb
 import matplotlib.pyplot as plt
 
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
+from scipy.signal import savgol_filter
 
 class TimeSteppingDataset(torch.utils.data.Dataset):
     """Dataset"""
@@ -16,6 +17,7 @@ class TimeSteppingDataset(torch.utils.data.Dataset):
         input_seq_len: int = 10,
         output_seq_len: int = 10,
         num_time_steps: int = 2000,
+        filter: bool = False,
         ) -> None:
         super().__init__()
 
@@ -34,6 +36,10 @@ class TimeSteppingDataset(torch.utils.data.Dataset):
             self.local_path = local_path
 
         self._load_entire_dataset()
+
+        if filter:
+            self.state = savgol_filter(self.state.detach().numpy(), 10, 1, axis=-1)
+            self.state = torch.tensor(self.state, dtype=torch.get_default_dtype())
 
         self.input_state, self.output_state = self._prepare_multistep_state(
             input_seq_len=input_seq_len,
@@ -81,7 +87,7 @@ class TimeSteppingDataset(torch.utils.data.Dataset):
             
         self.state = torch.tensor(self.state, dtype=torch.get_default_dtype())
         self.pars = torch.tensor(self.pars, dtype=torch.get_default_dtype())   
-
+        
         self.state = self.state[:, :, 0:self.num_time_steps]
     
     def _prepare_multistep_state(

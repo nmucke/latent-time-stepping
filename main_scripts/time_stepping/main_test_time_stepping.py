@@ -5,6 +5,7 @@ from tqdm import tqdm
 import torch
 import matplotlib.pyplot as plt
 import yaml
+from scipy.signal import savgol_filter
 from latent_time_stepping.datasets.AE_dataset import AEDataset
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
@@ -12,16 +13,18 @@ from latent_time_stepping.utils import load_trained_AE_model, load_trained_time_
 torch.set_default_dtype(torch.float32)
 
 
-NUM_SKIP_STEPS = 4
 
 DEVICE = 'cpu'
 
-PHASE = "single"
+PHASE = "multi"
 AE_MODEL_TYPE = "WAE"
-TIME_STEPPING_MODEL_TYPE = "FNO"
-LOAD_MODEL_FROM_ORACLE = False
+TIME_STEPPING_MODEL_TYPE = "transformer"
+LOAD_MODEL_FROM_ORACLE = True
 
-LATENT_DIM = 4
+
+NUM_SKIP_STEPS = 4 if PHASE == 'single' else 10
+
+LATENT_DIM = 8 if PHASE == 'multi' else 4
 
 if PHASE == "single":
     NUM_STATES = 2
@@ -30,7 +33,11 @@ elif PHASE == "multi":
 
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
-ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_consistency'
+if PHASE == 'multi':
+    ORACLE_MODEL_LOAD_PATH = 'multi_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit'#'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
+else:
+    #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
+    ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_consistency'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
@@ -48,6 +55,7 @@ AE = load_trained_AE_model(
     model_type='WAE',
     device=DEVICE,
 )
+AE.eval()
 
 time_stepping_model_path = f"trained_models/time_steppers/{PHASE}_phase_{TIME_STEPPING_MODEL_TYPE}"
 time_stepper = load_trained_time_stepping_model(
@@ -58,6 +66,10 @@ if TIME_STEPPING_MODEL_TYPE == 'FNO':
     input_seq_len = 32
 else:
     input_seq_len = time_stepper.input_seq_len
+
+time_stepper.eval()
+
+
 """
 PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
 with open(PREPROCESSOR_PATH, 'rb') as f:
@@ -74,27 +86,24 @@ preprocessor = object_storage_client.get_preprocessor(
 
 
 LOCAL_OR_ORACLE = 'oracle'
+
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-SAMPLE_IDS = range(1, 2)
+SAMPLE_IDS = range(4, 5)
 
-if LOCAL_OR_ORACLE == 'oracle':
-    dataset = AEDataset(
-        oracle_path=ORACLE_LOAD_PATH,
-        sample_ids=SAMPLE_IDS,
-        preprocessor=preprocessor,
-        num_skip_steps=NUM_SKIP_STEPS,
-    )
-elif LOCAL_OR_ORACLE == 'local':
-    dataset = AEDataset(
-        local_path=LOCAL_LOAD_PATH,
-        sample_ids=SAMPLE_IDS,
-        preprocessor=preprocessor,
-        num_skip_steps=NUM_SKIP_STEPS,
-    )
+dataset = AEDataset(
+    oracle_path=ORACLE_LOAD_PATH if LOCAL_OR_ORACLE == 'oracle' else None,                                                          
+    local_path=LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
+    sample_ids=SAMPLE_IDS,
+    preprocessor=preprocessor,
+    num_skip_steps=4 if PHASE == 'single' else 10,
+    end_time_index=None,
+    filter=True if PHASE == 'multi' else False,
+    #states_to_include=(1,2) if PHASE == "multi" else None,
+)
 
 dataloader = torch.utils.data.DataLoader(
     dataset=dataset,
@@ -105,7 +114,7 @@ dataloader = torch.utils.data.DataLoader(
 
 def main():
 
-    num_steps = 500
+    num_steps = 1000
 
     for i, (state, pars) in enumerate(dataloader):
         state = state.to(DEVICE)
@@ -121,6 +130,9 @@ def main():
         else:
 
             latent_state = AE.encode(state)
+
+            latent_state = savgol_filter(latent_state.detach().numpy(), 10, 1, axis=-1)
+            latent_state = torch.tensor(latent_state, dtype=torch.float32)
 
             pred_latent_state = time_stepper.multistep_prediction(
                 latent_state[:, :, 0:input_seq_len],
@@ -162,7 +174,7 @@ def main():
 
     time_step_to_plot_1 = 75
     time_step_to_plot_2 = 150
-    time_step_to_plot_3 = 225
+    time_step_to_plot_3 = -1
     plt.figure()
     plt.subplot(1, 3, 1)
     plt.plot(state[0, 0, :, time_step_to_plot_1], label=f'HF, t={time_step_to_plot_1}', color='tab:blue')
@@ -181,6 +193,16 @@ def main():
     plt.plot(state[0, 1, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
     plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_3], color='tab:orange')
     plt.legend()
+
+    if PHASE == 'multi':
+        plt.subplot(1, 3, 3)
+        plt.plot(state[0, 2, :, time_step_to_plot_1], color='tab:blue', label=f'HF, t={time_step_to_plot_1}')
+        plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_1], label='pred state', color='tab:orange')
+        plt.plot(state[0, 2, :, time_step_to_plot_2], color='tab:blue', label=f'HF, t={time_step_to_plot_2}')
+        plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_2], color='tab:orange')
+        plt.plot(state[0, 2, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
+        plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_3], color='tab:orange')
+        plt.legend()
     plt.show()
 
 

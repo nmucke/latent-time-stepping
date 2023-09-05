@@ -21,17 +21,18 @@ torch.backends.cuda.enable_flash_sdp(enabled=True)
 torch.set_float32_matmul_precision('medium')
 torch.backends.cuda.matmul.allow_tf32 = True
 
-CONTINUE_TRAINING = True
+CONTINUE_TRAINING = False
 
 MODEL_TYPE = "transformer"
 
-PHASE = "single"
+PHASE = "multi"
 
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
 with open(config_path) as f:
     config = yaml.load(f, Loader=SafeLoader)
     
 LOCAL_OR_ORACLE = 'local'
+
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/latent_data/train'
@@ -41,22 +42,19 @@ LOCAL_LOAD_PATH = f'data/{PHASE}_phase/latent_data/train'
 MODEL_SAVE_PATH = f"trained_models/time_steppers/{PHASE}_phase_{MODEL_TYPE}"
 create_directory(MODEL_SAVE_PATH)
 with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
-    yaml.dump(config, f)
+    yaml.dump(config, f) 
 
 DEVICE = 'cuda'
 
-NUM_SAMPLES = 2500
+NUM_SAMPLES = 2500 if PHASE == 'single' else 5000
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 def main():
 
-    #data = np.load(f'data/multi_phase/processed_data/train/states.npz')['data']
-    #print(data.size * data.itemsize*0.000000001)
-    #pdb.set_trace()
-
     dataset = TimeSteppingDataset(
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
+        filter=True if PHASE == 'multi' else False,
         **config['dataset_args'],
     )
     

@@ -11,7 +11,7 @@ torch.set_default_dtype(torch.float32)
 
 DEVICE = 'cuda'
 
-PHASE = "single"
+PHASE = "multi"
 MODEL_TYPE = "WAE"
 
 TRANSPOSED = True
@@ -26,10 +26,14 @@ if PHASE == "single":
 elif PHASE == "multi":
     NUM_STATES = 3
 
-LOAD_MODEL_FROM_ORACLE = False
+LOAD_MODEL_FROM_ORACLE = True
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
-ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
+
+if PHASE == 'multi':
+    ORACLE_MODEL_LOAD_PATH = 'multi_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit'#'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
+else:
+    ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
@@ -47,11 +51,10 @@ model = load_trained_AE_model(
     model_type=MODEL_TYPE,
     device=DEVICE,
 )
+model.eval()
 
 
-
-
-NUM_SAMPLES = 2500
+NUM_SAMPLES = 2500 if PHASE == 'single' else 5000
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 NUM_PARS = 2
@@ -75,31 +78,29 @@ preprocessor = object_storage_client.get_preprocessor(
     source_path=PREPROCESSOR_PATH
 )
 
-
-if LOCAL_OR_ORACLE == 'oracle':
-    dataset = AEDataset(
-        oracle_path=ORACLE_LOAD_PATH,
-        sample_ids=SAMPLE_IDS,
-        load_entire_dataset=False,
-        num_skip_steps=4,
-        preprocessor=preprocessor,
-    )
-elif LOCAL_OR_ORACLE == 'local':
-
+if LOCAL_OR_ORACLE == 'local':
     create_directory(LOCAL_SAVE_PATH)
 
-    dataset = AEDataset(
-        local_path=LOCAL_LOAD_PATH,
-        sample_ids=SAMPLE_IDS,
-        load_entire_dataset=False,
-        num_skip_steps=4,
-        preprocessor=preprocessor,
-    )
+    if PHASE == 'multi':
+        LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/train'
+    else:
+        LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
+
+dataset = AEDataset(
+    oracle_path=ORACLE_LOAD_PATH if LOCAL_OR_ORACLE == 'oracle' else None,                                                          
+    local_path=LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
+    sample_ids=SAMPLE_IDS,
+    preprocessor=preprocessor,
+    num_skip_steps=4 if PHASE == 'single' else 10,
+    end_time_index=None,
+    filter=True if PHASE == 'multi' else False,
+)
+
 dataloader = torch.utils.data.DataLoader(
     dataset=dataset,
     batch_size=1,
     shuffle=False,
-    num_workers=0,
+    num_workers=30,
 )
 
 def main():

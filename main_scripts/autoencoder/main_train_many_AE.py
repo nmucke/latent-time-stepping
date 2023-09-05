@@ -119,6 +119,16 @@ def train_remote(
     #config['model_args']['encoder']['resnet'] = resnet
     #config['model_args']['decoder']['resnet'] = resnet
 
+    config['model_args']['decoder']['transposed'] = transposed
+
+    config['model_args']['decoder']['resnet'] = resnet
+    config['model_args']['encoder']['resnet'] = resnet
+
+    config['model_args']['decoder']['vit'] = vit
+    config['model_args']['encoder']['vit'] = vit
+
+
+
     if PHASE == "single":
         config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
         config['model_args']['decoder']['num_channels'].append(2)
