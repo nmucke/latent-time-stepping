@@ -14,15 +14,16 @@ from latent_time_stepping.utils import (
 torch.set_default_dtype(torch.float32)
 
 
+
 NUM_SKIP_STEPS = 5
 
 DEVICE = 'cpu'
 
-PHASE = "single"
+PHASE = "multi"
 AE_MODEL_TYPE = "WAE"
 TIME_STEPPING_MODEL_TYPE = "transformer"
 
-AE_model_path = f"trained_models/autoencoders/{PHASE}_phase_{AE_MODEL_TYPE}"
+AE_model_path = None#f"trained_models/autoencoders/{PHASE}_phase_{AE_MODEL_TYPE}"
 
 time_stepping_model_path = f"trained_models/time_steppers/{PHASE}_phase_{TIME_STEPPING_MODEL_TYPE}"
 
@@ -49,12 +50,16 @@ def main():
             destination_path=ORACLE_AE_SAVE_PATH,
         )
 
+        print("AE model uploaded to oracle")
+
     ##### Upload time stepping model #####
     if time_stepping_model_path is not None:
         object_storage_client.put_model(
             source_path=time_stepping_model_path,
             destination_path=ORACLE_TIME_STEPPING_SAVE_PATH,
         )
+        
+        print("Time stepping model uploaded to oracle")
 
     ##### load preprocessor #####
     preprocessor = object_storage_client.get_preprocessor(

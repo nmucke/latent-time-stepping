@@ -60,6 +60,7 @@ def load_trained_AE_model(
 
 def load_trained_time_stepping_model(
     model_load_path = None, 
+    model_type = 'transformer',
     state_dict = None,
     config = None,
     device = 'cpu',
@@ -70,7 +71,7 @@ def load_trained_time_stepping_model(
         with open(f'{model_load_path}/config.yml') as f:
             config = yaml.load(f, Loader=yaml.SafeLoader)
 
-    if model_load_path[-3:] == 'FNO':
+    if model_type == 'FNO':
         model = FNOTimeSteppingModel(
             **config['model_args'],
         )

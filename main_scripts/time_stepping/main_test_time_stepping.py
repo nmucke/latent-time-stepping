@@ -172,8 +172,8 @@ def main():
         plt.legend()
         plt.show()
 
-    time_step_to_plot_1 = 75
-    time_step_to_plot_2 = 150
+    time_step_to_plot_1 = 100
+    time_step_to_plot_2 = 500
     time_step_to_plot_3 = -1
     plt.figure()
     plt.subplot(1, 3, 1)
@@ -181,8 +181,8 @@ def main():
     plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_1], label=f'NN, t={time_step_to_plot_1}', color='tab:orange')
     plt.plot(state[0, 0, :, time_step_to_plot_2], color='tab:blue', label=f'HF, t={time_step_to_plot_2}')
     plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_2], color='tab:orange')
-    plt.plot(state[0, 0, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
-    plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_3], color='tab:orange')
+    #plt.plot(state[0, 0, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
+    #plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_3], color='tab:orange')
     plt.legend()
 
     plt.subplot(1, 3, 2)
@@ -190,8 +190,8 @@ def main():
     plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_1], label='pred state', color='tab:orange')
     plt.plot(state[0, 1, :, time_step_to_plot_2], color='tab:blue', label=f'HF, t={time_step_to_plot_2}')
     plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_2], color='tab:orange')
-    plt.plot(state[0, 1, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
-    plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_3], color='tab:orange')
+    #plt.plot(state[0, 1, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
+    #plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_3], color='tab:orange')
     plt.legend()
 
     if PHASE == 'multi':
@@ -200,8 +200,8 @@ def main():
         plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_1], label='pred state', color='tab:orange')
         plt.plot(state[0, 2, :, time_step_to_plot_2], color='tab:blue', label=f'HF, t={time_step_to_plot_2}')
         plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_2], color='tab:orange')
-        plt.plot(state[0, 2, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
-        plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_3], color='tab:orange')
+        #plt.plot(state[0, 2, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
+        #plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_3], color='tab:orange')
         plt.legend()
     plt.show()
 
