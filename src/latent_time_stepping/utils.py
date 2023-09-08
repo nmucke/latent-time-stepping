@@ -10,6 +10,7 @@ from latent_time_stepping.AE_models.VAE_encoder import VAEEncoder
 from latent_time_stepping.AE_models.autoencoder import Autoencoder
 from latent_time_stepping.AE_models.encoder_decoder import Decoder, Encoder
 from latent_time_stepping.time_stepping_models.FNO_time_stepping_model import FNOTimeSteppingModel
+from latent_time_stepping.time_stepping_models.neural_ODE import NODETimeSteppingModel
 from latent_time_stepping.time_stepping_models.parameter_encoder import ParameterEncoder
 from latent_time_stepping.time_stepping_models.time_stepping_model import TimeSteppingModel
 
@@ -73,6 +74,10 @@ def load_trained_time_stepping_model(
 
     if model_type == 'FNO':
         model = FNOTimeSteppingModel(
+            **config['model_args'],
+        )
+    elif model_type == 'NODE':
+        model = NODETimeSteppingModel(
             **config['model_args'],
         )
     else:

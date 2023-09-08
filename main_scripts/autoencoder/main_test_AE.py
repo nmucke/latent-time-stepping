@@ -66,7 +66,7 @@ else:
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-NUM_SAMPLES = 4
+NUM_SAMPLES = 5
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 dataset = AEDataset(
@@ -98,7 +98,7 @@ def main():
     latent_loss_regu_list = [1e-4]
     consistency_loss_regu_list = [1e-2, 1e-3]
 
-    num_transformer_layers_list = [1, 2]
+    num_transformer_layers_list = [2]
     vit = True
 
     for TRANSPOSED in transposed_list:
@@ -113,7 +113,6 @@ def main():
                                 if LOAD_MODEL_FROM_ORACLE:
                                     #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
                                     #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_embedding_{EMBEDDING_DIM}_latent_{LATENT_LOSS_REGU}_consistency_{CONSISTENCY_LOSS_REGU}'
-
 
 
                                     ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}'

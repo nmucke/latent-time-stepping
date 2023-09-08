@@ -4,6 +4,7 @@ import yaml
 from yaml.loader import SafeLoader
 import torch
 import matplotlib.pyplot as plt
+from latent_time_stepping.time_stepping_models.neural_ODE import NODETimeSteppingModel
 from latent_time_stepping.time_stepping_training.optimizers import Optimizer
 from latent_time_stepping.time_stepping_models.parameter_encoder import ParameterEncoder
 
@@ -23,7 +24,7 @@ torch.backends.cuda.matmul.allow_tf32 = True
 
 CONTINUE_TRAINING = False
 
-MODEL_TYPE = "transformer"
+MODEL_TYPE = "NODE"
 
 PHASE = "multi"
 
@@ -73,11 +74,17 @@ def main():
         **config['dataloader_args'],
     )
 
-    pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
-    model = TimeSteppingModel(
-        pars_encoder=pars_encoder,
-        **config['model_args']['time_stepping_decoder'],
-    )
+    if MODEL_TYPE == 'transformer':
+        pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
+        model = TimeSteppingModel(
+            pars_encoder=pars_encoder,
+            **config['model_args']['time_stepping_decoder'],
+        )
+    elif MODEL_TYPE == 'NODE':
+        model = NODETimeSteppingModel(
+            **config['model_args'],
+        )
+
     model = model.to(DEVICE)
 
     optimizer = Optimizer(

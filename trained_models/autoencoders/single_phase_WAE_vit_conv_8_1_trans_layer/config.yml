@@ -21,7 +21,7 @@ model_args:
     - 8
     - 4
     - 2
-    num_transformer_layers: 2
+    num_transformer_layers: 1
     pars_dim: 2
     resnet: false
     space_dim: 256
@@ -45,7 +45,7 @@ model_args:
     - 16
     - 32
     - 64
-    num_transformer_layers: 2
+    num_transformer_layers: 1
     resnet: false
     space_dim: 256
     vit: true

@@ -1,0 +1,28 @@
+dataloader_args:
+  batch_size: 2
+  num_workers: 4
+  shuffle: true
+dataset_args:
+  input_seq_len: 32
+  num_time_steps: 1000
+  output_seq_len: 32
+model_args:
+  num_channels: 128
+  num_modes: 32
+  num_pars: 2
+  num_states: 3
+  space_dim: 512
+optimizer_args:
+  learning_rate: 0.0001
+  scheduler_args:
+    max_iters: 1000
+    warmup: 50
+  weight_decay: null
+train_args:
+  num_epochs: 1000
+  patience: 100
+train_stepper_args:
+  mixed_precision: false
+  teacher_forcing_ratio: 0.0
+  teacher_forcing_ratio_reduction: 0.9
+  teacher_forcing_ratio_reduction_freq: 50

@@ -20,7 +20,8 @@ dependencies = [
     'oci',
     'ocifs',
     'ray[default]',
-    'einops'
+    'einops',
+    'torchdiffeq'
 ]
 
 [project.urls]

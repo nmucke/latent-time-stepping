@@ -7,23 +7,25 @@ model_args:
   encoder:
     num_channels: [2, 4, 8, 16, 32, 64] #[2, 4, 8, 16, 32, 64, 128]
     kernel_size: 5
-    latent_dim: 4
+    latent_dim: 8
     space_dim: 256
     resnet: False
-    activation: gelu
+    activation: leaky_relu
     vit: True
     embedding_dim: [32, 32, 32, 32, 32, 32]
+    num_transformer_layers: 1
   decoder:
     num_channels: [64, 32, 16, 8, 4, 2] #[128, 64, 32, 16, 8, 4, 2]
     kernel_size: 5
-    latent_dim: 4
+    latent_dim: 8
     pars_dim: 2
     space_dim: 256
     resnet: False
     transposed: False
     vit: True
-    activation: gelu
+    activation: leaky_relu
     embedding_dim: [32, 32, 32, 32, 32, 32]
+    num_transformer_layers: 1
     
 optimizer_args:
   learning_rate: 5.0e-4
@@ -33,7 +35,7 @@ optimizer_args:
     patience: 20
 
 train_stepper_args:
-  latent_loss_regu: 1.0e-3
+  latent_loss_regu: 1.0e-4
   consistency_loss_regu: 1.0e-3
   mixed_precision: True
 

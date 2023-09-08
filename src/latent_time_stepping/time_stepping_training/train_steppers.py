@@ -184,8 +184,8 @@ class TimeSteppingTrainStepper(BaseTimeSteppingTrainStepper):
         input_state = input_state.permute(0, 3, 1, 2)
         output_state = output_state.permute(0, 3, 1, 2)
 
-        input_state = input_state.reshape(-1, 2, num_space)
-        output_state = output_state.reshape(-1, 2, num_space)
+        input_state = input_state.reshape(-1, self.model.num_states, num_space)
+        output_state = output_state.reshape(-1, self.model.num_states, num_space)
 
         return input_state, output_state, pars
 

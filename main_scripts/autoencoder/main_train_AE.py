@@ -35,10 +35,10 @@ torch.set_default_dtype(torch.float32)
 CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'local'
 
-PHASE = "multi"
+PHASE = "single"
 
 MODEL_TYPE = "WAE"
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv"
+MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_8_1_trans_layer"
 create_directory(MODEL_SAVE_PATH)
 
 CUDA = True

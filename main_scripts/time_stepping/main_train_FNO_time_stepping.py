@@ -17,11 +17,11 @@ torch.backends.cuda.enable_flash_sdp(enabled=True)
 torch.set_float32_matmul_precision('medium')
 torch.backends.cuda.matmul.allow_tf32 = True
 
-CONTINUE_TRAINING = True
+CONTINUE_TRAINING = False
 
 MODEL_TYPE = "FNO"
 
-PHASE = "single"
+PHASE = "multi"
 
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
 with open(config_path) as f:
@@ -32,7 +32,10 @@ LOCAL_OR_ORACLE = 'local'
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
+if PHASE == 'single':
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
+else:
+    LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/train'
 
 MODEL_SAVE_PATH = f"trained_models/time_steppers/{PHASE}_phase_{MODEL_TYPE}"
 create_directory(MODEL_SAVE_PATH)
@@ -41,7 +44,7 @@ with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
 
 DEVICE = 'cuda'
 
-NUM_SAMPLES = 2500
+NUM_SAMPLES = 2500 if PHASE == 'single' else 5000
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 
@@ -84,6 +87,11 @@ def main():
     model = FNOTimeSteppingModel(
         **config['model_args'],
     )
+
+    # get numger of trainable parameters
+    num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f'Number of trainable parameters: {num_params:0.4e}')
+
     model = model.to(DEVICE)
 
     optimizer = Optimizer(

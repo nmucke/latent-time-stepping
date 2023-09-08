@@ -1,0 +1,29 @@
+dataloader_args:
+  batch_size: 1024
+  num_workers: 8
+  shuffle: true
+dataset_args:
+  input_seq_len: 1
+  num_time_steps: 600
+  output_seq_len: 128
+model_args:
+  embed_dim: 8
+  integrator: rk4
+  latent_dim: 8
+  num_layers: 4
+  num_pars: 2
+  step_size: 0.2
+optimizer_args:
+  learning_rate: 0.0005
+  scheduler_args:
+    max_iters: 1000
+    warmup: 50
+  weight_decay: 1.0e-10
+train_args:
+  num_epochs: 1000
+  patience: 100
+train_stepper_args:
+  mixed_precision: false
+  teacher_forcing_ratio: 0.0
+  teacher_forcing_ratio_reduction: 0.9
+  teacher_forcing_ratio_reduction_freq: 50

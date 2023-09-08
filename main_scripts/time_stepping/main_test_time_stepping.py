@@ -18,7 +18,7 @@ DEVICE = 'cpu'
 
 PHASE = "multi"
 AE_MODEL_TYPE = "WAE"
-TIME_STEPPING_MODEL_TYPE = "transformer"
+TIME_STEPPING_MODEL_TYPE = "NODE"
 LOAD_MODEL_FROM_ORACLE = True
 
 
@@ -61,11 +61,12 @@ time_stepping_model_path = f"trained_models/time_steppers/{PHASE}_phase_{TIME_ST
 time_stepper = load_trained_time_stepping_model(
     model_load_path=time_stepping_model_path,
     device=DEVICE,
+    model_type=TIME_STEPPING_MODEL_TYPE,
 )
-if TIME_STEPPING_MODEL_TYPE == 'FNO':
-    input_seq_len = 32
-else:
+if TIME_STEPPING_MODEL_TYPE == 'transformer':
     input_seq_len = time_stepper.input_seq_len
+else:
+    input_seq_len = 32
 
 time_stepper.eval()
 
@@ -83,7 +84,6 @@ PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
 preprocessor = object_storage_client.get_preprocessor(
     source_path=PREPROCESSOR_PATH
 )
-
 
 LOCAL_OR_ORACLE = 'oracle'
 
@@ -131,18 +131,18 @@ def main():
 
             latent_state = AE.encode(state)
 
-            latent_state = savgol_filter(latent_state.detach().numpy(), 10, 1, axis=-1)
-            latent_state = torch.tensor(latent_state, dtype=torch.float32)
+            #latent_state = savgol_filter(latent_state.detach().numpy(), 10, 1, axis=-1)
+            #latent_state = torch.tensor(latent_state, dtype=torch.float32)
 
             pred_latent_state = time_stepper.multistep_prediction(
                 latent_state[:, :, 0:input_seq_len],
                 pars,
                 output_seq_len=num_steps,
-                )
+            )
             pred_latent_state = torch.cat(
                 [latent_state[:, :, 0:input_seq_len], pred_latent_state],
                 dim=2
-                )
+            )
                 
             pred_recon_state = AE.decode(pred_latent_state, pars)
 
