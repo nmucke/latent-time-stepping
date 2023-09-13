@@ -13,7 +13,7 @@ model_args:
     - 32
     - 32
     kernel_size: 5
-    latent_dim: 8
+    latent_dim: 4
     num_channels:
     - 64
     - 32
@@ -37,7 +37,7 @@ model_args:
     - 32
     - 32
     kernel_size: 5
-    latent_dim: 8
+    latent_dim: 4
     num_channels:
     - 2
     - 4

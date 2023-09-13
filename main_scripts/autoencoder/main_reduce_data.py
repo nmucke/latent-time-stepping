@@ -11,7 +11,7 @@ torch.set_default_dtype(torch.float32)
 
 DEVICE = 'cuda'
 
-PHASE = "multi"
+PHASE = "single"
 MODEL_TYPE = "WAE"
 
 TRANSPOSED = True
@@ -26,28 +26,30 @@ if PHASE == "single":
 elif PHASE == "multi":
     NUM_STATES = 3
 
-LOAD_MODEL_FROM_ORACLE = True
+LOAD_MODEL_FROM_ORACLE = False
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 
 if PHASE == 'multi':
     ORACLE_MODEL_LOAD_PATH = 'multi_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit' #'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
 else:
-    ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
+    ORACLE_MODEL_LOAD_PATH = None
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
 )
 
-state_dict, config = object_storage_client.get_model(
-    source_path=ORACLE_MODEL_LOAD_PATH,
-    device=DEVICE,
-)
+if LOAD_MODEL_FROM_ORACLE:
+    state_dict, config = object_storage_client.get_model(
+        source_path=ORACLE_MODEL_LOAD_PATH,
+        device=DEVICE,
+    )
 #model.load_state_dict(state_dict['model_state_dict'])
 model = load_trained_AE_model(
     model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
     state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
-    config=config,
+    config=config if LOAD_MODEL_FROM_ORACLE else None,
     model_type=MODEL_TYPE,
     device=DEVICE,
 )

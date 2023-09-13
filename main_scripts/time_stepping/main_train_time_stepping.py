@@ -22,11 +22,11 @@ torch.backends.cuda.enable_flash_sdp(enabled=True)
 torch.set_float32_matmul_precision('medium')
 torch.backends.cuda.matmul.allow_tf32 = True
 
-CONTINUE_TRAINING = False
+CONTINUE_TRAINING = True
 
-MODEL_TYPE = "NODE"
+MODEL_TYPE = "transformer"
 
-PHASE = "multi"
+PHASE = "single"
 
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
 with open(config_path) as f:
@@ -43,7 +43,7 @@ LOCAL_LOAD_PATH = f'data/{PHASE}_phase/latent_data/train'
 MODEL_SAVE_PATH = f"trained_models/time_steppers/{PHASE}_phase_{MODEL_TYPE}"
 create_directory(MODEL_SAVE_PATH)
 with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
-    yaml.dump(config, f) 
+    yaml.dump(config, f)
 
 DEVICE = 'cuda'
 

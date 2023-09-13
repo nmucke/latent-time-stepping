@@ -18,9 +18,8 @@ DEVICE = 'cpu'
 
 PHASE = "multi"
 AE_MODEL_TYPE = "WAE"
-TIME_STEPPING_MODEL_TYPE = "NODE"
+TIME_STEPPING_MODEL_TYPE = "transformer"
 LOAD_MODEL_FROM_ORACLE = True
-
 
 NUM_SKIP_STEPS = 4 if PHASE == 'single' else 10
 
@@ -31,13 +30,13 @@ if PHASE == "single":
 elif PHASE == "multi":
     NUM_STATES = 3
 
-
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
 if PHASE == 'multi':
     ORACLE_MODEL_LOAD_PATH = 'multi_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit'#'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
 else:
     #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
     ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_consistency'
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_vit_conv_{LATENT_DIM}_1_trans_layer"
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
@@ -64,7 +63,7 @@ time_stepper = load_trained_time_stepping_model(
     model_type=TIME_STEPPING_MODEL_TYPE,
 )
 if TIME_STEPPING_MODEL_TYPE == 'transformer':
-    input_seq_len = time_stepper.input_seq_len
+    input_seq_len = 64#time_stepper.input_seq_len
 else:
     input_seq_len = 32
 

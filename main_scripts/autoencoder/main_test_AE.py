@@ -17,7 +17,7 @@ from scipy.signal import savgol_filter
 
 DEVICE = 'cpu'
 
-PHASE = "multi"
+PHASE = "single"
 MODEL_TYPE = "WAE"
 LATENT_DIM = 8 if PHASE == 'multi' else 4
 TRANSPOSED = True
@@ -30,14 +30,14 @@ CONSISTENCY_LOSS_REGU = 1e-3
 
 LOCAL_OR_ORACLE = 'local'
 
-LOAD_MODEL_FROM_ORACLE = True
+LOAD_MODEL_FROM_ORACLE = False
 
 if PHASE == "single":
     NUM_STATES = 2
 elif PHASE == "multi":
     NUM_STATES = 3
 
-MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv"
+MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
 #MODEL_LOAD_PATH = f"trained_models/autoencoders/multi_phase_WAE_16_embedding_32_latent_0.001_consistency_0.001"
 
 #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_256_channels'
