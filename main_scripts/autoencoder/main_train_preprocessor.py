@@ -14,18 +14,18 @@ from latent_time_stepping.utils import create_directory
 
 torch.set_default_dtype(torch.float32)
 
-NUM_SAMPLES = 5000
+NUM_SAMPLES = 3000
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 NUM_SKIP_STEPS = 1
-END_TIME_INDEX = 36000
+END_TIME_INDEX = 6000
 
-LOCAL_OR_ORACLE = 'oracle'
-PHASE = 'multi'
+LOCAL_OR_ORACLE = 'local'
+PHASE = 'lorenz'
 TRAIN_OR_TEST = 'train'
 
-NUM_WORKERS = 30
-BATCH_SIZE = 30
+NUM_WORKERS = 8
+BATCH_SIZE = 64
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 BUCKET_NAME = "bucket-20230222-1753"
@@ -41,6 +41,8 @@ if PHASE == 'single':
     NUM_STATES = 2
 elif PHASE == 'multi':
     NUM_STATES = 3
+elif PHASE == 'lorenz':
+    NUM_STATES = 1
 
 def main():
 

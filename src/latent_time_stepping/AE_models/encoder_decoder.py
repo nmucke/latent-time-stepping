@@ -481,6 +481,7 @@ class Encoder(nn.Module):
 
             in_patch_sizes = [1 if patch_size < 1 else patch_size for patch_size in in_patch_sizes]
             out_patch_sizes = [1 if patch_size < 1 else patch_size for patch_size in out_patch_sizes]
+
             for i in range(len(self.num_channels)-1):
                 self.conv_blocks.append(
                     nn.Sequential(
@@ -614,24 +615,6 @@ class Encoder(nn.Module):
 
 
     def forward(self, x):
-        '''
-        for (conv, down, batch_norm) in zip(self.conv_list, self.down, self.batchnorm_list):
-            x = conv(x)
-            x = self.activation(x)
-            x = batch_norm(x)
-            x = down(x)
-        #x = self.activation(x)
-        #x = self.positional_encoding(x)
-        #x = self.attn1(x)
-        #x = self.activation(x)
-        #x = self.attn2(x)
-        
-        #x = self.attention(x.transpose(1, 2)).transpose(1, 2)
-        #x = self.activation(x)
-        x = self.flatten(x)
-        x = self.activation(x)
-        x = self.fc1(x)
-        '''
         
         batch_size = x.shape[0]
         num_states = x.shape[1]
@@ -865,26 +848,15 @@ class Decoder(nn.Module):
         pars = self.pars_embed_2(pars)
         pars = self.activation(pars)
 
+
         #if not self.vit:
         pars = self.pars_unflatten(pars)
-
 
         x = self.init_dense_layer(x)
         x = self.activation(x)
         for dense in self.dense_layers:
             x = dense(x)
             x = self.activation(x)
-
-        '''
-        if self.vit:
-            x = self.unflatten(x)
-            pars = self.unflatten(pars)
-            pars = self.pars_transformer(pars)
-            pars = torch.repeat_interleave(pars, repeats=num_time_steps, dim=0)
-            x = self.pars_state_transformer(pars, x)
-            x = x.permute(0, 2, 1)
-        else:
-        '''
 
         x = self.state_unflatten(x)
 

@@ -52,49 +52,6 @@ def train(
         # Train
         t1 = time.time()
         for i, (state, pars) in pbar:
-            
-            # pick N random integers from 0 to len(train_dataloader)
-            #idx = np.random.randint(0, state.shape[-1], size=state.shape[-1]//8)
-            #state = state[:, :, :, idx]
-
-            '''
-            lal = savgol_filter(state, 15, 1, axis=-2)
-            #lal = savgol_filter(state, 20, 3, axis=-2)
-            x = np.linspace(0, 5000, state.shape[-2])
-
-            fig, ax = plt.subplots()
-            xdata, ydata, ydata_1 = [], [], []
-            ln, = ax.plot([], [], lw=3, animated=True)
-            ln_1, = ax.plot([], [], lw=3, animated=True)
-
-            def init():
-                ax.set_xlim(0, 5000)
-                ax.set_ylim(state.min(), state.max())
-                #ax.set_ylim(0.1, 0.9)
-                #ax.set_ylim(18, 35)
-                return ln,
-
-            def update(frame):
-                xdata.append(x)
-                ydata.append(state[0, 0, :, frame])
-                ydata_1.append(lal[0, 0, :, frame])
-                ln.set_data(x, state[0, 0, :, frame])
-                ln_1.set_data(x, lal[0, 0, :, frame])
-                return ln, ln_1,
-
-            ani = FuncAnimation(
-                fig,
-                update,
-                frames=np.arange(0, state.shape[-1], 1),
-                init_func=init, 
-                blit=True,
-                interval=10,
-                )
-            ani.save('pipeflow_holdup.gif', fps=30)
-            plt.show()
-
-            pdb.set_trace()
-            '''
 
             loss = train_stepper.train_step(state, pars)
 

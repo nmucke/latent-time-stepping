@@ -17,9 +17,9 @@ from scipy.signal import savgol_filter
 
 DEVICE = 'cpu'
 
-PHASE = "single"
+PHASE = "lorenz"
 MODEL_TYPE = "WAE"
-LATENT_DIM = 8 if PHASE == 'multi' else 4
+LATENT_DIM = 8 if PHASE == 'multi' else 8
 TRANSPOSED = True
 RESNET = False
 NUM_CHANNELS = 256 if PHASE == 'multi' else 128
@@ -32,11 +32,14 @@ LOCAL_OR_ORACLE = 'local'
 
 LOAD_MODEL_FROM_ORACLE = False
 
-if PHASE == "single":
+if PHASE == 'single':
     NUM_STATES = 2
-elif PHASE == "multi":
+elif PHASE == 'multi':
     NUM_STATES = 3
+elif PHASE == 'lorenz':
+    NUM_STATES = 1
 
+#MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
 #MODEL_LOAD_PATH = f"trained_models/autoencoders/multi_phase_WAE_16_embedding_32_latent_0.001_consistency_0.001"
 
@@ -59,8 +62,8 @@ preprocessor = object_storage_client.get_preprocessor(
 )
 
 
-if PHASE == 'single':
-    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/test'
+if PHASE == 'single' or PHASE == 'lorenz':
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 else:
     LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/test'
 

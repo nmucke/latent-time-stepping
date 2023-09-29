@@ -35,13 +35,13 @@ torch.set_default_dtype(torch.float32)
 CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'local'
 
-PHASE = "single"
+PHASE = "lorenz"
 
 MODEL_TYPE = "WAE"
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_8_1_trans_layer"
 create_directory(MODEL_SAVE_PATH)
 
-CUDA = True
+CUDA = False
 if CUDA:
     DEVICE = torch.device('cuda' if CUDA else 'cpu')
 else:
@@ -49,14 +49,14 @@ else:
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
-if PHASE == 'single':
+if PHASE == 'single' or PHASE == 'lorenz':
     LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 else:
     LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/train'
 
 PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
 
-NUM_SAMPLES = 5000 if PHASE == 'multi' else 2500
+NUM_SAMPLES = 5000 if PHASE == 'multi' else 3000
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
 

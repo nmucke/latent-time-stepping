@@ -123,8 +123,11 @@ def save_data(
         if not os.path.exists(state_path):
             os.makedirs(state_path)
 
-        np.save(f'{pars_path}/sample_{idx}.npy', pars)
-        np.save(f'{state_path}/sample_{idx}.npy', state)
+        #np.save(f'{pars_path}/sample_{idx}.npy', pars)
+        #np.save(f'{state_path}/sample_{idx}.npy', state)
+
+        np.savez_compressed(f'{pars_path}/sample_{idx}', data=pars)
+        np.savez_compressed(f'{state_path}/sample_{idx}', data=state)
 
     print('Saved data for sample {}'.format(idx))
 
