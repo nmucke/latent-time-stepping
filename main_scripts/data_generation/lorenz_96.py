@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pdb
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
+from latent_time_stepping.utils import create_directory
 
 def save_data(
     idx: int, 
@@ -92,11 +93,12 @@ def simulate_lorenz(
     F, 
     idx, 
     to_oracle, 
-    train_or_test
+    train_or_test,
+    save_string
 ):
 
     lorenz = Lorenz96(
-        N=64,
+        N=128,
         F=F
     )
 
@@ -117,14 +119,22 @@ def simulate_lorenz(
         idx=idx,
         pars=np.array([F]),
         state=sol,
-        path=path,
+        path=save_string,
         to_oracle=to_oracle
     )
 
     return None
 
 def main():
-    F_list = np.random.uniform(low=6, high=10, size=3000)
+
+    TRAIN_OR_TEST = 'train'
+    save_string = 'lorenz_phase/raw_data/{TRAIN_OR_TEST}'
+
+    # Create directory if it does not exist
+    create_directory(save_string)
+
+
+    F_list = np.random.uniform(low=3, high=5, size=3000)
 
     remote_list = []
     for idx, F in enumerate(F_list):
@@ -134,14 +144,15 @@ def main():
                 F=F, 
                 idx=idx, 
                 to_oracle=False, 
-                train_or_test='train'
+                train_or_test='train',
+                save_string=save_string
             )
         )
 
     ray.get(remote_list)
 
 if __name__ == "__main__":
-    ray.init(num_cpus=8)
+    ray.init(num_cpus=30)
     main()
     ray.shutdown()
 

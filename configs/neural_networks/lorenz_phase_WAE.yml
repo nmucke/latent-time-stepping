@@ -5,27 +5,27 @@ dataloader_args:
   
 model_args:
   encoder:
-    num_channels: [1, 8, 16, 32] #[2, 4, 8, 16, 32, 64] # 
-    kernel_size: 5
-    latent_dim: 8
-    space_dim: 64
+    num_channels: [1, 4, 8, 16, 32, 64] #[2, 4, 8, 16, 32, 64] # 
+    kernel_size: 3
+    latent_dim: 16
+    space_dim: 128
     resnet: False
     activation: leaky_relu
     vit: True
-    embedding_dim: [32, 32, 32, 32, 32]
-    num_transformer_layers: 2
+    embedding_dim: [32, 64, 64, 64, 64]
+    num_transformer_layers: 1
   decoder:
-    num_channels: [32, 16, 8, 1] #[64, 32, 16, 8, 4, 2] # 
-    kernel_size: 5
-    latent_dim: 8
+    num_channels: [64, 32, 16, 8, 4, 1] #[64, 32, 16, 8, 4, 2] # 
+    kernel_size: 3
+    latent_dim: 16
     pars_dim: 1
-    space_dim: 64
+    space_dim: 128
     resnet: False
     transposed: False
     activation: leaky_relu
     vit: True
-    embedding_dim: [32, 32, 32, 32, 32]
-    num_transformer_layers: 2
+    embedding_dim: [64, 64, 64, 64, 32]
+    num_transformer_layers: 1
 
 optimizer_args:
   learning_rate: 5.0e-4
@@ -35,8 +35,8 @@ optimizer_args:
     patience: 10
 
 train_stepper_args:
-  latent_loss_regu: 1.0e-4
-  consistency_loss_regu: 1.0e-2
+  latent_loss_regu: 1.0e-3
+  consistency_loss_regu: 1.0e-3
   mixed_precision: False
 
 train_args:
