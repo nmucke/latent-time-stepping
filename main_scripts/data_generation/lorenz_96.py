@@ -6,7 +6,6 @@ import numpy as np
 import pdb
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
 
-
 def save_data(
     idx: int, 
     pars: np.ndarray, 
