@@ -4,7 +4,7 @@ dataloader_args:
   shuffle: true
 dataset_args:
   input_seq_len: 16
-  num_time_steps: 800
+  num_time_steps: 1800
   output_seq_len: 64
 model_args:
   parameter_encoder_args:

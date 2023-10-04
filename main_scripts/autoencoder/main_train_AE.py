@@ -32,16 +32,16 @@ torch.set_float32_matmul_precision('medium')
 
 torch.set_default_dtype(torch.float32)
 
-CONTIUE_TRAINING = False
+CONTIUE_TRAINING = True
 LOCAL_OR_ORACLE = 'local'
 
 PHASE = "lorenz"
 
 MODEL_TYPE = "WAE"
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_8_1_trans_layer"
+MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_2_layers"
 create_directory(MODEL_SAVE_PATH)
 
-CUDA = False
+CUDA = True
 if CUDA:
     DEVICE = torch.device('cuda' if CUDA else 'cpu')
 else:

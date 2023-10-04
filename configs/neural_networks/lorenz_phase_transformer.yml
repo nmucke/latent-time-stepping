@@ -1,7 +1,7 @@
 dataset_args:
   input_seq_len: 16
   output_seq_len: 64
-  num_time_steps: 1800
+  num_time_steps: 800
 
 dataloader_args:
   batch_size: 512
@@ -14,9 +14,9 @@ model_args:
     num_heads: 2
     embed_hidden_dim: 64
     num_layers: 2
-    pars_dim: 2
+    pars_dim: 1
   time_stepping_decoder:
-    latent_dim: 8
+    latent_dim: 16
     embed_dim: 32
     num_heads: 2
     embed_hidden_dim: 64

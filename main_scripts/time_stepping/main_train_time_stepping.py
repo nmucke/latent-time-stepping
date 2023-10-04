@@ -26,7 +26,7 @@ CONTINUE_TRAINING = True
 
 MODEL_TYPE = "transformer"
 
-PHASE = "single"
+PHASE = "multi"
 
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
 with open(config_path) as f:
@@ -47,7 +47,7 @@ with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
 
 DEVICE = 'cuda'
 
-NUM_SAMPLES = 2500 if PHASE == 'single' else 5000
+NUM_SAMPLES = 2500 if PHASE == 'single' else 3000
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 def main():

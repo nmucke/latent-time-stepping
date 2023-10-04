@@ -11,7 +11,7 @@ model_args:
     - 64
     - 64
     - 64
-    kernel_size: 3
+    kernel_size: 5
     latent_dim: 16
     num_channels:
     - 64
@@ -33,7 +33,7 @@ model_args:
     - 64
     - 64
     - 64
-    kernel_size: 3
+    kernel_size: 5
     latent_dim: 16
     num_channels:
     - 1
@@ -55,6 +55,6 @@ train_args:
   num_epochs: 2000
   patience: 50
 train_stepper_args:
-  consistency_loss_regu: 0.001
+  consistency_loss_regu: 0.01
   latent_loss_regu: 0.0001
   mixed_precision: false

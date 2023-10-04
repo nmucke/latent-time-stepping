@@ -11,7 +11,7 @@ torch.set_default_dtype(torch.float32)
 
 DEVICE = 'cuda'
 
-PHASE = "single"
+PHASE = "lorenz"
 MODEL_TYPE = "WAE"
 
 TRANSPOSED = True
@@ -19,12 +19,14 @@ RESNET = False
 NUM_CHANNELS = 256 if PHASE == 'multi' else 128
 NUM_LAYERS = 6
 
-LATENT_DIM = 4
+LATENT_DIM = 16
 
 if PHASE == "single":
     NUM_STATES = 2
 elif PHASE == "multi":
     NUM_STATES = 3
+elif PHASE == "lorenz":
+    NUM_STATES = 1
 
 LOAD_MODEL_FROM_ORACLE = False
 
@@ -32,6 +34,9 @@ MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 
 if PHASE == 'multi':
     ORACLE_MODEL_LOAD_PATH = 'multi_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit' #'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
+elif PHASE == 'lorenz':
+
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 else:
     MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
     ORACLE_MODEL_LOAD_PATH = None
@@ -56,10 +61,15 @@ model = load_trained_AE_model(
 model.eval()
 
 
-NUM_SAMPLES = 2500 if PHASE == 'single' else 5000
+NUM_SAMPLES = 2500 if PHASE == 'single' else 3000
 SAMPLE_IDS = range(NUM_SAMPLES)
 
-NUM_PARS = 2
+if PHASE == 'single':
+    NUM_PARS = 2
+elif PHASE == 'multi':
+    NUM_PARS = 2
+elif PHASE == 'lorenz':
+    NUM_PARS = 1
 
 LOCAL_OR_ORACLE = 'local'
 

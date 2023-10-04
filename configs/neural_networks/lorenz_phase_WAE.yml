@@ -5,26 +5,26 @@ dataloader_args:
   
 model_args:
   encoder:
-    num_channels: [1, 4, 8, 16, 32, 64] #[2, 4, 8, 16, 32, 64] # 
-    kernel_size: 3
-    latent_dim: 16
+    num_channels: [1, 8, 16, 32, 64, 128] #[2, 4, 8, 16, 32, 64] # 
+    kernel_size: 5
+    latent_dim: 12
     space_dim: 128
     resnet: False
     activation: leaky_relu
     vit: True
-    embedding_dim: [32, 64, 64, 64, 64]
+    embedding_dim: [128, 128, 128, 128, 128]
     num_transformer_layers: 1
   decoder:
-    num_channels: [64, 32, 16, 8, 4, 1] #[64, 32, 16, 8, 4, 2] # 
-    kernel_size: 3
-    latent_dim: 16
+    num_channels: [128, 64, 32, 16, 8, 1] #[64, 32, 16, 8, 4, 2] # 
+    kernel_size: 5
+    latent_dim: 12
     pars_dim: 1
     space_dim: 128
     resnet: False
     transposed: False
     activation: leaky_relu
     vit: True
-    embedding_dim: [64, 64, 64, 64, 32]
+    embedding_dim: [128, 128, 128, 128, 128]
     num_transformer_layers: 1
 
 optimizer_args:

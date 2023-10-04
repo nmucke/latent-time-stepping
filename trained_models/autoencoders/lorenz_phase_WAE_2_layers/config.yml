@@ -4,16 +4,17 @@ dataloader_args:
   shuffle: true
 model_args:
   decoder:
-    activation: gelu
+    activation: leaky_relu
     embedding_dim:
-    - 64
-    - 64
-    - 64
-    - 64
-    - 64
-    kernel_size: 3
-    latent_dim: 16
+    - 128
+    - 128
+    - 128
+    - 128
+    - 128
+    kernel_size: 5
+    latent_dim: 12
     num_channels:
+    - 128
     - 64
     - 32
     - 16
@@ -26,21 +27,22 @@ model_args:
     transposed: false
     vit: true
   encoder:
-    activation: gelu
+    activation: leaky_relu
     embedding_dim:
-    - 64
-    - 64
-    - 64
-    - 64
-    - 64
-    kernel_size: 3
-    latent_dim: 16
+    - 128
+    - 128
+    - 128
+    - 128
+    - 128
+    kernel_size: 5
+    latent_dim: 12
     num_channels:
     - 1
     - 8
     - 16
     - 32
     - 64
+    - 128
     num_transformer_layers: 1
     resnet: false
     space_dim: 128
@@ -56,5 +58,5 @@ train_args:
   patience: 50
 train_stepper_args:
   consistency_loss_regu: 0.001
-  latent_loss_regu: 0.0001
+  latent_loss_regu: 0.001
   mixed_precision: false

@@ -40,7 +40,7 @@ elif PHASE == 'lorenz':
     NUM_STATES = 1
 
 #MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
-MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
+MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_2_layers"
 #MODEL_LOAD_PATH = f"trained_models/autoencoders/multi_phase_WAE_16_embedding_32_latent_0.001_consistency_0.001"
 
 #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_256_channels'
@@ -63,13 +63,13 @@ preprocessor = object_storage_client.get_preprocessor(
 
 
 if PHASE == 'single' or PHASE == 'lorenz':
-    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/test'
 else:
     LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/test'
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-NUM_SAMPLES = 5
+NUM_SAMPLES = 2
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 dataset = AEDataset(
@@ -208,19 +208,31 @@ def main():
                                 latent_state_list = np.concatenate(latent_state_list, axis=0)
                                 
                                 normal_distribution = 1 / np.sqrt(2 * np.pi) * np.exp(-0.5 * np.linspace(-5, 5, 1000) ** 2)
+
+                                plt.figure()
+                                plt.subplot(1, 3, 1)
+                                plt.imshow(recon_state[0], aspect='auto')
+                                plt.colorbar()
+                                plt.subplot(1, 3, 2)
+                                plt.imshow(hf_trajectory[0], aspect='auto')
+                                plt.colorbar()
+                                plt.subplot(1, 3, 3)
+                                plt.imshow(np.abs(recon_state[0] - hf_trajectory[0]), aspect='auto')
+                                plt.colorbar()
+                                plt.show()
                                 
                                 plt.figure(figsize=(20, 10))
                                 plt.subplot(2, 4, 1)
                                 plt.plot(recon_state[0, :, 150], label="Reconstructed", color='tab:orange')
                                 plt.plot(hf_trajectory[0, :, 150], label="H1igh Fidelity", color='tab:blue')
-                                plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
-                                plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
+                                #plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
+                                #plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
                                 plt.legend()
                                 plt.subplot(2, 4, 2)
                                 plt.plot(recon_state[-1, :, 150], label="Reconstructed", color='tab:orange')
                                 plt.plot(hf_trajectory[-1, :, 150], label="High Fidelity", color='tab:blue')
-                                plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
-                                plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
+                                #plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
+                                #plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
                                 plt.legend()
                                 plt.subplot(2, 4, 3)
                                 plt.plot(latent_state[0, 0, :])

@@ -23,16 +23,25 @@ LOAD_MODEL_FROM_ORACLE = True
 
 NUM_SKIP_STEPS = 4 if PHASE == 'single' else 10
 
-LATENT_DIM = 8 if PHASE == 'multi' else 4
-
-if PHASE == "single":
+if PHASE == 'single':
+    LATENT_DIM = 4
     NUM_STATES = 2
-elif PHASE == "multi":
+elif PHASE == 'multi':
+    LATENT_DIM = 8
     NUM_STATES = 3
+elif PHASE == 'lorenz':
+    LATENT_DIM = 16
+    NUM_STATES = 1
+
+#LATENT_DIM = 8 if PHASE == 'multi' else 4
+
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
 if PHASE == 'multi':
     ORACLE_MODEL_LOAD_PATH = 'multi_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit'#'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
+elif PHASE == 'lorenz':
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_vit_conv_8_1_trans_layer"
+    ORACLE_MODEL_LOAD_PATH = None
 else:
     #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_layers_{NUM_LAYERS}_channels_{NUM_CHANNELS}'
     ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_consistency'
@@ -42,15 +51,16 @@ object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
 )
 
-state_dict, config = object_storage_client.get_model(
-    source_path=ORACLE_MODEL_LOAD_PATH,
-    device=DEVICE,
-)
+if ORACLE_MODEL_LOAD_PATH is not None:
+    state_dict, config = object_storage_client.get_model(
+        source_path=ORACLE_MODEL_LOAD_PATH,
+        device=DEVICE,
+    )
 #model.load_state_dict(state_dict['model_state_dict'])
 AE = load_trained_AE_model(
     model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
     state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
-    config=config,
+    config=config if LOAD_MODEL_FROM_ORACLE else None,
     model_type='WAE',
     device=DEVICE,
 )
@@ -86,12 +96,12 @@ preprocessor = object_storage_client.get_preprocessor(
 
 LOCAL_OR_ORACLE = 'oracle'
 
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/training_data'
+LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-SAMPLE_IDS = range(4, 5)
+SAMPLE_IDS = range(8, 9)
 
 dataset = AEDataset(
     oracle_path=ORACLE_LOAD_PATH if LOCAL_OR_ORACLE == 'oracle' else None,                                                          
@@ -113,7 +123,7 @@ dataloader = torch.utils.data.DataLoader(
 
 def main():
 
-    num_steps = 1000
+    num_steps = 1800
 
     for i, (state, pars) in enumerate(dataloader):
         state = state.to(DEVICE)
@@ -174,6 +184,7 @@ def main():
     time_step_to_plot_1 = 100
     time_step_to_plot_2 = 500
     time_step_to_plot_3 = -1
+    
     plt.figure()
     plt.subplot(1, 3, 1)
     plt.plot(state[0, 0, :, time_step_to_plot_1], label=f'HF, t={time_step_to_plot_1}', color='tab:blue')

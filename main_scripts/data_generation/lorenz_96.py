@@ -134,7 +134,7 @@ def main():
     create_directory(save_string)
 
 
-    F_list = np.random.uniform(low=3, high=5, size=3000)
+    F_list = np.random.uniform(low=1, high=3, size=3000)
 
     remote_list = []
     for idx, F in enumerate(F_list):
