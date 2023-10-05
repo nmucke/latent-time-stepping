@@ -69,7 +69,7 @@ else:
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-NUM_SAMPLES = 2
+NUM_SAMPLES = 10
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 dataset = AEDataset(
@@ -175,8 +175,8 @@ def main():
 
                                     latent_state = model.encode(state)
 
-                                    latent_state = savgol_filter(latent_state.detach().numpy(), 10, 1, axis=-1)
-                                    latent_state = torch.tensor(latent_state, dtype=torch.float32)
+                                    #latent_state = savgol_filter(latent_state.detach().numpy(), 10, 1, axis=-1)
+                                    #latent_state = torch.tensor(latent_state, dtype=torch.float32)
 
                                     recon_state = model.decode(latent_state, pars)
 

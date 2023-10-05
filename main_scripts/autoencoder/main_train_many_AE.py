@@ -44,11 +44,17 @@ def train_remote(
     latent_loss_regu,
     num_transformer_layers,
     vit,
-):
-    
+):  
     
     CONTINUE_TRAINING = False
     PHASE = phase
+
+    if PHASE == 'single':
+        num_skip_steps = 4
+    elif PHASE == 'multi':
+        num_skip_steps = 10
+    elif PHASE == 'lorenz':
+        num_skip_steps = 5
 
     #latent_dim = 4 if PHASE == "single" else 8
 
@@ -60,8 +66,11 @@ def train_remote(
 
     if PHASE == "single":
         NUM_SAMPLES = 2500
+    elif PHASE == "lorenz":
+        NUM_SAMPLES = 3000
     else:
         NUM_SAMPLES = 5000
+
     TRAIN_RATIO = 0.8
     VAL_RATIO = 0.2
 
@@ -93,7 +102,7 @@ def train_remote(
         load_entire_dataset=False,
         num_random_idx_divisor=None if PHASE == "multi" else None,
         preprocessor=preprocessor,
-        num_skip_steps=4 if PHASE == "single" else 10,
+        num_skip_steps=num_skip_steps,
         filter=True if PHASE == "multi" else False,
         #states_to_include=(1,2) if PHASE == "multi" else None,
     )
@@ -141,6 +150,12 @@ def train_remote(
         config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
         config['model_args']['encoder']['embedding_dim'] = [embedding_dim for _ in range(6)]
         config['model_args']['decoder']['embedding_dim'] = [embedding_dim for _ in range(6)]
+    else:
+        config['model_args']['decoder']['num_channels'] = [num_channels//(2**i) for i in range(0, num_layers)]
+        config['model_args']['decoder']['num_channels'].append(1)
+        config['model_args']['encoder']['num_channels'] = config['model_args']['decoder']['num_channels'][::-1]
+        config['model_args']['encoder']['embedding_dim'] = [embedding_dim for _ in range(5)]
+        config['model_args']['decoder']['embedding_dim'] = [embedding_dim for _ in range(5)]
 
 
     config['train_stepper_args']['latent_loss_regu'] = latent_loss_regu
@@ -226,22 +241,26 @@ def main():
     resnet_list = [False]
     vit_list = [True]
 
-    num_channels_list = [128]
+    num_channels_list = [128, 64]
 
     embedding_dim_list = [64]
-    latent_loss_regu_list = [1e-2, 1e-3]
+    latent_loss_regu_list = [1e-3, 1e-4]
     consistency_loss_regu_list = [1e-2, 1e-3]
 
-    latent_dim_list = [8]
+    latent_dim_list = [8, 12, 16]
 
-    num_transformer_layers_list = [2]
+    num_transformer_layers_list = [1, 2]
 
-    PHASE = "multi"
+    PHASE = "lorenz"
+
 
     if PHASE == "single":
         num_layers_list = [5, 6]
     elif PHASE == "multi":
         num_layers_list = [6, 7]
+    else:
+        num_layers_list = [5, 6]
+
 
     for transposed in transposed_list:
         for resnet in resnet_list:

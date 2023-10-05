@@ -32,7 +32,7 @@ torch.set_float32_matmul_precision('medium')
 
 torch.set_default_dtype(torch.float32)
 
-CONTIUE_TRAINING = True
+CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'local'
 
 PHASE = "lorenz"
@@ -79,6 +79,13 @@ preprocessor = object_storage_client.get_preprocessor(
     source_path=PREPROCESSOR_PATH
 )
 
+if PHASE == 'single':
+    num_skip_steps = 4
+elif PHASE == 'multi':
+    num_skip_steps = 10
+elif PHASE == 'lorenz':
+    num_skip_steps = 5
+
 
 def main():
 
@@ -90,10 +97,10 @@ def main():
         load_entire_dataset=False,
         num_random_idx_divisor=None,#2 if PHASE == 'multi' else None,
         preprocessor=preprocessor,
-        num_skip_steps=4 if PHASE == 'single' else 10,
+        num_skip_steps=num_skip_steps,
         #states_to_include=(1, 2) if PHASE == 'multi' else None,
         filter=True if PHASE == 'multi' else False,
-        end_time_index=5000,
+        #end_time_index=15000,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(

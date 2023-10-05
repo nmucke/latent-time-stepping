@@ -103,12 +103,20 @@ ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
 SAMPLE_IDS = range(8, 9)
 
+
+if PHASE == 'single':
+    num_skip_steps = 4
+elif PHASE == 'multi':
+    num_skip_steps = 10
+elif PHASE == 'lorenz':
+    num_skip_steps = 5
+
 dataset = AEDataset(
     oracle_path=ORACLE_LOAD_PATH if LOCAL_OR_ORACLE == 'oracle' else None,                                                          
     local_path=LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
     sample_ids=SAMPLE_IDS,
     preprocessor=preprocessor,
-    num_skip_steps=4 if PHASE == 'single' else 10,
+    num_skip_steps=num_skip_steps,
     end_time_index=None,
     filter=True if PHASE == 'multi' else False,
     #states_to_include=(1,2) if PHASE == "multi" else None,
