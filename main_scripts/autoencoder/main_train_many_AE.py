@@ -67,7 +67,7 @@ def train_remote(
     if PHASE == "single":
         NUM_SAMPLES = 2500
     elif PHASE == "lorenz":
-        NUM_SAMPLES = 3000
+        NUM_SAMPLES = 2000
     else:
         NUM_SAMPLES = 5000
 
@@ -247,7 +247,7 @@ def main():
     latent_loss_regu_list = [1e-3, 1e-4]
     consistency_loss_regu_list = [1e-2, 1e-3]
 
-    latent_dim_list = [8, 12, 16]
+    latent_dim_list = [8]
 
     num_transformer_layers_list = [1, 2]
 
@@ -259,7 +259,7 @@ def main():
     elif PHASE == "multi":
         num_layers_list = [6, 7]
     else:
-        num_layers_list = [5, 6]
+        num_layers_list = [3]
 
 
     for transposed in transposed_list:

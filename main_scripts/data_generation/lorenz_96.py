@@ -94,11 +94,10 @@ def simulate_lorenz(
     idx, 
     to_oracle, 
     train_or_test,
-    save_string
 ):
 
     lorenz = Lorenz96(
-        N=128,
+        N=40,
         F=F
     )
 
@@ -115,11 +114,12 @@ def simulate_lorenz(
     else:
         path = f'data/lorenz_phase/raw_data/{train_or_test}'
 
+
     save_data(
         idx=idx,
         pars=np.array([F]),
         state=sol,
-        path=save_string,
+        path=path,
         to_oracle=to_oracle
     )
 
@@ -128,13 +128,13 @@ def simulate_lorenz(
 def main():
 
     TRAIN_OR_TEST = 'train'
-    save_string = 'lorenz_phase/raw_data/{TRAIN_OR_TEST}'
 
     # Create directory if it does not exist
-    create_directory(save_string)
+    #create_directory(save_string)
 
 
-    F_list = np.random.uniform(low=1, high=3, size=3000)
+
+    F_list = np.random.uniform(low=6, high=9, size=3000)
 
     remote_list = []
     for idx, F in enumerate(F_list):
@@ -144,8 +144,7 @@ def main():
                 F=F, 
                 idx=idx, 
                 to_oracle=False, 
-                train_or_test='train',
-                save_string=save_string
+                train_or_test=TRAIN_OR_TEST,
             )
         )
 

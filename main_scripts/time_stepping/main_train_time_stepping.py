@@ -47,7 +47,7 @@ with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
 
 DEVICE = 'cuda'
 
-NUM_SAMPLES = 2500 if PHASE == 'single' else 3000
+NUM_SAMPLES = 2500 if PHASE == 'single' else 5000
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 def main():

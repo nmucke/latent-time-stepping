@@ -9,20 +9,17 @@ model_args:
     - 64
     - 64
     - 64
-    - 64
-    - 64
-    kernel_size: 5
-    latent_dim: 12
+    kernel_size: 3
+    latent_dim: 16
     num_channels:
     - 128
     - 64
     - 32
-    - 16
     - 1
-    num_transformer_layers: 1
+    num_transformer_layers: 2
     pars_dim: 1
     resnet: false
-    space_dim: 128
+    space_dim: 40
     transposed: false
     vit: true
   encoder:
@@ -33,17 +30,16 @@ model_args:
     - 64
     - 64
     - 64
-    kernel_size: 5
-    latent_dim: 12
+    kernel_size: 3
+    latent_dim: 16
     num_channels:
     - 1
-    - 16
     - 32
     - 64
     - 128
-    num_transformer_layers: 1
+    num_transformer_layers: 2
     resnet: false
-    space_dim: 128
+    space_dim: 40
     vit: true
 optimizer_args:
   learning_rate: 0.0005
