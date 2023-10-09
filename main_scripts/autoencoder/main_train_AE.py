@@ -32,10 +32,10 @@ torch.set_float32_matmul_precision('medium')
 
 torch.set_default_dtype(torch.float32)
 
-CONTIUE_TRAINING = False
+CONTIUE_TRAINING = True
 LOCAL_OR_ORACLE = 'local'
 
-PHASE = "lorenz"
+PHASE = "wave"
 
 MODEL_TYPE = "WAE"
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_2_layers"
@@ -49,18 +49,12 @@ else:
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
-if PHASE == 'single' or PHASE == 'lorenz':
-    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
-else:
+if PHASE == 'multi':
     LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/train'
+else:
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
 PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
-
-NUM_SAMPLES = 5000 if PHASE == 'multi' else 3000
-TRAIN_RATIO = 0.8
-VAL_RATIO = 0.2
-
-TRAIN_SAMPLE_IDS = range(NUM_SAMPLES)
 
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
 with open(config_path) as f:
@@ -81,10 +75,20 @@ preprocessor = object_storage_client.get_preprocessor(
 
 if PHASE == 'single':
     num_skip_steps = 4
+    NUM_SAMPLES = 2500
 elif PHASE == 'multi':
     num_skip_steps = 10
+    NUM_SAMPLES = 5000
 elif PHASE == 'lorenz':
     num_skip_steps = 5
+    NUM_SAMPLES = 3000
+elif PHASE == 'wave':
+    num_skip_steps = 1
+    NUM_SAMPLES = 110
+
+TRAIN_RATIO = 0.8
+VAL_RATIO = 0.2
+TRAIN_SAMPLE_IDS = range(NUM_SAMPLES)
 
 
 def main():

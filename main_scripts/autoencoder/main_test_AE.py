@@ -17,9 +17,9 @@ from scipy.signal import savgol_filter
 
 DEVICE = 'cpu'
 
-PHASE = "lorenz"
+PHASE = "wave"
 MODEL_TYPE = "WAE"
-LATENT_DIM = 8 if PHASE == 'multi' else 8
+LATENT_DIM = 8 if PHASE == 'multi' else 16
 TRANSPOSED = True
 RESNET = False
 NUM_CHANNELS = 256 if PHASE == 'multi' else 128
@@ -33,11 +33,17 @@ LOCAL_OR_ORACLE = 'local'
 LOAD_MODEL_FROM_ORACLE = False
 
 if PHASE == 'single':
+    num_skip_steps = 4
     NUM_STATES = 2
 elif PHASE == 'multi':
+    num_skip_steps = 10
     NUM_STATES = 3
 elif PHASE == 'lorenz':
+    num_skip_steps = 5
     NUM_STATES = 1
+elif PHASE == 'wave':
+    num_skip_steps = 1
+    NUM_STATES = 2
 
 #MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_2_layers"
@@ -62,12 +68,12 @@ preprocessor = object_storage_client.get_preprocessor(
 )
 
 
-if PHASE == 'single' or PHASE == 'lorenz':
-    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/test'
-else:
+if PHASE == 'multi':
     LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/test'
+else:
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
-ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
 NUM_SAMPLES = 10
 SAMPLE_IDS = range(NUM_SAMPLES)
@@ -77,7 +83,7 @@ dataset = AEDataset(
     local_path=LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
     sample_ids=SAMPLE_IDS,
     preprocessor=preprocessor,
-    num_skip_steps=4 if PHASE == 'single' else 10,
+    num_skip_steps=num_skip_steps,
     end_time_index=None,
     filter=True if PHASE == 'multi' else False,
     #states_to_include=(1,2) if PHASE == "multi" else None,
@@ -94,20 +100,21 @@ def main():
 
     transposed_list = [False]
     resnet_list = [False]
-    NUM_CHANNELS = 128
-    num_layers_list = [6]
+    num_channels_list = [64, 128]
+    num_layers_list = [3]
 
     embedding_dim_list = [64]
-    latent_loss_regu_list = [1e-4]
+    latent_loss_regu_list = [1e-3, 1e-4]
     consistency_loss_regu_list = [1e-2, 1e-3]
 
-    num_transformer_layers_list = [2]
+    num_transformer_layers_list = [1, 2]
     vit = True
 
     for TRANSPOSED in transposed_list:
         for RESNET in resnet_list:
             for NUM_LAYERS in num_layers_list:
-                for EMBEDDING_DIM in embedding_dim_list:
+                #for EMBEDDING_DIM in embedding_dim_list:
+                for NUM_CHANNELS in num_channels_list:
                     for LATENT_LOSS_REGU in latent_loss_regu_list:
                         for CONSISTENCY_LOSS_REGU in consistency_loss_regu_list:
                             for num_transformer_layers in num_transformer_layers_list:
@@ -141,7 +148,7 @@ def main():
 
                                     object_storage_client = ObjectStorageClientWrapper(
                                         bucket_name='trained_models'
-                                    )                    
+                                    )              
 
                                     state_dict, config = object_storage_client.get_model(
                                         source_path=ORACLE_MODEL_LOAD_PATH,
@@ -172,6 +179,7 @@ def main():
 
                                     state = state.to(DEVICE)
                                     pars = pars.to(DEVICE)
+
 
                                     latent_state = model.encode(state)
 
@@ -225,14 +233,14 @@ def main():
                                 plt.subplot(2, 4, 1)
                                 plt.plot(recon_state[0, :, 150], label="Reconstructed", color='tab:orange')
                                 plt.plot(hf_trajectory[0, :, 150], label="H1igh Fidelity", color='tab:blue')
-                                #plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
-                                #plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
+                                plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
+                                plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
                                 plt.legend()
                                 plt.subplot(2, 4, 2)
                                 plt.plot(recon_state[-1, :, 150], label="Reconstructed", color='tab:orange')
                                 plt.plot(hf_trajectory[-1, :, 150], label="High Fidelity", color='tab:blue')
-                                #plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
-                                #plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
+                                plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
+                                plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
                                 plt.legend()
                                 plt.subplot(2, 4, 3)
                                 plt.plot(latent_state[0, 0, :])

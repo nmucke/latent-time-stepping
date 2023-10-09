@@ -22,11 +22,11 @@ torch.backends.cuda.enable_flash_sdp(enabled=True)
 torch.set_float32_matmul_precision('medium')
 torch.backends.cuda.matmul.allow_tf32 = True
 
-CONTINUE_TRAINING = True
+CONTINUE_TRAINING = False
 
 MODEL_TYPE = "transformer"
 
-PHASE = "multi"
+PHASE = "wave"
 
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
 with open(config_path) as f:
@@ -47,7 +47,32 @@ with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
 
 DEVICE = 'cuda'
 
-NUM_SAMPLES = 2500 if PHASE == 'single' else 5000
+
+if PHASE == 'single':
+    num_skip_steps = 4
+    NUM_PARS = 2
+    NUM_SAMPLES = 2500
+    NUM_STATES = 2
+    LOAD_MODEL_FROM_ORACLE = False
+elif PHASE == 'multi':
+    num_skip_steps = 10
+    NUM_PARS = 2
+    NUM_STATES = 3
+    NUM_SAMPLES = 5000
+    LOAD_MODEL_FROM_ORACLE = True
+elif PHASE == 'lorenz':
+    num_skip_steps = 5
+    NUM_SAMPLES = 2000
+    NUM_STATES = 1
+    NUM_PARS = 1
+    LOAD_MODEL_FROM_ORACLE = True
+elif PHASE == 'wave':
+    num_skip_steps = 1
+    NUM_SAMPLES = 110
+    NUM_STATES = 2
+    NUM_PARS = 1
+    LOAD_MODEL_FROM_ORACLE = False
+
 SAMPLE_IDS = range(NUM_SAMPLES)
 
 def main():

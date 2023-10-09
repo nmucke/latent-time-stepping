@@ -14,14 +14,12 @@ from latent_time_stepping.utils import create_directory
 
 torch.set_default_dtype(torch.float32)
 
-NUM_SAMPLES = 3000
-SAMPLE_IDS = range(NUM_SAMPLES)
 
 NUM_SKIP_STEPS = 1
 END_TIME_INDEX = 10000
 
 LOCAL_OR_ORACLE = 'local'
-PHASE = 'lorenz'
+PHASE = 'wave'
 TRAIN_OR_TEST = 'train'
 
 NUM_WORKERS = 8
@@ -37,12 +35,25 @@ create_directory(TRAINED_PREPROCESSOR_SAVE_PATH)
 
 TRAINED_PREPROCESSOR_SAVE_PATH += f'/{PHASE}_phase_preprocessor.pkl'
 
+
 if PHASE == 'single':
     NUM_STATES = 2
+    num_skip_steps = 4
+    NUM_SAMPLES = 2500
 elif PHASE == 'multi':
     NUM_STATES = 3
+    num_skip_steps = 10
+    NUM_SAMPLES = 5000
 elif PHASE == 'lorenz':
     NUM_STATES = 1
+    num_skip_steps = 5
+    NUM_SAMPLES = 3000
+elif PHASE == 'wave':
+    NUM_STATES = 2
+    num_skip_steps = 1
+    NUM_SAMPLES = 110
+
+SAMPLE_IDS = range(NUM_SAMPLES)
 
 def main():
 

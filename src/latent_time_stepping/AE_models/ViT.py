@@ -147,11 +147,11 @@ class ViTEncoderLayer(nn.Module):
 
         out_patch_dim = out_channels * out_patch_size
 
-        print(f'num_patches: {num_patches}')
-        print(f'in_patch_dim: {in_patch_dim}, in_patch_size: {in_patch_size}')
-        print(f'out_patch_dim: {out_patch_dim}, out_patch_size: {out_patch_size}')
-        print(f'embedding_dim: {embedding_dim}')
-        print('------------------------------------------')
+        #print(f'num_patches: {num_patches}')
+        #print(f'in_patch_dim: {in_patch_dim}, in_patch_size: {in_patch_size}')
+        #print(f'out_patch_dim: {out_patch_dim}, out_patch_size: {out_patch_size}')
+        #print(f'embedding_dim: {embedding_dim}')
+        #print('------------------------------------------')
 
 
         self.to_patch_embedding = nn.Sequential(
