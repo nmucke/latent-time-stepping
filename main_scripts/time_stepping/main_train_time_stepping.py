@@ -26,14 +26,13 @@ CONTINUE_TRAINING = False
 
 MODEL_TYPE = "transformer"
 
-PHASE = "wave"
+PHASE = "lorenz"
 
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
 with open(config_path) as f:
     config = yaml.load(f, Loader=SafeLoader)
     
 LOCAL_OR_ORACLE = 'local'
-
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/latent_data/train'

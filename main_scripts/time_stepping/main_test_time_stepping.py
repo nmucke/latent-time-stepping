@@ -1,5 +1,6 @@
 import pdb
 import pickle
+from matplotlib.animation import FuncAnimation
 import numpy as np
 from tqdm import tqdm
 import torch
@@ -12,7 +13,7 @@ from latent_time_stepping.oracle import ObjectStorageClientWrapper
 from latent_time_stepping.utils import load_trained_AE_model, load_trained_time_stepping_model
 torch.set_default_dtype(torch.float32)
 
-
+ANIMATE = True
 
 DEVICE = 'cpu'
 
@@ -89,7 +90,7 @@ time_stepper = load_trained_time_stepping_model(
     model_type=TIME_STEPPING_MODEL_TYPE,
 )
 if TIME_STEPPING_MODEL_TYPE == 'transformer':
-    input_seq_len = 64#time_stepper.input_seq_len
+    input_seq_len = 16#time_stepper.input_seq_len
 else:
     input_seq_len = 32
 
@@ -115,7 +116,7 @@ LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
 
-SAMPLE_IDS = range(8, 9)
+SAMPLE_IDS = range(0, 1)
 
 
 
@@ -144,6 +145,7 @@ def main():
     for i, (state, pars) in enumerate(dataloader):
         state = state.to(DEVICE)
         pars = pars.to(DEVICE)
+
 
         if TIME_STEPPING_MODEL_TYPE == "FNO":
             pred_recon_state = time_stepper.multistep_prediction(
@@ -175,6 +177,8 @@ def main():
 
         state = preprocessor.inverse_transform_state(state, ensemble=True)
         pred_recon_state = pred_recon_state.detach()
+
+        print(f'{i}: {preprocessor.inverse_transform_pars(pars, ensemble=True)}')
     
     if TIME_STEPPING_MODEL_TYPE != 'FNO':
         latent_state = latent_state.detach().numpy()
@@ -231,6 +235,46 @@ def main():
         plt.legend()
     plt.show()
 
+
+    if ANIMATE:
+        t_vec = np.arange(0, 45, 0.03535)
+        t_vec = t_vec[:pred_recon_state.shape[-1]]
+
+        x = np.linspace(0, 25.6, 512)
+
+        fig, ax = plt.subplots()
+        #xdata, ydata, ydata_1 = [], [], []
+        ln, = ax.plot([], [], lw=3, animated=True)
+        ln_1, = ax.plot([], [], '--', lw=3, animated=True)
+        ax.grid()
+
+        def init():
+            ax.set_xlim(0, 25.6)
+            ax.set_ylim(-0.025, 0.025)
+            return ln,
+    
+        def update(frame):
+            #xdata.append(x)
+            #ydata.append(state[0, :, frame])
+            #ydata_1.append(pred_recon_state[0, :, frame])
+            ln.set_data(x, state[0, 0, :, frame], )
+            ln_1.set_data(x, pred_recon_state[0, 0, :, frame],)
+            plt.legend([f'High-fidelity', f'Neural network'])
+            plt.xlabel('x')
+            plt.ylabel('\eta')
+            plt.title(f't = {t_vec[frame]:.2f}')
+            return ln, ln_1,
+
+        ani = FuncAnimation(
+            fig,
+            update,
+            frames=len(t_vec),
+            init_func=init, 
+            blit=True,
+            interval=10,
+            )
+        ani.save('submerged_bar.gif', fps=30)
+        plt.show()
 
 if __name__ == "__main__":
     

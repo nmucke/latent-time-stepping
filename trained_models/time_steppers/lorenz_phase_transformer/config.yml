@@ -1,11 +1,11 @@
 dataloader_args:
-  batch_size: 512
+  batch_size: 256
   num_workers: 4
   shuffle: true
 dataset_args:
   input_seq_len: 16
-  num_time_steps: 800
-  output_seq_len: 64
+  num_time_steps: 8000
+  output_seq_len: 128
 model_args:
   parameter_encoder_args:
     embed_dim: 32
@@ -19,8 +19,8 @@ model_args:
     input_seq_len: 16
     latent_dim: 16
     num_heads: 2
-    num_layers: 3
-    output_seq_len: 64
+    num_layers: 2
+    output_seq_len: 128
 optimizer_args:
   learning_rate: 0.0005
   scheduler_args:
@@ -34,4 +34,4 @@ train_stepper_args:
   mixed_precision: false
   teacher_forcing_ratio: 0.0
   teacher_forcing_ratio_reduction: 0.5
-  teacher_forcing_ratio_reduction_freq: 5
+  teacher_forcing_ratio_reduction_freq: 50000

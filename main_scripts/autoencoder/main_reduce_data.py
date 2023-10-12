@@ -42,7 +42,7 @@ elif PHASE == 'lorenz':
     LOAD_MODEL_FROM_ORACLE = True
 elif PHASE == 'wave':
     num_skip_steps = 1
-    NUM_SAMPLES = 110
+    NUM_SAMPLES = 150
     NUM_STATES = 2
     NUM_PARS = 1
     LOAD_MODEL_FROM_ORACLE = False
