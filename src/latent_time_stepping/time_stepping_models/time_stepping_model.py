@@ -148,25 +148,32 @@ class TimeSteppingModel(nn.Module):
     def multistep_prediction(
         self,
         input: torch.Tensor,
-        pars: torch.Tensor,
-        output_seq_len: int,
+        pars: torch.Tensor = None,
+        output_seq_len: int = 16,
         ) -> torch.Tensor:
 
         input = input.permute(0, 2, 1)
-        
-        pars = self.encode_pars(pars)
-
         out = input
-        for _ in range(output_seq_len):
-            inp = self.initial_conv_layer(out[:, -self.max_seq_len:])
-            inp = torch.cat([pars, inp], dim=1)
-            inp = self.positional_embedding(inp)
+        
+        if self.pars_encoder is not None:
+            pars = self.encode_pars(pars)
 
-            x = self.decode_one_step(inp)
+            for _ in range(output_seq_len):
+                inp = self.initial_conv_layer(out[:, -self.max_seq_len:])
+                inp = torch.cat([pars, inp], dim=1)
+                inp = self.positional_embedding(inp)
 
-            #x = out[:, -1:] + x
+                x = self.decode_one_step(inp)
 
-            out = torch.cat([out, x], dim=1)
+                out = torch.cat([out, x], dim=1)
+        else:
+            for _ in range(output_seq_len):
+                inp = self.initial_conv_layer(out[:, -self.max_seq_len:])
+                inp = self.positional_embedding(inp)
+
+                x = self.decode_one_step(inp)
+
+                out = torch.cat([out, x], dim=1)
         
         out = out[:, -output_seq_len:]
         

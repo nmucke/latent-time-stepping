@@ -78,7 +78,14 @@ class Lorenz96():
         
         x0 = self.F * np.ones(self.N)  # Initial state (equilibrium)
         #x0 = self.F*np.sin(np.linspace(0, 2*np.pi, self.N))# + perturbation
-        x0[0] += 0.1  # Add small perturbation to the first variable
+        #x0[0] += 0.1  # Add small perturbation to the first variable
+
+        # add noise to initial state
+        #x0 += np.random.normal(0, 0.01, self.N)
+
+        # add noise to a random component
+        x0[np.random.randint(0, self.N)] += np.random.normal(0, 0.01)
+
         t = np.arange(0.0, t_final, step_size)
 
         x = odeint(self.L96, x0, t)
@@ -86,7 +93,7 @@ class Lorenz96():
         return x
     
 
-@ray.remote(num_cpus=1)
+#@ray.remote(num_cpus=1)
 def simulate_lorenz(
     t_final, 
     step_size, 
@@ -108,6 +115,7 @@ def simulate_lorenz(
 
     sol = sol.transpose()
     sol = np.expand_dims(sol, 0)
+    sol = sol[:, :, 100:]
 
     if to_oracle:
         path = f'lorenz_phase/raw_data/{train_or_test}'
@@ -132,15 +140,14 @@ def main():
     # Create directory if it does not exist
     #create_directory(save_string)
 
-
-
-    F_list = np.random.uniform(low=6, high=9, size=3000)
+    F_list = np.random.uniform(low=8, high=8, size=3000)
 
     remote_list = []
     for idx, F in enumerate(F_list):
-        remote_list.append(simulate_lorenz.remote(
-                t_final=60, 
-                step_size=0.01, 
+        #remote_list.append(simulate_lorenz.remote(
+        remote_list.append(simulate_lorenz(
+                t_final=40, 
+                step_size=0.05, 
                 F=F, 
                 idx=idx, 
                 to_oracle=False, 
@@ -151,7 +158,7 @@ def main():
     ray.get(remote_list)
 
 if __name__ == "__main__":
-    ray.init(num_cpus=30)
+    ray.init(num_cpus=25)
     main()
     ray.shutdown()
 

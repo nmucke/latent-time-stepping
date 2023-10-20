@@ -19,11 +19,11 @@ NUM_SKIP_STEPS = 5
 
 DEVICE = 'cpu'
 
-PHASE = "multi"
+PHASE = "lorenz"
 AE_MODEL_TYPE = "WAE"
 TIME_STEPPING_MODEL_TYPE = "transformer"
 
-AE_model_path = None#f"trained_models/autoencoders/{PHASE}_phase_{AE_MODEL_TYPE}"
+AE_model_path = f"trained_models/autoencoders/{PHASE}_phase_{AE_MODEL_TYPE}"
 
 time_stepping_model_path = f"trained_models/time_steppers/{PHASE}_phase_{TIME_STEPPING_MODEL_TYPE}"
 
@@ -38,10 +38,11 @@ def main():
     object_storage_client = ObjectStorageClientWrapper(BUCKET_NAME)
 
     ##### Upload preprocessor #####
-    #object_storage_client.put_preprocessor(
-    #    source_path=PREPROCESSOR_PATH,
-    #    destination_path=ORACLE_PREPROCESSOR_SAVE_PATH,
-    #)
+    object_storage_client.put_preprocessor(
+        source_path=PREPROCESSOR_PATH,
+        destination_path=ORACLE_PREPROCESSOR_SAVE_PATH,
+    )
+    print("Preprocessor uploaded to oracle")
 
     ##### Upload AE model #####
     if AE_model_path is not None:

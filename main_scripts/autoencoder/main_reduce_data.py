@@ -11,7 +11,7 @@ torch.set_default_dtype(torch.float32)
 
 DEVICE = 'cuda'
 
-PHASE = "wave"
+PHASE = "lorenz"
 MODEL_TYPE = "WAE"
 
 TRANSPOSED = True
@@ -35,14 +35,14 @@ elif PHASE == 'multi':
     NUM_SAMPLES = 5000
     LOAD_MODEL_FROM_ORACLE = True
 elif PHASE == 'lorenz':
-    num_skip_steps = 5
+    num_skip_steps = 1
     NUM_SAMPLES = 3000
     NUM_STATES = 1
     NUM_PARS = 1
-    LOAD_MODEL_FROM_ORACLE = True
+    LOAD_MODEL_FROM_ORACLE = False
 elif PHASE == 'wave':
     num_skip_steps = 1
-    NUM_SAMPLES = 150
+    NUM_SAMPLES = 210
     NUM_STATES = 2
     NUM_PARS = 1
     LOAD_MODEL_FROM_ORACLE = False
@@ -52,13 +52,13 @@ MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 if PHASE == 'multi':
     ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit' #'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
 elif PHASE == 'lorenz':
-    #MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
-    ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_16_latent_0.001_consistency_0.01_channels_64_layers_3_trans_layers_1_embedding_64_vit'
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
+    #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_16_latent_0.001_consistency_0.01_channels_64_layers_3_trans_layers_1_embedding_64_vit'
 elif PHASE == 'single':
     MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
     ORACLE_MODEL_LOAD_PATH = None
 elif PHASE == 'wave':
-    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_2_layers"
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
     ORACLE_MODEL_LOAD_PATH = None
 
 object_storage_client = ObjectStorageClientWrapper(
@@ -145,10 +145,9 @@ def main():
     for i, (state, _pars) in pbar:
 
         state = state.to(DEVICE)
-        
+
         latent_state[i] = model.encode(state).detach().cpu()[0]
         pars[i] = _pars.detach().cpu()[0]  
-
 
     latent_state = latent_state.numpy()
     pars = pars.numpy()

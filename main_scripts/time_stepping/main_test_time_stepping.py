@@ -1,5 +1,6 @@
 import pdb
 import pickle
+import time
 from matplotlib.animation import FuncAnimation
 import numpy as np
 from tqdm import tqdm
@@ -15,14 +16,13 @@ torch.set_default_dtype(torch.float32)
 
 ANIMATE = True
 
-DEVICE = 'cpu'
+DEVICE = 'cuda'
 
-PHASE = "wave"
+PHASE = "multi"
 AE_MODEL_TYPE = "WAE"
 TIME_STEPPING_MODEL_TYPE = "transformer"
 LOAD_MODEL_FROM_ORACLE = True
 
-NUM_SKIP_STEPS = 4 if PHASE == 'single' else 10
 
 if PHASE == 'single':
     num_skip_steps = 4
@@ -37,11 +37,11 @@ elif PHASE == 'multi':
     LOCAL_OR_ORACLE = 'oracle'
     LOAD_MODEL_FROM_ORACLE = True
 elif PHASE == 'lorenz':
-    num_skip_steps = 5
+    num_skip_steps = 1
     LATENT_DIM = 16
     NUM_STATES = 1
     LOCAL_OR_ORACLE = 'local'
-    LOAD_MODEL_FROM_ORACLE = True
+    LOAD_MODEL_FROM_ORACLE = False
 elif PHASE == 'wave':
     num_skip_steps = 1
     LATENT_DIM = 8
@@ -55,13 +55,13 @@ elif PHASE == 'wave':
 if PHASE == 'multi':
     ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit' #'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
 elif PHASE == 'lorenz':
-    #MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
-    ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_16_latent_0.001_consistency_0.01_channels_64_layers_3_trans_layers_1_embedding_64_vit'
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
+    ORACLE_MODEL_LOAD_PATH = None#f'{PHASE}_phase/autoencoders/WAE_16_latent_0.001_consistency_0.01_channels_64_layers_3_trans_layers_1_embedding_64_vit'
 elif PHASE == 'single':
     MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_vit_conv_{LATENT_DIM}_1_trans_layer"
     ORACLE_MODEL_LOAD_PATH = None
 elif PHASE == 'wave':
-    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE_2_layers"
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
     ORACLE_MODEL_LOAD_PATH = None
 
 object_storage_client = ObjectStorageClientWrapper(
@@ -90,18 +90,12 @@ time_stepper = load_trained_time_stepping_model(
     model_type=TIME_STEPPING_MODEL_TYPE,
 )
 if TIME_STEPPING_MODEL_TYPE == 'transformer':
-    input_seq_len = 16#time_stepper.input_seq_len
+    input_seq_len = 150
 else:
     input_seq_len = 32
 
 time_stepper.eval()
 
-
-"""
-PREPROCESSOR_PATH = f'trained_preprocessors/{PHASE}_phase_preprocessor.pkl'
-with open(PREPROCESSOR_PATH, 'rb') as f:
-    preprocessor = pickle.load(f)
-"""
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
@@ -111,14 +105,12 @@ preprocessor = object_storage_client.get_preprocessor(
     source_path=PREPROCESSOR_PATH
 )
 
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
+LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/test'
 
 BUCKET_NAME = "bucket-20230222-1753"
-ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/test'
+ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
 SAMPLE_IDS = range(0, 1)
-
-
 
 dataset = AEDataset(
     oracle_path=ORACLE_LOAD_PATH if LOCAL_OR_ORACLE == 'oracle' else None,                                                          
@@ -128,7 +120,6 @@ dataset = AEDataset(
     num_skip_steps=num_skip_steps,
     end_time_index=None,
     filter=True if PHASE == 'multi' else False,
-    #states_to_include=(1,2) if PHASE == "multi" else None,
 )
 
 dataloader = torch.utils.data.DataLoader(
@@ -140,7 +131,9 @@ dataloader = torch.utils.data.DataLoader(
 
 def main():
 
-    num_steps = 1200
+    t1 = time.time()
+
+    num_steps = 500
 
     for i, (state, pars) in enumerate(dataloader):
         state = state.to(DEVICE)
@@ -158,8 +151,11 @@ def main():
 
             latent_state = AE.encode(state)
 
+
+
             #latent_state = savgol_filter(latent_state.detach().numpy(), 10, 1, axis=-1)
             #latent_state = torch.tensor(latent_state, dtype=torch.float32)
+
 
             pred_latent_state = time_stepper.multistep_prediction(
                 latent_state[:, :, 0:input_seq_len],
@@ -180,11 +176,14 @@ def main():
 
         print(f'{i}: {preprocessor.inverse_transform_pars(pars, ensemble=True)}')
     
+    t2 = time.time()
+    print(f'Time: {(t2-t1)/len(SAMPLE_IDS)}')
+
     if TIME_STEPPING_MODEL_TYPE != 'FNO':
-        latent_state = latent_state.detach().numpy()
-        pred_latent_state = pred_latent_state.detach().numpy()
-    state = state.detach().numpy()
-    pred_recon_state = pred_recon_state.detach().numpy()
+        latent_state = latent_state.detach().to('cpu').numpy()
+        pred_latent_state = pred_latent_state.detach().to('cpu').numpy()
+    state = state.detach().to('cpu').numpy()
+    pred_recon_state = pred_recon_state.detach().to('cpu').numpy()
 
     num_latent_to_plot = 4
     plt.figure(figsize=(15,5))
@@ -197,13 +196,13 @@ def main():
 
         plt.plot(pred_latent_state[0, 0, :num_steps], label='pred latent state', color='tab:orange')
         for i in range(1, num_latent_to_plot):
-            plt.plot(pred_latent_state[0, i, :num_steps], color='tab:orange') 
+            plt.plot(pred_latent_state[0, i, :num_steps], color='tab:orange')
         plt.legend()
         plt.show()
 
     time_step_to_plot_1 = 100
-    time_step_to_plot_2 = 500
-    time_step_to_plot_3 = -1
+    time_step_to_plot_2 = 100
+    time_step_to_plot_3 = 500
     
     plt.figure()
     plt.subplot(1, 3, 1)
@@ -215,24 +214,26 @@ def main():
     plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_3], color='tab:orange')
     plt.legend()
 
-    plt.subplot(1, 3, 2)
-    plt.plot(state[0, 1, :, time_step_to_plot_1], color='tab:blue', label=f'HF, t={time_step_to_plot_1}')
-    plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_1], label='pred state', color='tab:orange')
-    #plt.plot(state[0, 1, :, time_step_to_plot_2], color='tab:blue', label=f'HF, t={time_step_to_plot_2}')
-    #plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_2], color='tab:orange')
-    plt.plot(state[0, 1, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
-    plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_3], color='tab:orange')
-    plt.legend()
+    if PHASE != 'lorenz':
 
-    if PHASE == 'multi':
-        plt.subplot(1, 3, 3)
-        plt.plot(state[0, 2, :, time_step_to_plot_1], color='tab:blue', label=f'HF, t={time_step_to_plot_1}')
-        plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_1], label='pred state', color='tab:orange')
-        plt.plot(state[0, 2, :, time_step_to_plot_2], color='tab:blue', label=f'HF, t={time_step_to_plot_2}')
-        plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_2], color='tab:orange')
-        #plt.plot(state[0, 2, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
-        #plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_3], color='tab:orange')
+        plt.subplot(1, 3, 2)
+        plt.plot(state[0, 1, :, time_step_to_plot_1], color='tab:blue', label=f'HF, t={time_step_to_plot_1}')
+        plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_1], label='pred state', color='tab:orange')
+        #plt.plot(state[0, 1, :, time_step_to_plot_2], color='tab:blue', label=f'HF, t={time_step_to_plot_2}')
+        #plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_2], color='tab:orange')
+        plt.plot(state[0, 1, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
+        plt.plot(pred_recon_state[0, 1, :, time_step_to_plot_3], color='tab:orange')
         plt.legend()
+
+        if PHASE == 'multi':
+            plt.subplot(1, 3, 3)
+            plt.plot(state[0, 2, :, time_step_to_plot_1], color='tab:blue', label=f'HF, t={time_step_to_plot_1}')
+            plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_1], label='pred state', color='tab:orange')
+            plt.plot(state[0, 2, :, time_step_to_plot_2], color='tab:blue', label=f'HF, t={time_step_to_plot_2}')
+            plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_2], color='tab:orange')
+            #plt.plot(state[0, 2, :, time_step_to_plot_3], color='tab:blue', label=f'HF, t={time_step_to_plot_3}')
+            #plt.plot(pred_recon_state[0, 2, :, time_step_to_plot_3], color='tab:orange')
+            plt.legend()
     plt.show()
 
 
@@ -240,7 +241,10 @@ def main():
         t_vec = np.arange(0, 45, 0.03535)
         t_vec = t_vec[:pred_recon_state.shape[-1]]
 
-        x = np.linspace(0, 25.6, 512)
+        if PHASE == 'wave':
+            x = np.linspace(0, 25.6, 512)
+        elif PHASE == 'multi':
+            x = np.linspace(0, 5000, 512)
 
         fig, ax = plt.subplots()
         #xdata, ydata, ydata_1 = [], [], []
@@ -249,16 +253,20 @@ def main():
         ax.grid()
 
         def init():
-            ax.set_xlim(0, 25.6)
-            ax.set_ylim(-0.025, 0.025)
+            if PHASE == 'wave':
+                ax.set_xlim(0, 25.6)
+                ax.set_ylim(-0.025, 0.025)
+            elif PHASE == 'multi':
+                ax.set_xlim(0, 5000)
+                ax.set_ylim(0.3, 2)
             return ln,
     
         def update(frame):
             #xdata.append(x)
             #ydata.append(state[0, :, frame])
             #ydata_1.append(pred_recon_state[0, :, frame])
-            ln.set_data(x, state[0, 0, :, frame], )
-            ln_1.set_data(x, pred_recon_state[0, 0, :, frame],)
+            ln.set_data(x, state[0, 2, :, frame], )
+            ln_1.set_data(x, pred_recon_state[0, 2, :, frame],)
             plt.legend([f'High-fidelity', f'Neural network'])
             plt.xlabel('x')
             plt.ylabel('\eta')
@@ -273,7 +281,8 @@ def main():
             blit=True,
             interval=10,
             )
-        ani.save('submerged_bar.gif', fps=30)
+        save_string = f'./{PHASE}.gif'
+        ani.save(save_string, fps=30)
         plt.show()
 
 if __name__ == "__main__":

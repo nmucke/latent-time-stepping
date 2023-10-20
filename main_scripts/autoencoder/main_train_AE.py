@@ -35,10 +35,10 @@ torch.set_default_dtype(torch.float32)
 CONTIUE_TRAINING = True
 LOCAL_OR_ORACLE = 'local'
 
-PHASE = "wave"
+PHASE = "lorenz"
 
 MODEL_TYPE = "WAE"
-MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_2_layers"
+MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 create_directory(MODEL_SAVE_PATH)
 
 CUDA = True
@@ -76,15 +76,19 @@ preprocessor = object_storage_client.get_preprocessor(
 if PHASE == 'single':
     num_skip_steps = 4
     NUM_SAMPLES = 2500
+    end_time_index = 100000
 elif PHASE == 'multi':
     num_skip_steps = 10
     NUM_SAMPLES = 5000
+    end_time_index = 100000
 elif PHASE == 'lorenz':
-    num_skip_steps = 5
+    num_skip_steps = 1
     NUM_SAMPLES = 3000
+    end_time_index = 2000
 elif PHASE == 'wave':
     num_skip_steps = 1
-    NUM_SAMPLES = 110
+    NUM_SAMPLES = 210
+    end_time_index = 100000
 
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
@@ -104,7 +108,7 @@ def main():
         num_skip_steps=num_skip_steps,
         #states_to_include=(1, 2) if PHASE == 'multi' else None,
         filter=True if PHASE == 'multi' else False,
-        #end_time_index=15000,
+        end_time_index=end_time_index,
     )
 
     train_dataset, val_dataset = torch.utils.data.random_split(

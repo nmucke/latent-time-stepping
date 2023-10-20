@@ -19,7 +19,7 @@ NUM_SKIP_STEPS = 1
 END_TIME_INDEX = 10000
 
 LOCAL_OR_ORACLE = 'local'
-PHASE = 'wave'
+PHASE = 'lorenz'
 TRAIN_OR_TEST = 'train'
 
 NUM_WORKERS = 8
@@ -46,12 +46,12 @@ elif PHASE == 'multi':
     NUM_SAMPLES = 5000
 elif PHASE == 'lorenz':
     NUM_STATES = 1
-    num_skip_steps = 5
+    num_skip_steps = 1
     NUM_SAMPLES = 3000
 elif PHASE == 'wave':
     NUM_STATES = 2
     num_skip_steps = 1
-    NUM_SAMPLES = 110
+    NUM_SAMPLES = 210
 
 SAMPLE_IDS = range(NUM_SAMPLES)
 

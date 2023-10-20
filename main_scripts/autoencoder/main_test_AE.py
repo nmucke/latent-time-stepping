@@ -17,7 +17,7 @@ from scipy.signal import savgol_filter
 
 DEVICE = 'cpu'
 
-PHASE = "wave"
+PHASE = "lorenz"
 MODEL_TYPE = "WAE"
 LATENT_DIM = 8 if PHASE == 'multi' else 16
 TRANSPOSED = True
@@ -39,14 +39,14 @@ elif PHASE == 'multi':
     num_skip_steps = 10
     NUM_STATES = 3
 elif PHASE == 'lorenz':
-    num_skip_steps = 5
+    num_skip_steps = 1
     NUM_STATES = 1
 elif PHASE == 'wave':
     num_skip_steps = 1
     NUM_STATES = 2
 
 #MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
-MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_2_layers"
+MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"#_2_layers"
 #MODEL_LOAD_PATH = f"trained_models/autoencoders/multi_phase_WAE_16_embedding_32_latent_0.001_consistency_0.001"
 
 #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_{LATENT_DIM}_256_channels'
@@ -76,7 +76,7 @@ else:
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
 NUM_SAMPLES = 10
-SAMPLE_IDS = range(NUM_SAMPLES)
+SAMPLE_IDS = range(0,NUM_SAMPLES)
 
 dataset = AEDataset(
     oracle_path=ORACLE_LOAD_PATH if LOCAL_OR_ORACLE == 'oracle' else None,                                                          
@@ -93,7 +93,7 @@ dataloader = torch.utils.data.DataLoader(
     dataset=dataset,
     batch_size=1,
     shuffle=False,
-    num_workers=NUM_SAMPLES,
+    num_workers=1,
 )
 
 def main():
@@ -231,8 +231,8 @@ def main():
                                 
                                 plt.figure(figsize=(20, 10))
                                 plt.subplot(2, 4, 1)
-                                plt.plot(recon_state[0, :, 150], label="Reconstructed", color='tab:orange')
-                                plt.plot(hf_trajectory[0, :, 150], label="H1igh Fidelity", color='tab:blue')
+                                plt.plot(recon_state[0, :, 10], label="Reconstructed", color='tab:orange')
+                                plt.plot(hf_trajectory[0, :, 10], label="H1igh Fidelity", color='tab:blue')
                                 plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
                                 plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
                                 plt.legend()

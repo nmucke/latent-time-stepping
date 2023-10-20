@@ -539,64 +539,6 @@ class Encoder(nn.Module):
                 bias=False,
             )
 
-        '''
-        self.conv_list = nn.ModuleList()
-        for i in range(len(self.num_channels)-1):
-            self.conv_list.append(
-                nn.Conv1d(
-                    in_channels=self.num_channels[i],
-                    out_channels=self.num_channels[i+1],
-                    kernel_size=self.kernel_size,
-                    bias=False,
-                    stride=1,
-                    padding=self.padding,
-                )
-            )
-        
-        self.batchnorm_list = nn.ModuleList()
-        for i in range(len(self.num_channels)-1):
-            self.batchnorm_list.append(
-                nn.BatchNorm1d(
-                    num_features=self.num_channels[i+1],
-                )
-            )
-        
-        self.down = nn.ModuleList()
-        for i in range(len(self.num_channels)-1):
-            self.down.append(
-                DownSample(
-                    channels=self.num_channels[i+1],
-                )
-            )
-            
-        out_size = 256//2**(len(self.num_channels)-1)
-        
-        self.flatten = nn.Flatten()
-
-        self.fc1 = nn.Linear(
-            in_features=self.num_channels[-1]*out_size,
-            out_features=self.latent_dim,
-            bias=False
-        )
-        self.attention = EncoderLayer(
-            embed_dim=self.num_channels[-1],
-            num_heads=8,
-            embed_hidden_dim=self.num_channels[-1],
-            p=0.1
-            )
-            
-        self.positional_encoding = PositionalEmbedding(
-            embed_dim=self.num_channels[-1]
-        )
-
-        self.attn1 = AttnBlock(
-            channels=self.num_channels[-1]
-        )
-        
-        self.attn2 = AttnBlock(
-            channels=self.num_channels[-1]
-        )
-        '''
 
     def _reshape_input(
         self, 
@@ -655,6 +597,7 @@ class Decoder(nn.Module):
         vit: bool = False,
         embedding_dim: int = None,
         num_transformer_layers: int = 2,
+        padding_mode: str = 'edge',
         ):
         super().__init__()
 
@@ -663,6 +606,8 @@ class Decoder(nn.Module):
         self.resnet = resnet
         self.transposed = transposed
         self.vit = vit
+        self.pars_dim = pars_dim
+        self.padding_mode = padding_mode
 
         self.embedding_dim = embedding_dim
         
@@ -708,43 +653,25 @@ class Decoder(nn.Module):
             )
         )
 
-        self.pars_embed_1 = nn.Linear(
-            in_features=pars_dim,
-            out_features=pars_embed_channels,
-            bias=True,
-        )
-        self.pars_embed_2 = nn.Linear(
-            in_features=pars_embed_channels,
-            out_features=pars_embed_channels * init_dim,# if not self.vit else self.num_channels[0] * init_dim,
-            bias=True,
-        )
-
-        '''
-        if self.vit:
-            self.unflatten = nn.Unflatten(1, (init_dim, self.num_channels[0]))
-
-            self.pars_transformer = nn.TransformerEncoder(
-                nn.TransformerEncoderLayer(
-                    d_model=self.num_channels[0],
-                    nhead=4,
-                    dim_feedforward=self.num_channels[0]*2,
-                ),
-                num_layers=1,
+        if self.pars_dim is not None:
+            self.pars_embed_1 = nn.Linear(
+                in_features=pars_dim,
+                out_features=pars_embed_channels,
+                bias=True,
             )
-            self.pars_state_transformer = nn.TransformerDecoder(
-                nn.TransformerDecoderLayer(
-                    d_model=self.num_channels[0],
-                    nhead=4,
-                    dim_feedforward=self.num_channels[0]*2,
-                ),
-                num_layers=1,
+            self.pars_embed_2 = nn.Linear(
+                in_features=pars_embed_channels,
+                out_features=pars_embed_channels * init_dim,# if not self.vit else self.num_channels[0] * init_dim,
+                bias=True,
             )
+            
+            self.pars_unflatten = nn.Unflatten(1, (pars_embed_channels, init_dim))
 
-        else:
-        '''
-        self.pars_unflatten = nn.Unflatten(1, (pars_embed_channels, init_dim))
         self.state_unflatten = nn.Unflatten(1, (self.num_channels[0], init_dim))
-        self.num_channels[0] += pars_embed_channels
+
+        if self.pars_dim is not None:
+            self.num_channels[0] += pars_embed_channels
+        
 
         self.conv_blocks = nn.ModuleList()
         if self.resnet:
@@ -813,6 +740,10 @@ class Decoder(nn.Module):
         
 
         self.edge_padding = torchvision.transforms.Pad(padding=[self.padding, 0], padding_mode="edge")
+        #if self.padding_mode == "edge":
+        #    self.edge_padding = torchvision.transforms.Pad(padding=[self.padding, 0], padding_mode="edge")
+        #elif self.padding_mode == "periodic":
+        #    self.edge_padding = torchvision.transforms.Pad(padding=[self.padding, 0], padding_mode="circular")
 
         self.final_conv = nn.Conv1d(
             in_channels=self.num_channels[-1],
@@ -835,7 +766,7 @@ class Decoder(nn.Module):
 
         return x
 
-    def forward(self, x, pars):
+    def forward(self, x, pars=None):
 
         batch_size = x.shape[0]
         latent_dim = x.shape[1]
@@ -843,14 +774,13 @@ class Decoder(nn.Module):
 
         x = self._reshape_input(x, batch_size, latent_dim, num_time_steps)
         
-        pars = self.pars_embed_1(pars)
-        pars = self.activation(pars)
-        pars = self.pars_embed_2(pars)
-        pars = self.activation(pars)
+        if self.pars_dim is not None:
+            pars = self.pars_embed_1(pars)
+            pars = self.activation(pars)
+            pars = self.pars_embed_2(pars)
+            pars = self.activation(pars)
 
-
-        #if not self.vit:
-        pars = self.pars_unflatten(pars)
+            pars = self.pars_unflatten(pars)
 
         x = self.init_dense_layer(x)
         x = self.activation(x)
@@ -860,8 +790,9 @@ class Decoder(nn.Module):
 
         x = self.state_unflatten(x)
 
-        pars = torch.repeat_interleave(pars, repeats=num_time_steps, dim=0)
-        x = torch.cat([x, pars], dim=1)
+        if self.pars_dim is not None:
+            pars = torch.repeat_interleave(pars, repeats=num_time_steps, dim=0)
+            x = torch.cat([x, pars], dim=1)
 
         for conv_block in self.conv_blocks:
             x = conv_block(x)

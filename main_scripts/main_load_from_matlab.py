@@ -8,7 +8,7 @@ from latent_time_stepping.utils import create_directory
 
 def main():
 
-    num_samples = 150
+    num_samples = 210
     train_or_test = 'train'
     
     data_load_path = f'../allan/2DBarTestExperiment/data/{train_or_test}'

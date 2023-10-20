@@ -60,14 +60,14 @@ elif PHASE == 'multi':
     NUM_SAMPLES = 5000
     LOAD_MODEL_FROM_ORACLE = True
 elif PHASE == 'lorenz':
-    num_skip_steps = 5
-    NUM_SAMPLES = 2000
+    num_skip_steps = 1
+    NUM_SAMPLES = 1000
     NUM_STATES = 1
     NUM_PARS = 1
     LOAD_MODEL_FROM_ORACLE = True
 elif PHASE == 'wave':
     num_skip_steps = 1
-    NUM_SAMPLES = 110
+    NUM_SAMPLES = 210
     NUM_STATES = 2
     NUM_PARS = 1
     LOAD_MODEL_FROM_ORACLE = False
