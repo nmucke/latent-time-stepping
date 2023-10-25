@@ -1,0 +1,62 @@
+dataloader_args:
+  batch_size: 4
+  num_workers: 4
+  shuffle: true
+model_args:
+  decoder:
+    activation: leaky_relu
+    embedding_dim:
+    - 32
+    - 32
+    - 32
+    - 32
+    - 32
+    kernel_size: 5
+    latent_dim: 8
+    num_channels:
+    - 64
+    - 32
+    - 16
+    - 8
+    - 4
+    - 1
+    num_transformer_layers: 1
+    pars_dim: null
+    resnet: false
+    space_dim: 256
+    transposed: false
+    vit: true
+  encoder:
+    activation: leaky_relu
+    embedding_dim:
+    - 32
+    - 32
+    - 32
+    - 32
+    - 32
+    kernel_size: 5
+    latent_dim: 8
+    num_channels:
+    - 1
+    - 4
+    - 8
+    - 16
+    - 32
+    - 64
+    num_transformer_layers: 1
+    resnet: false
+    space_dim: 256
+    vit: true
+optimizer_args:
+  learning_rate: 0.0001
+  scheduler_args:
+    factor: 0.9
+    patience: 10
+  weight_decay: 1.0e-10
+train_args:
+  num_epochs: 2000
+  patience: 50
+train_stepper_args:
+  consistency_loss_regu: 0.1
+  latent_loss_regu: 0.0001
+  mixed_precision: false

@@ -17,7 +17,7 @@ from scipy.signal import savgol_filter
 
 DEVICE = 'cpu'
 
-PHASE = "lorenz"
+PHASE = "burgers"
 MODEL_TYPE = "WAE"
 LATENT_DIM = 8 if PHASE == 'multi' else 16
 TRANSPOSED = True
@@ -44,6 +44,9 @@ elif PHASE == 'lorenz':
 elif PHASE == 'wave':
     num_skip_steps = 1
     NUM_STATES = 2
+elif PHASE == 'burgers':
+    num_skip_steps = 1
+    NUM_STATES = 1
 
 #MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}_vit_conv_{LATENT_DIM}_1_trans_layer"
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"#_2_layers"
@@ -75,7 +78,7 @@ else:
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
-NUM_SAMPLES = 10
+NUM_SAMPLES = 5
 SAMPLE_IDS = range(0,NUM_SAMPLES)
 
 dataset = AEDataset(
@@ -195,8 +198,9 @@ def main():
                                     #recon_state = savgol_filter(recon_state.detach().numpy(), 15, 1, axis=-2)
                                     #recon_state = torch.tensor(recon_state, dtype=torch.float32)
 
-                                    recon_state = preprocessor.inverse_transform_state(recon_state, ensemble=True)
-                                    state = preprocessor.inverse_transform_state(state, ensemble=True)
+                                    if preprocessor is not None:
+                                        recon_state = preprocessor.inverse_transform_state(recon_state, ensemble=True)
+                                        state = preprocessor.inverse_transform_state(state, ensemble=True)
                                     recon_state = recon_state.detach()
 
                                     e = 0
@@ -231,14 +235,14 @@ def main():
                                 
                                 plt.figure(figsize=(20, 10))
                                 plt.subplot(2, 4, 1)
-                                plt.plot(recon_state[0, :, 10], label="Reconstructed", color='tab:orange')
-                                plt.plot(hf_trajectory[0, :, 10], label="H1igh Fidelity", color='tab:blue')
+                                plt.plot(recon_state[0, :, 3], label="Reconstructed", color='tab:orange')
+                                plt.plot(hf_trajectory[0, :, 3], label="H1igh Fidelity", color='tab:blue')
                                 plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
                                 plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
                                 plt.legend()
                                 plt.subplot(2, 4, 2)
-                                plt.plot(recon_state[-1, :, 150], label="Reconstructed", color='tab:orange')
-                                plt.plot(hf_trajectory[-1, :, 150], label="High Fidelity", color='tab:blue')
+                                plt.plot(recon_state[-1, :, 7], label="Reconstructed", color='tab:orange')
+                                plt.plot(hf_trajectory[-1, :, 7], label="High Fidelity", color='tab:blue')
                                 plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
                                 plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
                                 plt.legend()

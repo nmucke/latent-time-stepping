@@ -19,7 +19,7 @@ NUM_SKIP_STEPS = 1
 END_TIME_INDEX = 10000
 
 LOCAL_OR_ORACLE = 'local'
-PHASE = 'lorenz'
+PHASE = 'burgers'
 TRAIN_OR_TEST = 'train'
 
 NUM_WORKERS = 8
@@ -52,6 +52,11 @@ elif PHASE == 'wave':
     NUM_STATES = 2
     num_skip_steps = 1
     NUM_SAMPLES = 210
+elif PHASE == 'burgers':
+
+    NUM_STATES = 1
+    num_skip_steps = 1
+    NUM_SAMPLES = 1000
 
 SAMPLE_IDS = range(NUM_SAMPLES)
 

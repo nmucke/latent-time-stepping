@@ -32,10 +32,10 @@ torch.set_float32_matmul_precision('medium')
 
 torch.set_default_dtype(torch.float32)
 
-CONTIUE_TRAINING = True
+CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'local'
 
-PHASE = "lorenz"
+PHASE = "burgers"
 
 MODEL_TYPE = "WAE"
 MODEL_SAVE_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
@@ -89,6 +89,12 @@ elif PHASE == 'wave':
     num_skip_steps = 1
     NUM_SAMPLES = 210
     end_time_index = 100000
+elif PHASE == 'burgers':
+    num_skip_steps = 1
+    NUM_SAMPLES = 1000
+    end_time_index = 300
+    preprocessor = None
+
 
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.2
