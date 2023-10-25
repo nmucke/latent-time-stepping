@@ -11,7 +11,7 @@ torch.set_default_dtype(torch.float32)
 
 DEVICE = 'cuda'
 
-PHASE = "lorenz"
+PHASE = "burgers"
 MODEL_TYPE = "WAE"
 
 TRANSPOSED = True
@@ -44,6 +44,12 @@ elif PHASE == 'wave':
     num_skip_steps = 1
     NUM_SAMPLES = 210
     NUM_STATES = 2
+    NUM_PARS = 1
+    LOAD_MODEL_FROM_ORACLE = False
+elif PHASE == 'burgers':
+    num_skip_steps = 1
+    NUM_SAMPLES = 1000
+    NUM_STATES = 1
     NUM_PARS = 1
     LOAD_MODEL_FROM_ORACLE = False
 

@@ -57,6 +57,6 @@ train_args:
   num_epochs: 2000
   patience: 50
 train_stepper_args:
-  consistency_loss_regu: 0.1
-  latent_loss_regu: 0.0001
+  consistency_loss_regu: 0.001
+  latent_loss_regu: 0.001
   mixed_precision: false

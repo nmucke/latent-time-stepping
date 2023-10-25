@@ -36,8 +36,8 @@ optimizer_args:
     patience: 10
 
 train_stepper_args:
-  latent_loss_regu: 1.0e-4
-  consistency_loss_regu: 1.0e-1
+  latent_loss_regu: 1.0e-3
+  consistency_loss_regu: 1.0e-3
   mixed_precision: False
 
 train_args:

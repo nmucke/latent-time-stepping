@@ -93,7 +93,6 @@ elif PHASE == 'burgers':
     num_skip_steps = 1
     NUM_SAMPLES = 1000
     end_time_index = 300
-    preprocessor = None
 
 
 TRAIN_RATIO = 0.8

@@ -26,7 +26,7 @@ CONTINUE_TRAINING = False
 
 MODEL_TYPE = "transformer"
 
-PHASE = "lorenz"
+PHASE = "burgers"
 
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
 with open(config_path) as f:
@@ -69,6 +69,12 @@ elif PHASE == 'wave':
     num_skip_steps = 1
     NUM_SAMPLES = 210
     NUM_STATES = 2
+    NUM_PARS = 1
+    LOAD_MODEL_FROM_ORACLE = False
+elif PHASE == 'burgers':
+    num_skip_steps = 1
+    NUM_SAMPLES = 1000
+    NUM_STATES = 1
     NUM_PARS = 1
     LOAD_MODEL_FROM_ORACLE = False
 
