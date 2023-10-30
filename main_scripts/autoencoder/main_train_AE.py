@@ -32,7 +32,7 @@ torch.set_float32_matmul_precision('medium')
 
 torch.set_default_dtype(torch.float32)
 
-CONTIUE_TRAINING = False
+CONTIUE_TRAINING = True
 LOCAL_OR_ORACLE = 'local'
 
 PHASE = "burgers"
@@ -52,7 +52,7 @@ ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 if PHASE == 'multi':
     LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/train'
 else:
-    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/test'
 
 PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
 
@@ -91,13 +91,15 @@ elif PHASE == 'wave':
     end_time_index = 100000
 elif PHASE == 'burgers':
     num_skip_steps = 1
-    NUM_SAMPLES = 1000
+    NUM_SAMPLES = 1024
     end_time_index = 300
 
 
 TRAIN_RATIO = 0.8
-VAL_RATIO = 0.2
-TRAIN_SAMPLE_IDS = range(NUM_SAMPLES)
+
+FULL_SAMPLE_IDS = range(NUM_SAMPLES)
+num_train_samples = int(TRAIN_RATIO*NUM_SAMPLES)
+num_val_samples = NUM_SAMPLES - num_train_samples
 
 
 def main():
@@ -106,7 +108,7 @@ def main():
     dataset = AEDataset(
         oracle_path=ORACLE_LOAD_PATH if LOCAL_OR_ORACLE == 'oracle' else None,
         local_path = LOCAL_LOAD_PATH if LOCAL_OR_ORACLE == 'local' else None,
-        sample_ids=TRAIN_SAMPLE_IDS,
+        sample_ids=FULL_SAMPLE_IDS,
         load_entire_dataset=False,
         num_random_idx_divisor=None,#2 if PHASE == 'multi' else None,
         preprocessor=preprocessor,
@@ -118,7 +120,7 @@ def main():
 
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset,
-        [int(TRAIN_RATIO*len(dataset)), int(VAL_RATIO*len(dataset))]
+        [num_train_samples, num_val_samples]
     )
     
     train_dataloader = torch.utils.data.DataLoader(

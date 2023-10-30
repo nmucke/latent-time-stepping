@@ -165,12 +165,12 @@ def simulate_burgers(
 def main():
 
 
-    TRAIN_OR_TEST = 'train'
+    TRAIN_OR_TEST = 'test'
 
     # Create directory if it does not exist
     #create_directory(save_string)
 
-    u_list = np.random.uniform(low=0.5, high=1.5, size=1024)
+    u_list = np.random.uniform(low=0.5, high=1.5, size=20)
 
     remote_list = []
     for idx, u in enumerate(u_list):

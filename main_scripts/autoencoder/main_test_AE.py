@@ -74,7 +74,7 @@ preprocessor = object_storage_client.get_preprocessor(
 if PHASE == 'multi':
     LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/test'
 else:
-    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/test'
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
@@ -87,7 +87,7 @@ dataset = AEDataset(
     sample_ids=SAMPLE_IDS,
     preprocessor=preprocessor,
     num_skip_steps=num_skip_steps,
-    end_time_index=None,
+    end_time_index=300,
     filter=True if PHASE == 'multi' else False,
     #states_to_include=(1,2) if PHASE == "multi" else None,
 )
@@ -210,9 +210,13 @@ def main():
                                     L2_error.append(e)
 
                                     latent_state_list.append(latent_state.detach().numpy())
+
+                                    RMSE = torch.sqrt(torch.mean((state - recon_state) ** 2))
                                     
                                 print(f'Number of parameters: {num_params:.3e}')
                                 print(f"Average L2 Error: {torch.mean(torch.stack(L2_error))}")
+                                print(f"Average RMSE: {RMSE}")
+
 
                                 recon_state = recon_state[0].detach().numpy()
                                 hf_trajectory = state[0].detach().numpy()
