@@ -47,7 +47,7 @@ def train_remote(
 ):  
     
     CONTINUE_TRAINING = False
-    PHASE = phase
+    PHASE = 'burgers'
 
     if PHASE == 'single':
         num_skip_steps = 4
@@ -55,6 +55,8 @@ def train_remote(
         num_skip_steps = 10
     elif PHASE == 'lorenz':
         num_skip_steps = 5
+    elif PHASE == 'burgers':
+        num_skip_steps = 1
 
     #latent_dim = 4 if PHASE == "single" else 8
 
@@ -68,13 +70,17 @@ def train_remote(
         NUM_SAMPLES = 2500
     elif PHASE == "lorenz":
         NUM_SAMPLES = 2000
+    elif PHASE == "burgers":
+        NUM_SAMPLES = 1024
     else:
         NUM_SAMPLES = 5000
 
     TRAIN_RATIO = 0.8
-    VAL_RATIO = 0.2
 
-    SAMPLE_IDS = range(NUM_SAMPLES)
+    FULL_SAMPLE_IDS = range(NUM_SAMPLES)
+    num_train_samples = int(TRAIN_RATIO*NUM_SAMPLES)
+    num_val_samples = NUM_SAMPLES - num_train_samples
+
 
     config_path = f"configs/neural_networks/{PHASE}_phase_WAE.yml"
     with open(config_path) as f:
@@ -98,7 +104,7 @@ def train_remote(
     dataset = AEDataset(
         #oracle_path=ORACLE_LOAD_PATH,
         local_path=LOCAL_LOAD_PATH,
-        sample_ids=SAMPLE_IDS,
+        sample_ids=FULL_SAMPLE_IDS,
         load_entire_dataset=False,
         num_random_idx_divisor=None if PHASE == "multi" else None,
         preprocessor=preprocessor,
@@ -109,7 +115,7 @@ def train_remote(
 
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset,
-        [int(TRAIN_RATIO*len(dataset)), int(VAL_RATIO*len(dataset))]
+        [num_train_samples, num_val_samples]
     )
     
     train_dataloader = torch.utils.data.DataLoader(
@@ -241,13 +247,13 @@ def main():
     resnet_list = [False]
     vit_list = [True]
 
-    num_channels_list = [128, 64]
+    num_channels_list = [128, 64, 32]
 
-    embedding_dim_list = [64]
+    embedding_dim_list = [64, 32]
     latent_loss_regu_list = [1e-3, 1e-4]
     consistency_loss_regu_list = [1e-2, 1e-3]
 
-    latent_dim_list = [8]
+    latent_dim_list = [8, 12, 16]
 
     num_transformer_layers_list = [1, 2]
 
@@ -259,7 +265,7 @@ def main():
     elif PHASE == "multi":
         num_layers_list = [6, 7]
     else:
-        num_layers_list = [3]
+        num_layers_list = [4, 5]
 
 
     for transposed in transposed_list:

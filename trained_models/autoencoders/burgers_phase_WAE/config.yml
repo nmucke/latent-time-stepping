@@ -11,14 +11,13 @@ model_args:
     - 32
     - 32
     - 32
-    kernel_size: 7
+    kernel_size: 3
     latent_dim: 16
     num_channels:
     - 32
     - 16
     - 8
     - 4
-    - 2
     - 1
     num_transformer_layers: 1
     pars_dim: null
@@ -34,11 +33,10 @@ model_args:
     - 32
     - 32
     - 32
-    kernel_size: 7
+    kernel_size: 3
     latent_dim: 16
     num_channels:
     - 1
-    - 2
     - 4
     - 8
     - 16

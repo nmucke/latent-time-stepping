@@ -32,7 +32,7 @@ torch.set_float32_matmul_precision('medium')
 
 torch.set_default_dtype(torch.float32)
 
-CONTIUE_TRAINING = True
+CONTIUE_TRAINING = False
 LOCAL_OR_ORACLE = 'local'
 
 PHASE = "burgers"
@@ -52,7 +52,7 @@ ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 if PHASE == 'multi':
     LOCAL_LOAD_PATH = f'../../../../../scratch2/ntm/data/{PHASE}_phase/raw_data/train'
 else:
-    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/test'
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
 PREPROCESSOR_PATH = f'{PHASE}_phase/preprocessor.pkl'
 

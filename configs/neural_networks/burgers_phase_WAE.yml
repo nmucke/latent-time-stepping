@@ -5,8 +5,8 @@ dataloader_args:
   
 model_args:
   encoder:
-    num_channels: [1, 2, 4, 8, 16, 32] #[2, 4, 8, 16, 32, 64] # 
-    kernel_size: 7
+    num_channels: [1, 4, 8, 16, 32] #[2, 4, 8, 16, 32, 64] # 
+    kernel_size: 3
     latent_dim: 16
     space_dim: 256
     resnet: False
@@ -15,8 +15,8 @@ model_args:
     embedding_dim: [32, 32, 32, 32, 32]
     num_transformer_layers: 1
   decoder:
-    num_channels: [32, 16, 8, 4, 2, 1] #[64, 32, 16, 8, 4, 2] # 
-    kernel_size: 7
+    num_channels: [32, 16, 8, 4, 1] #[64, 32, 16, 8, 4, 2] # 
+    kernel_size: 3
     latent_dim: 16
     pars_dim: null
     space_dim: 256
