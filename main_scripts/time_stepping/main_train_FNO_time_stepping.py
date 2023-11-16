@@ -17,8 +17,7 @@ torch.backends.cuda.enable_flash_sdp(enabled=True)
 torch.set_float32_matmul_precision('medium')
 torch.backends.cuda.matmul.allow_tf32 = True
 
-CONTINUE_TRAINING = False
-
+CONTINUE_TRAINING = True
 MODEL_TYPE = "FNO"
 
 PHASE = "multi"
@@ -64,7 +63,7 @@ def main():
         local_path=LOCAL_LOAD_PATH,
         sample_ids=SAMPLE_IDS,
         preprocessor=preprocessor,
-        num_skip_steps=4,
+        num_skip_steps=10,
         **config['dataset_args'],
     )
 

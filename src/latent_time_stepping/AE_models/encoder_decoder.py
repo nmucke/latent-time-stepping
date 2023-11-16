@@ -781,7 +781,7 @@ class Decoder(nn.Module):
             pars = self.activation(pars)
 
             pars = self.pars_unflatten(pars)
-
+            
         x = self.init_dense_layer(x)
         x = self.activation(x)
         for dense in self.dense_layers:

@@ -48,10 +48,10 @@ elif PHASE == 'wave':
     LOAD_MODEL_FROM_ORACLE = False
 elif PHASE == 'burgers':
     num_skip_steps = 1
-    NUM_SAMPLES = 1000
+    NUM_SAMPLES = 1024
     NUM_STATES = 1
     NUM_PARS = 1
-    LOAD_MODEL_FROM_ORACLE = False
+    LOAD_MODEL_FROM_ORACLE = True
 
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 
@@ -66,6 +66,9 @@ elif PHASE == 'single':
 elif PHASE == 'wave':
     MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
     ORACLE_MODEL_LOAD_PATH = None
+elif PHASE == 'burgers':
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
+    ORACLE_MODEL_LOAD_PATH = 'burgers_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.001_channels_64_layers_4_trans_layers_2_embedding_64_vit'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'

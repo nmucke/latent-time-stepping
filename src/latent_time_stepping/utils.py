@@ -81,7 +81,10 @@ def load_trained_time_stepping_model(
             **config['model_args'],
         )
     else:
-        pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
+        if config['model_args']['parameter_encoder_args'] is not None:
+            pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
+        else:
+            pars_encoder = None
         model = TimeSteppingModel(
             pars_encoder=pars_encoder,
             **config['model_args']['time_stepping_decoder'],

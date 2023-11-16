@@ -1,14 +1,14 @@
 dataloader_args:
-  batch_size: 2
+  batch_size: 1
   num_workers: 4
   shuffle: true
 dataset_args:
-  input_seq_len: 32
+  input_seq_len: 1
   num_time_steps: 1000
-  output_seq_len: 32
+  output_seq_len: 16
 model_args:
   num_channels: 128
-  num_modes: 32
+  num_modes: 64
   num_pars: 2
   num_states: 3
   space_dim: 512

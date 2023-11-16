@@ -46,7 +46,6 @@ with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
 
 DEVICE = 'cuda'
 
-
 if PHASE == 'single':
     num_skip_steps = 4
     NUM_PARS = 2
@@ -105,7 +104,10 @@ def main():
     )
 
     if MODEL_TYPE == 'transformer':
-        pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
+        if config['model_args']['parameter_encoder_args'] is not None:
+            pars_encoder = ParameterEncoder(**config['model_args']['parameter_encoder_args'])
+        else:
+            pars_encoder = None
         model = TimeSteppingModel(
             pars_encoder=pars_encoder,
             **config['model_args']['time_stepping_decoder'],

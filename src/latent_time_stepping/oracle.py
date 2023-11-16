@@ -57,6 +57,15 @@ class ObjectStorageClientWrapper:
 
         self.fs = ocifs.OCIFileSystem(config)
 
+    def list_all_objects(self, prefix):
+        object_list = self.object_storage_client.list_objects(
+            self.namespace, 
+            self.bucket_name, 
+            prefix=prefix
+        )
+
+        return object_list.data.objects
+
     def put_numpy_object(self, data, destination_path): #, source_path):
 
         with self.fs.open(f'{self.bucket_name}@{self.namespace}/{destination_path}', 'wb') as f:

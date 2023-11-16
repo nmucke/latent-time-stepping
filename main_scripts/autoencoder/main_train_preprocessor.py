@@ -18,12 +18,12 @@ torch.set_default_dtype(torch.float32)
 NUM_SKIP_STEPS = 1
 END_TIME_INDEX = 10000
 
-LOCAL_OR_ORACLE = 'local'
-PHASE = 'burgers'
+LOCAL_OR_ORACLE = 'oracle'
+PHASE = 'multi'
 TRAIN_OR_TEST = 'train'
 
-NUM_WORKERS = 8
-BATCH_SIZE = 64
+NUM_WORKERS = 32
+BATCH_SIZE = 8
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/{TRAIN_OR_TEST}'
 BUCKET_NAME = "bucket-20230222-1753"

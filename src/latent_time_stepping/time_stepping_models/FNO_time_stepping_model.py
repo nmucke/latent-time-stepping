@@ -192,4 +192,4 @@ class FNOTimeSteppingModel(nn.Module):
             state = self.forward(input[:, :, :, -1], pars)
             input = torch.cat((input, state.unsqueeze(-1)), dim=-1)
         
-        return input
+        return input[:, :, :, -output_seq_len:]

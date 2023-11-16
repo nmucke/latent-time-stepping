@@ -18,7 +18,7 @@ ANIMATE = True
 
 DEVICE = 'cuda'
 
-PHASE = "multi"
+PHASE = "burgers"
 AE_MODEL_TYPE = "WAE"
 TIME_STEPPING_MODEL_TYPE = "transformer"
 LOAD_MODEL_FROM_ORACLE = True
@@ -48,6 +48,12 @@ elif PHASE == 'wave':
     NUM_STATES = 2
     LOCAL_OR_ORACLE = 'local'
     LOAD_MODEL_FROM_ORACLE = False
+elif PHASE == 'burgers':
+    num_skip_steps = 1
+    LATENT_DIM = 8
+    NUM_STATES = 1
+    LOCAL_OR_ORACLE = 'local'
+    LOAD_MODEL_FROM_ORACLE = True
 
 #LATENT_DIM = 8 if PHASE == 'multi' else 4
 
@@ -63,6 +69,9 @@ elif PHASE == 'single':
 elif PHASE == 'wave':
     MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
     ORACLE_MODEL_LOAD_PATH = None
+elif PHASE == 'burgers':
+    MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_WAE"
+    ORACLE_MODEL_LOAD_PATH = 'burgers_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.001_channels_64_layers_4_trans_layers_2_embedding_64_vit'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
@@ -92,7 +101,7 @@ time_stepper = load_trained_time_stepping_model(
 if TIME_STEPPING_MODEL_TYPE == 'transformer':
     input_seq_len = 150
 else:
-    input_seq_len = 32
+    input_seq_len = 20
 
 time_stepper.eval()
 
@@ -105,7 +114,7 @@ preprocessor = object_storage_client.get_preprocessor(
     source_path=PREPROCESSOR_PATH
 )
 
-LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/test'
+LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
@@ -133,49 +142,48 @@ def main():
 
     t1 = time.time()
 
-    num_steps = 500
+    num_steps = 300
 
-    for i, (state, pars) in enumerate(dataloader):
-        state = state.to(DEVICE)
-        pars = pars.to(DEVICE)
+    with torch.no_grad():
+        for i, (state, pars) in enumerate(dataloader):
+            state = state.to(DEVICE)
+            pars = pars.to(DEVICE)
 
 
-        if TIME_STEPPING_MODEL_TYPE == "FNO":
-            pred_recon_state = time_stepper.multistep_prediction(
-                input=state[0:1, :, :, 0:input_seq_len],
-                pars=pars,
-                output_seq_len=num_steps,
+            if TIME_STEPPING_MODEL_TYPE == "FNO":
+                pred_recon_state = time_stepper.multistep_prediction(
+                    input=state[0:1, :, :, 0:input_seq_len],
+                    pars=pars,
+                    output_seq_len=num_steps,
                 )
-            
-        else:
-
-            latent_state = AE.encode(state)
-
-
-
-            #latent_state = savgol_filter(latent_state.detach().numpy(), 10, 1, axis=-1)
-            #latent_state = torch.tensor(latent_state, dtype=torch.float32)
-
-
-            pred_latent_state = time_stepper.multistep_prediction(
-                latent_state[:, :, 0:input_seq_len],
-                pars,
-                output_seq_len=num_steps,
-            )
-            pred_latent_state = torch.cat(
-                [latent_state[:, :, 0:input_seq_len], pred_latent_state],
-                dim=2
-            )
                 
-            pred_recon_state = AE.decode(pred_latent_state, pars)
+            else:
 
-        pred_recon_state = preprocessor.inverse_transform_state(pred_recon_state, ensemble=True)
+                latent_state = AE.encode(state)
 
-        state = preprocessor.inverse_transform_state(state, ensemble=True)
-        pred_recon_state = pred_recon_state.detach()
+                #latent_state = savgol_filter(latent_state.detach().numpy(), 10, 1, axis=-1)
+                #latent_state = torch.tensor(latent_state, dtype=torch.float32)
 
-        print(f'{i}: {preprocessor.inverse_transform_pars(pars, ensemble=True)}')
-    
+
+                pred_latent_state = time_stepper.multistep_prediction(
+                    latent_state[:, :, 0:input_seq_len],
+                    pars,
+                    output_seq_len=num_steps,
+                )
+                pred_latent_state = torch.cat(
+                    [latent_state[:, :, 0:input_seq_len], pred_latent_state],
+                    dim=2
+                )
+                    
+                pred_recon_state = AE.decode(pred_latent_state, pars)
+
+            pred_recon_state = preprocessor.inverse_transform_state(pred_recon_state, ensemble=True)
+
+            state = preprocessor.inverse_transform_state(state, ensemble=True)
+            pred_recon_state = pred_recon_state.detach()
+
+            print(f'{i}: {preprocessor.inverse_transform_pars(pars, ensemble=True)}')
+        
     t2 = time.time()
     print(f'Time: {(t2-t1)/len(SAMPLE_IDS)}')
 
@@ -200,9 +208,9 @@ def main():
         plt.legend()
         plt.show()
 
-    time_step_to_plot_1 = 100
+    time_step_to_plot_1 = 50
     time_step_to_plot_2 = 100
-    time_step_to_plot_3 = 500
+    time_step_to_plot_3 = 120
     
     plt.figure()
     plt.subplot(1, 3, 1)
@@ -214,7 +222,7 @@ def main():
     plt.plot(pred_recon_state[0, 0, :, time_step_to_plot_3], color='tab:orange')
     plt.legend()
 
-    if PHASE != 'lorenz':
+    if PHASE != 'burgers':
 
         plt.subplot(1, 3, 2)
         plt.plot(state[0, 1, :, time_step_to_plot_1], color='tab:blue', label=f'HF, t={time_step_to_plot_1}')
@@ -245,6 +253,8 @@ def main():
             x = np.linspace(0, 25.6, 512)
         elif PHASE == 'multi':
             x = np.linspace(0, 5000, 512)
+        elif PHASE == 'burgers':
+            x = np.linspace(0, 256, 256)
 
         fig, ax = plt.subplots()
         #xdata, ydata, ydata_1 = [], [], []
@@ -259,14 +269,24 @@ def main():
             elif PHASE == 'multi':
                 ax.set_xlim(0, 5000)
                 ax.set_ylim(0.3, 2)
+            elif PHASE == 'burgers':
+                ax.set_xlim(0, 256)
+                ax.set_ylim(-1.5, 1.5)
             return ln,
     
         def update(frame):
             #xdata.append(x)
             #ydata.append(state[0, :, frame])
             #ydata_1.append(pred_recon_state[0, :, frame])
-            ln.set_data(x, state[0, 2, :, frame], )
-            ln_1.set_data(x, pred_recon_state[0, 2, :, frame],)
+            if PHASE == 'wave':
+                ln.set_data(x, state[0, 0, :, frame], )
+                ln_1.set_data(x, pred_recon_state[0, 0, :, frame],)
+            elif PHASE == 'multi':
+                ln.set_data(x, state[0, 2, :, frame], )
+                ln_1.set_data(x, pred_recon_state[0, 2, :, frame],)
+            elif PHASE == 'burgers':
+                ln.set_data(x, state[0, 0, :, frame], )
+                ln_1.set_data(x, pred_recon_state[0, 0, :, frame],)
             plt.legend([f'High-fidelity', f'Neural network'])
             plt.xlabel('x')
             plt.ylabel('\eta')

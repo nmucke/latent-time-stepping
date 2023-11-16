@@ -259,7 +259,6 @@ def main():
 
     PHASE = "lorenz"
 
-
     if PHASE == "single":
         num_layers_list = [5, 6]
     elif PHASE == "multi":

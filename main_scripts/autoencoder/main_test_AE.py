@@ -2,6 +2,7 @@
 import pdb
 import pickle
 import numpy as np
+import oci
 from tqdm import tqdm
 import torch
 import matplotlib.pyplot as plt
@@ -10,6 +11,57 @@ from latent_time_stepping.datasets.AE_dataset import AEDataset
 from latent_time_stepping.oracle import ObjectStorageClientWrapper
 from latent_time_stepping.preprocessor import Preprocessor
 from latent_time_stepping.utils import load_trained_AE_model
+
+def plot_solutions(recon_state, hf_trajectory, latent_state, latent_state_list, normal_distribution):
+
+    plt.figure()
+    plt.subplot(1, 3, 1)
+    plt.imshow(recon_state[0], aspect='auto')
+    plt.colorbar()
+    plt.subplot(1, 3, 2)
+    plt.imshow(hf_trajectory[0], aspect='auto')
+    plt.colorbar()
+    plt.subplot(1, 3, 3)
+    plt.imshow(np.abs(recon_state[0] - hf_trajectory[0]), aspect='auto')
+    plt.colorbar()
+    plt.show()
+
+    plt.figure(figsize=(20, 10))
+    plt.subplot(2, 4, 1)
+    plt.plot(recon_state[0, :, 3], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[0, :, 3], label="H1igh Fidelity", color='tab:blue')
+    plt.plot(recon_state[0, :, -1], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[0, :, -1], label="High Fidelity", color='tab:blue')
+    plt.legend()
+    plt.subplot(2, 4, 2)
+    plt.plot(recon_state[-1, :, 7], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[-1, :, 7], label="High Fidelity", color='tab:blue')
+    plt.plot(recon_state[-1, :, -1], label="Reconstructed", color='tab:orange')
+    plt.plot(hf_trajectory[-1, :, -1], label="High Fidelity", color='tab:blue')
+    plt.legend()
+    plt.subplot(2, 4, 3)
+    plt.plot(latent_state[0, 0, :])
+    plt.plot(latent_state[0, 1, :])
+    plt.plot(latent_state[0, 2, :])
+    plt.grid()
+    plt.subplot(2, 4, 4)
+    plt.plot(latent_state[0, 3, :])
+    #plt.plot(latent_state[0, 4, :])
+    #plt.plot(latent_state[0, 5, :])
+    plt.grid()
+    plt.subplot(2, 4, 5)
+    plt.hist(latent_state_list[:, 0, :].flatten(), bins=50, density=True)
+    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+    plt.subplot(2, 4, 6)
+    plt.hist(latent_state_list[:, 1, :].flatten(), bins=50, density=True)
+    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+    plt.subplot(2, 4, 7)
+    plt.hist(latent_state_list[:, 2, :].flatten(), bins=50, density=True)
+    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+    plt.subplot(2, 4, 8)
+    plt.hist(latent_state_list[:, 3, :].flatten(), bins=50, density=True)
+    plt.plot(np.linspace(-5, 5, 1000), normal_distribution,color='tab:red')
+    plt.show()
 
 torch.set_default_dtype(torch.float32)
 
@@ -30,7 +82,7 @@ CONSISTENCY_LOSS_REGU = 1e-3
 
 LOCAL_OR_ORACLE = 'local'
 
-LOAD_MODEL_FROM_ORACLE = False
+LOAD_MODEL_FROM_ORACLE = True
 
 if PHASE == 'single':
     num_skip_steps = 4
@@ -78,7 +130,7 @@ else:
 
 ORACLE_LOAD_PATH = f'{PHASE}_phase/raw_data/train'
 
-NUM_SAMPLES = 5
+NUM_SAMPLES = 10
 SAMPLE_IDS = range(0,NUM_SAMPLES)
 
 dataset = AEDataset(
@@ -96,10 +148,130 @@ dataloader = torch.utils.data.DataLoader(
     dataset=dataset,
     batch_size=1,
     shuffle=False,
-    num_workers=1,
+    num_workers=5,
 )
 
+
 def main():
+    states_list = []
+    pars_list = []
+    pbar = tqdm(
+        enumerate(dataloader),
+        bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'
+    )
+    for i, (state, pars) in pbar:
+        states_list.append(state)
+        pars_list.append(pars)
+    state = torch.cat(states_list, axis=0)
+    pars = torch.cat(pars_list, axis=0)
+
+    state = state.to(DEVICE)
+    pars = pars.to(DEVICE)
+
+
+    state_high_fidelity = preprocessor.inverse_transform_state(state.clone(), ensemble=True)
+
+    if LOAD_MODEL_FROM_ORACLE:
+        object_storage_client = ObjectStorageClientWrapper(
+            bucket_name='trained_models'
+        )              
+        tained_models_list = object_storage_client.list_all_objects(
+            prefix=f'{PHASE}_phase'
+        )
+    else:
+        tained_models_list = [0]
+
+    RMSE_list = []
+    model_name_list = []
+    pbar = tqdm(
+        tained_models_list[0:-1:2],
+        bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'
+    )
+    print(len(tained_models_list)//2)
+
+    best_model_name = None
+    for model_name in pbar:
+        state_high_fidelity = state_high_fidelity.to(DEVICE)
+        if LOAD_MODEL_FROM_ORACLE:
+            
+            model_name = model_name.name.rpartition('/')[0]
+
+            model_name_list.append(model_name)
+
+            #if len(model_name) < 40:
+            #    continue
+            
+            state_dict, config = object_storage_client.get_model(
+                source_path=model_name,
+                device=DEVICE,
+            )
+            
+        model = load_trained_AE_model(
+            model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
+            state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
+            config=config if LOAD_MODEL_FROM_ORACLE else None,
+            model_type=MODEL_TYPE,
+            device=DEVICE,
+        )
+        model.eval()
+
+        # print number of parameters
+        num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+        L2_error = []
+
+        latent_state = model.encode(state)
+
+        recon_state = model.decode(latent_state, pars)
+
+        if preprocessor is not None:
+            recon_state = preprocessor.inverse_transform_state(recon_state, ensemble=True)
+        recon_state = recon_state.detach()
+
+        e = 0
+        for i in range(state.shape[0]):
+            for j in range(NUM_STATES):
+                e += torch.norm(state_high_fidelity[i, j, :] - recon_state[i, j, :])/torch.norm(state_high_fidelity[i, j, :])
+            L2_error.append(e)
+
+        RMSE = torch.sqrt(torch.mean((state_high_fidelity - recon_state) ** 2))
+        RMSE_list.append(RMSE)
+
+        if RMSE == min(RMSE_list):
+            best_model_name = model_name
+            
+        #print(f'Number of parameters: {num_params:.3e}')
+        #print(f"Average L2 Error: {torch.mean(torch.stack(L2_error))}")
+        #print(f"Average RMSE: {RMSE}")
+        #print(model_name)
+
+        recon_state = recon_state[0].cpu().detach().numpy()
+        hf_trajectory = state_high_fidelity[0].cpu().detach().numpy()
+        latent_state = latent_state.detach().cpu().numpy()
+
+        normal_distribution = 1 / np.sqrt(2 * np.pi) * np.exp(-0.5 * np.linspace(-5, 5, 1000) ** 2)
+
+        '''
+        plot_solutions(
+            hf_trajectory=hf_trajectory,
+            recon_state=recon_state,
+            latent_state=latent_state,
+            latent_state_list=latent_state,
+            normal_distribution=normal_distribution,
+        )
+        '''
+
+    plt.figure()
+    plt.semilogy(np.array(RMSE_list))
+    plt.xticks(range(len(model_name_list)), range(len(model_name_list)))
+    plt.grid()
+    plt.show()
+
+    print(f'Best model: {best_model_name}')
+
+    for i, model_name in enumerate(model_name_list):
+        print(f'{i}: {model_name}')
+    '''
 
     transposed_list = [False]
     resnet_list = [False]
@@ -152,7 +324,7 @@ def main():
                                     object_storage_client = ObjectStorageClientWrapper(
                                         bucket_name='trained_models'
                                     )              
-
+                                    ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit'
                                     state_dict, config = object_storage_client.get_model(
                                         source_path=ORACLE_MODEL_LOAD_PATH,
                                         device=DEVICE,
@@ -182,7 +354,6 @@ def main():
 
                                     state = state.to(DEVICE)
                                     pars = pars.to(DEVICE)
-
 
                                     latent_state = model.encode(state)
 
@@ -276,7 +447,7 @@ def main():
 
                                 print(ORACLE_MODEL_LOAD_PATH)
 
-
+    '''
 if __name__ == "__main__":
     
     main()

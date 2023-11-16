@@ -18,6 +18,7 @@ class TimeSteppingDataset(torch.utils.data.Dataset):
         output_seq_len: int = 10,
         num_time_steps: int = 2000,
         filter: bool = False,
+        with_pars: bool = True,
         ) -> None:
         super().__init__()
 
@@ -25,6 +26,7 @@ class TimeSteppingDataset(torch.utils.data.Dataset):
         self.local_path = None
         self.sample_ids = sample_ids
         self.num_time_steps = num_time_steps
+        self.with_pars = with_pars
 
         if oracle_path is not None:
             bucket_name = "bucket-20230222-1753"
