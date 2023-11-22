@@ -24,22 +24,35 @@ torch.backends.cuda.matmul.allow_tf32 = True
 
 CONTINUE_TRAINING = False
 
+#AE_MODEL_TYPE = "WAE"
+AE_MODEL_TYPE = "AE_no_reg"
+#AE_MODEL_TYPE = "WAE_conv"
+
+
 MODEL_TYPE = "transformer"
 
-PHASE = "burgers"
+PHASE = "multi"
 
+MODEL_SAVE_PATH = f"trained_models/time_steppers/{PHASE}_phase_{MODEL_TYPE}"
 config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}.yml"
-with open(config_path) as f:
-    config = yaml.load(f, Loader=SafeLoader)
-    
+if PHASE == 'multi' and AE_MODEL_TYPE == 'AE_no_reg':
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/latent_data_AE/train'
+    MODEL_SAVE_PATH = f"trained_models/time_steppers/{PHASE}_phase_{MODEL_TYPE}_AE_no_reg"
+    config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}_AE_no_reg.yml"
+elif PHASE == 'multi' and AE_MODEL_TYPE == 'WAE_conv':
+    LOCAL_LOAD_PATH = f'data/{PHASE}_phase/latent_data_conv/train'
+    MODEL_SAVE_PATH = f"trained_models/time_steppers/{PHASE}_phase_{MODEL_TYPE}_WAE_conv"
+    config_path = f"configs/neural_networks/{PHASE}_phase_{MODEL_TYPE}_WAE_conv.yml"
+
 LOCAL_OR_ORACLE = 'local'
 
 BUCKET_NAME = "bucket-20230222-1753"
 ORACLE_LOAD_PATH = f'{PHASE}_phase/latent_data/train'
-
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/latent_data/train'
 
-MODEL_SAVE_PATH = f"trained_models/time_steppers/{PHASE}_phase_{MODEL_TYPE}"
+with open(config_path) as f:
+    config = yaml.load(f, Loader=SafeLoader)
+
 create_directory(MODEL_SAVE_PATH)
 with open(f'{MODEL_SAVE_PATH}/config.yml', 'w') as f:
     yaml.dump(config, f)

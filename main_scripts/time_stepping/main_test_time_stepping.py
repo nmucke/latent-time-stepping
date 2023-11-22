@@ -99,7 +99,7 @@ time_stepper = load_trained_time_stepping_model(
     model_type=TIME_STEPPING_MODEL_TYPE,
 )
 if TIME_STEPPING_MODEL_TYPE == 'transformer':
-    input_seq_len = 150
+    input_seq_len = 8
 else:
     input_seq_len = 20
 

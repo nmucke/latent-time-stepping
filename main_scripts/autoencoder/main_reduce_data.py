@@ -11,8 +11,10 @@ torch.set_default_dtype(torch.float32)
 
 DEVICE = 'cuda'
 
-PHASE = "burgers"
-MODEL_TYPE = "WAE"
+PHASE = "multi"
+#MODEL_TYPE = "WAE"
+MODEL_TYPE = "AE_no_reg"
+#MODEL_TYPE = "WAE_conv"
 
 TRANSPOSED = True
 RESNET = False
@@ -56,7 +58,12 @@ elif PHASE == 'burgers':
 MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
 
 if PHASE == 'multi':
-    ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit' #'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
+
+    if MODEL_TYPE == "AE_no_reg" or MODEL_TYPE == "WAE_conv":
+        ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/{MODEL_TYPE}'
+    else:
+        ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_8_latent_0.0001_consistency_0.01_channels_128_layers_6_trans_layers_2_embedding_64_vit' #'multi_phase/autoencoders/WAE_8_latent_0.001_consistency_0.01_channels_128_layers_6_trans_layers_1_embedding_64_vit'
+
 elif PHASE == 'lorenz':
     MODEL_LOAD_PATH = f"trained_models/autoencoders/{PHASE}_phase_{MODEL_TYPE}"
     #ORACLE_MODEL_LOAD_PATH = f'{PHASE}_phase/autoencoders/WAE_16_latent_0.001_consistency_0.01_channels_64_layers_3_trans_layers_1_embedding_64_vit'
@@ -79,12 +86,19 @@ if LOAD_MODEL_FROM_ORACLE:
         source_path=ORACLE_MODEL_LOAD_PATH,
         device=DEVICE,
     )
+
+model_type = MODEL_TYPE
+if PHASE == 'multi':
+    if MODEL_TYPE == "AE_no_reg":
+        model_type = "WAE"
+    elif MODEL_TYPE == "WAE_conv":
+        model_type = "WAE"
 #model.load_state_dict(state_dict['model_state_dict'])
 model = load_trained_AE_model(
     model_load_path=MODEL_LOAD_PATH if not LOAD_MODEL_FROM_ORACLE else None,
     state_dict=state_dict if LOAD_MODEL_FROM_ORACLE else None,
     config=config if LOAD_MODEL_FROM_ORACLE else None,
-    model_type=MODEL_TYPE,
+    model_type=model_type,
     device=DEVICE,
 )
 model.eval()
@@ -101,6 +115,11 @@ ORACLE_SAVE_PATH = f'{PHASE}_phase/latent_data/train'
 
 LOCAL_LOAD_PATH = f'data/{PHASE}_phase/raw_data/train'
 LOCAL_SAVE_PATH = f'data/{PHASE}_phase/latent_data/train'
+if PHASE == 'multi':
+    if MODEL_TYPE == "AE_no_reg":
+        LOCAL_SAVE_PATH = f'data/{PHASE}_phase/latent_data_AE/train'
+    elif MODEL_TYPE == "WAE_conv":
+        LOCAL_SAVE_PATH = f'data/{PHASE}_phase/latent_data_conv/train'
 
 object_storage_client = ObjectStorageClientWrapper(
     bucket_name='trained_models'
@@ -156,11 +175,11 @@ def main():
         state = state.to(DEVICE)
 
         latent_state[i] = model.encode(state).detach().cpu()[0]
-        pars[i] = _pars.detach().cpu()[0]  
+        pars[i] = _pars.detach().cpu()[0]
 
     latent_state = latent_state.numpy()
     pars = pars.numpy()
-
+    
     # Save the processed data
     if LOCAL_OR_ORACLE == 'oracle':
 

@@ -1,6 +1,6 @@
 dataset_args:
   input_seq_len: 8
-  output_seq_len: 64
+  output_seq_len: 8
   num_time_steps: 300
   with_pars: False
 
@@ -10,7 +10,13 @@ dataloader_args:
   num_workers: 4
   
 model_args:
+  #parameter_encoder_args: 
   parameter_encoder_args: null
+    #embed_dim: 32
+    #num_heads: 2
+    #embed_hidden_dim: 32
+    #num_layers: 2
+    #pars_dim: 1
   time_stepping_decoder:
     latent_dim: 8
     embed_dim: 32
